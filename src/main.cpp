@@ -174,7 +174,7 @@ const char* PARAM_MODE = "mode";
 
 AsyncWebServer server(80);
 
-LED_ESP32 led1(2,0);
+LED_ESP32 led1(4,0);
 LED_ESP32 led2(12,1);
 LED_ESP32 led3(13,2);
 LED_ESP32 led4(15,3);
