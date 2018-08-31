@@ -174,13 +174,13 @@ const char* PARAM_MODE = "mode";
 
 AsyncWebServer server(80);
 
-LED_ESP32 led1(4,0);
+LED_ESP32 led1(2,0);
 LED_ESP32 led2(12,1);
 LED_ESP32 led3(13,2);
 LED_ESP32 led4(15,3);
 LED_ESP32 led5(22,4);
 LED_ESP32 led6(23,5);
-LED_ESP32 led7(24,6);
+LED_ESP32 led7(34,6);
 
 int increase = 5;
 int val = 0;
@@ -2196,6 +2196,7 @@ void loop() {
 
           }
         } else if(PWM_INFO_SHOWTYPE == "fix") {
+          Serial.println(" this is the fix mode");
           led1.set(P1_24.toInt());
           led2.set(P2_24.toInt());
           led3.set(P3_24.toInt());
