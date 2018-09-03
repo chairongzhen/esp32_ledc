@@ -10,8 +10,10 @@
 #include <ESPmDNS.h>
 #include <Update.h>
 
-
-
+#define RESET_BUTTON 16
+#define VERSION_NUM "0.12"
+#define ESP_HOST_NAME "esp003"
+#define ESP_RTC_TICK 1535987038
 
 String PWM_INFO_SHOWTYPE,PWM_INFO_TESTMODE,PWM_INFO_CONMODE,PWM_INFO_RTC,PWM_INFO_VERSION;
 String P1_0, P1_1,P1_2,P1_3,P1_4,P1_5,P1_6,P1_7,P1_8,P1_9,P1_10,P1_11,P1_12,P1_13,P1_14,P1_15,P1_16,P1_17,P1_18,P1_19,P1_20,P1_21,P1_22,P1_23,P1_24;
@@ -21,76 +23,21 @@ String P4_0, P4_1,P4_2,P4_3,P4_4,P4_5,P4_6,P4_7,P4_8,P4_9,P4_10,P4_11,P4_12,P4_1
 String P5_0, P5_1,P5_2,P5_3,P5_4,P5_5,P5_6,P5_7,P5_8,P5_9,P5_10,P5_11,P5_12,P5_13,P5_14,P5_15,P5_16,P5_17,P5_18,P5_19,P5_20,P5_21,P5_22,P5_23,P5_24;
 String P6_0, P6_1,P6_2,P6_3,P6_4,P6_5,P6_6,P6_7,P6_8,P6_9,P6_10,P6_11,P6_12,P6_13,P6_14,P6_15,P6_16,P6_17,P6_18,P6_19,P6_20,P6_21,P6_22,P6_23,P6_24;
 String P7_0, P7_1,P7_2,P7_3,P7_4,P7_5,P7_6,P7_7,P7_8,P7_9,P7_10,P7_11,P7_12,P7_13,P7_14,P7_15,P7_16,P7_17,P7_18,P7_19,P7_20,P7_21,P7_22,P7_23,P7_24;
+bool RESET_FLAG = false;
+
+const char* ssid = ESP_HOST_NAME;
+const char* password = "11111111";
+const char* host = ESP_HOST_NAME;
 
 
+LED_ESP32 led1(4,0);
+LED_ESP32 led2(12,1);
+LED_ESP32 led3(13,2);
+LED_ESP32 led4(15,3);
+LED_ESP32 led5(22,4);
+LED_ESP32 led6(23,5);
+LED_ESP32 led7(25,6);
 
-void listDir(fs::FS &fs, const char * dirname, uint8_t levels) {
-  Serial.printf("Listing directory: %s\n", dirname);
-
-  File root = fs.open(dirname);
-  if (!root) {
-    Serial.println("Failed to open directory");
-    return;
-  }
-  if (!root.isDirectory()) {
-    Serial.println("Not a directory");
-    return;
-  }
-
-  File file = root.openNextFile();
-  while (file) {
-    if (file.isDirectory()) {
-      Serial.print("  DIR : ");
-      Serial.println(file.name());
-      if (levels) {
-        listDir(fs, file.name(), levels - 1);
-      }
-    } else {
-      Serial.print("  FILE: ");
-      Serial.print(file.name());
-      Serial.print("  SIZE: ");
-      Serial.println(file.size());
-    }
-    file = root.openNextFile();
-  }
-}
-
-
-void readFile(fs::FS &fs, const char * path) {
-  Serial.printf("Reading file: %s\n", path);
-
-  File file = fs.open(path);
-  if (!file) {
-    Serial.println("Failed to open file for reading");
-    return;
-  }
-
-  Serial.print("Read from file: ");
-  while (file.available()) {
-    Serial.write(file.read());
-  }
-}
-
-bool IsEsist(fs::FS &fs, const char* filename) {
-  File root = fs.open("/");
-  if (!root) {
-    Serial.println("Failed to open directory");
-    return false;
-  }
-  if (!root.isDirectory()) {
-    Serial.println("Not a directory");
-    return false;
-  }
-
-  File file = root.openNextFile();
-  while (file) {
-    if(String(file.name()) == filename) {
-      return true;
-    }
-    file = root.openNextFile();
-  }
-  return false;
-}
 
 String getFileString(fs::FS &fs, const char* path) {
   File file = fs.open(path);
@@ -146,8 +93,6 @@ void appendLn(fs::FS &fs, const char * path) {
   }
 }
 
-
-
 void deleteFile(fs::FS &fs, const char * path) {
   Serial.printf("Deleting file: %s\n", path);
   if (fs.remove(path)) {
@@ -159,8 +104,15 @@ void deleteFile(fs::FS &fs, const char * path) {
 
 
 void initFileSystem() {
-  deleteFile(SPIFFS,"/wifi.ini");
-  writeFile(SPIFFS,"/pwminfo.ini","{\"showtype\":\"fix\",\"testmode\":\"test\",\"sysdate\":\"1525046400\",\"status\":\"stop\",\"conmode\": \"local\",\"version\":\"0.11\"}");
+  if(SPIFFS.exists("/wifi.ini")) {
+    deleteFile(SPIFFS,"/wifi.ini");
+  }
+  String pwminfocontent = "{\"showtype\":\"fix\",\"testmode\":\"test\",\"sysdate\":\"{unixtick}\",\"status\":\"stop\",\"conmode\": \"local\",\"version\":\"{version_num}\"}";
+  pwminfocontent.replace("{version_num}",VERSION_NUM);
+  pwminfocontent.replace("{unixtick}",String(ESP_RTC_TICK));
+  writeFile(SPIFFS,"/pwminfo.ini",pwminfocontent.c_str());
+
+
   writeFile(SPIFFS, "/p1.ini","{\"t0\":0,\"t1\":0,\"t2\":0,\"t3\":0,\"t4\":0,\"t5\":0,\"t6\":0,\"t7\":0,\"t8\":0,\"t9\":0,\"t10\":0,\"t11\":0,\"t12\":0,\"t13\":0,\"t14\":0,\"t15\":0,\"t16\":0,\"t17\":0,\"t18\":0,\"t19\":0,\"t20\":0,\"t21\":0,\"t22\":0,\"t23\":0,\"t24\":0}");
   writeFile(SPIFFS, "/p2.ini","{\"t0\":0,\"t1\":0,\"t2\":0,\"t3\":0,\"t4\":0,\"t5\":0,\"t6\":0,\"t7\":0,\"t8\":0,\"t9\":0,\"t10\":0,\"t11\":0,\"t12\":0,\"t13\":0,\"t14\":0,\"t15\":0,\"t16\":0,\"t17\":0,\"t18\":0,\"t19\":0,\"t20\":0,\"t21\":0,\"t22\":0,\"t23\":0,\"t24\":0}");
   writeFile(SPIFFS, "/p3.ini","{\"t0\":0,\"t1\":0,\"t2\":0,\"t3\":0,\"t4\":0,\"t5\":0,\"t6\":0,\"t7\":0,\"t8\":0,\"t9\":0,\"t10\":0,\"t11\":0,\"t12\":0,\"t13\":0,\"t14\":0,\"t15\":0,\"t16\":0,\"t17\":0,\"t18\":0,\"t19\":0,\"t20\":0,\"t21\":0,\"t22\":0,\"t23\":0,\"t24\":0}");
@@ -171,11 +123,6 @@ void initFileSystem() {
 }
 
 void onFileUpload(AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
-  // if(!index)
-  //   Serial.printf("UploadStart: %s\n", filename.c_str());
-  //   Serial.printf("%s..............\n", (const char*)data);
-  // if(final)
-  //   Serial.printf("UploadEnd: %s (%u)\n", filename.c_str(), index+len);
   if(index == 0) {
     Serial.printf("Update: %s\n",filename.c_str());
     if(!Update.begin(UPDATE_SIZE_UNKNOWN)) {
@@ -192,45 +139,12 @@ void onFileUpload(AsyncWebServerRequest *request, const String& filename, size_t
   } 
 }
 
-int isreset = 0;
-#define RESET_BUTTON 16
-
-
-
-
-
-
-
-const char* ssid = "esp32-03";
-const char* password = "13501983117";
-const char* PARAM_MODE = "mode";
-const char* host = "esp32";
-
-const char* url = "192.168.4.1";
-
-AsyncWebServer server(80);
-
-
-LED_ESP32 led1(4,0);
-LED_ESP32 led2(12,1);
-LED_ESP32 led3(13,2);
-LED_ESP32 led4(15,3);
-LED_ESP32 led5(22,4);
-LED_ESP32 led6(23,5);
-LED_ESP32 led7(25,6);
-LED_ESP32 led8(14,7);
 
 void handleRestButtonChanged() {
-  // int level = digitalRead(RESET_BUTTON);
-  // if(level == HIGH) {
-
-  // } else if(level == LOW) {
-  //   Serial.println("Rest Button low value...");
-  // }
     Serial.println("Rest begin.....");
+    RESET_FLAG = true;
     Serial.println("rest end.....");
-    detachInterrupt(RESET_BUTTON);
-    
+    detachInterrupt(RESET_BUTTON);    
 }
 
 void notFound(AsyncWebServerRequest *request) {
@@ -238,17 +152,18 @@ void notFound(AsyncWebServerRequest *request) {
 }
 
 
+AsyncWebServer server(80);
+
 void setup() {
   Serial.begin(115200);
-  
+  RESET_FLAG = false;
   pinMode(RESET_BUTTON,INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(RESET_BUTTON),handleRestButtonChanged,CHANGE);
   
   WiFi.mode(WIFI_AP_STA);
   WiFi.softAP(ssid,password);
   Serial.println();
-  Serial.print("the AP address is : ");
-  Serial.println(WiFi.softAPIP());   
+  Serial.println("the AP name is : " + String(ssid) + " password is: " + String(password));
 
   /*use mdns for host name resolution*/
   if (!MDNS.begin(host)) { //http://esp32.local
@@ -266,7 +181,6 @@ void setup() {
   led5.setup();
   led6.setup();
   led7.setup();
-  led8.setup();
 
   led1.set(0);
   led2.set(0);
@@ -276,17 +190,18 @@ void setup() {
   led6.set(0);
   led7.set(0);
 
+
   if (!SPIFFS.begin(true)) {
     Serial.println("SPIFFS Mount Failed");
     return;
   } else {
-    if(!IsEsist(SPIFFS,"/pwminfo.ini")) {
+    if(!SPIFFS.exists("/pwminfo.ini")) {
       Serial.println("begin to init system file");
       initFileSystem();
       Serial.println("init success...");      
     } else {
       Serial.println("not the first time");
-      if(IsEsist(SPIFFS,"/wifi.ini")) {
+      if(SPIFFS.exists("/wifi.ini")) {
         String filestr;
         filestr = getFileString(SPIFFS,"/wifi.ini");
         cJSON* root = NULL;
@@ -1190,12 +1105,12 @@ void setup() {
   server.on("/p",HTTP_GET,[](AsyncWebServerRequest *request){
     String lightSeq;
     String html = "";
-    if(request->hasParam(PARAM_MODE)) {      
+    if(request->hasParam("mode")) {      
       if (!SPIFFS.begin()) {
         Serial.println("SPIFFS Mount Failed");
         return;
       }
-      lightSeq = request->getParam(PARAM_MODE)->value();
+      lightSeq = request->getParam("mode")->value();
       String filestr;
       //filestr = getFileString(SPIFFS,"/pwminfo.ini");
       
@@ -1449,12 +1364,12 @@ void setup() {
     String filename = "";
     String html;
     
-    if(request->hasParam(PARAM_MODE)) {
+    if(request->hasParam("mode")) {
       if (!SPIFFS.begin()) {
         Serial.println("SPIFFS Mount Failed");
         return;
       }
-      lightSeq = request->getParam(PARAM_MODE)->value();
+      lightSeq = request->getParam("mode")->value();
       filename = "/" + lightSeq + ".ini";
       t0 = request->getParam("t0")->value();
       t1 = request->getParam("t1")->value();
@@ -1784,7 +1699,7 @@ void setup() {
       Serial.println("SPIFFS Mount Failed");
       return;
     }
-    if(IsEsist(SPIFFS,"/wifi.ini")) {      
+    if(SPIFFS.exists("/wifi.ini")) {      
       String filestr;
       filestr = getFileString(SPIFFS,"/wifi.ini");
       cJSON* root = NULL;
@@ -1869,6 +1784,15 @@ void setup() {
   });
 
   server.on("/update",HTTP_POST,[](AsyncWebServerRequest *request){
+    if (!SPIFFS.begin()) {
+      Serial.println("SPIFFS Mount Failed");
+      return;
+    }
+    String pwminfocontent = "{\"showtype\":\"fix\",\"testmode\":\"test\",\"sysdate\":\"{unixtick}\",\"status\":\"stop\",\"conmode\": \"local\",\"version\":\"{version_num}\"}";
+    pwminfocontent.replace("{version_num}",VERSION_NUM);
+    pwminfocontent.replace("{unixtick}",String(ESP_RTC_TICK));
+    writeFile(SPIFFS,"/pwminfo.ini",pwminfocontent.c_str());
+    SPIFFS.end();
     ESP.restart();
   },onFileUpload);  
 
@@ -1879,6 +1803,17 @@ void setup() {
 
 
 void loop() {        
+  if(RESET_FLAG) {
+    Serial.println("Start to initialize the system configuration.");
+    if (!SPIFFS.begin()) {
+      Serial.println("SPIFFS Mount Failed");
+      return;
+    }
+    initFileSystem();
+    SPIFFS.end();
+    RESET_FLAG = false;
+    ESP.restart();
+  }
   time_t t = time(NULL); 
   struct tm *t_st;
   t_st = localtime(&t);
