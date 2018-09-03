@@ -8,7 +8,19 @@
 #include "ESP32Time.h"
 #include "LED_ESP32.h"
 #include <ESPmDNS.h>
+#include <Update.h>
 
+
+
+
+String PWM_INFO_SHOWTYPE,PWM_INFO_TESTMODE,PWM_INFO_CONMODE,PWM_INFO_RTC,PWM_INFO_VERSION;
+String P1_0, P1_1,P1_2,P1_3,P1_4,P1_5,P1_6,P1_7,P1_8,P1_9,P1_10,P1_11,P1_12,P1_13,P1_14,P1_15,P1_16,P1_17,P1_18,P1_19,P1_20,P1_21,P1_22,P1_23,P1_24;
+String P2_0, P2_1,P2_2,P2_3,P2_4,P2_5,P2_6,P2_7,P2_8,P2_9,P2_10,P2_11,P2_12,P2_13,P2_14,P2_15,P2_16,P2_17,P2_18,P2_19,P2_20,P2_21,P2_22,P2_23,P2_24;
+String P3_0, P3_1,P3_2,P3_3,P3_4,P3_5,P3_6,P3_7,P3_8,P3_9,P3_10,P3_11,P3_12,P3_13,P3_14,P3_15,P3_16,P3_17,P3_18,P3_19,P3_20,P3_21,P3_22,P3_23,P3_24;
+String P4_0, P4_1,P4_2,P4_3,P4_4,P4_5,P4_6,P4_7,P4_8,P4_9,P4_10,P4_11,P4_12,P4_13,P4_14,P4_15,P4_16,P4_17,P4_18,P4_19,P4_20,P4_21,P4_22,P4_23,P4_24;
+String P5_0, P5_1,P5_2,P5_3,P5_4,P5_5,P5_6,P5_7,P5_8,P5_9,P5_10,P5_11,P5_12,P5_13,P5_14,P5_15,P5_16,P5_17,P5_18,P5_19,P5_20,P5_21,P5_22,P5_23,P5_24;
+String P6_0, P6_1,P6_2,P6_3,P6_4,P6_5,P6_6,P6_7,P6_8,P6_9,P6_10,P6_11,P6_12,P6_13,P6_14,P6_15,P6_16,P6_17,P6_18,P6_19,P6_20,P6_21,P6_22,P6_23,P6_24;
+String P7_0, P7_1,P7_2,P7_3,P7_4,P7_5,P7_6,P7_7,P7_8,P7_9,P7_10,P7_11,P7_12,P7_13,P7_14,P7_15,P7_16,P7_17,P7_18,P7_19,P7_20,P7_21,P7_22,P7_23,P7_24;
 
 
 
@@ -148,7 +160,7 @@ void deleteFile(fs::FS &fs, const char * path) {
 
 void initFileSystem() {
   deleteFile(SPIFFS,"/wifi.ini");
-  writeFile(SPIFFS,"/pwminfo.ini","{\"showtype\":\"fix\",\"testmode\":\"test\",\"sysdate\":\"1525046400\",\"status\":\"stop\",\"conmode\": \"local\"}");
+  writeFile(SPIFFS,"/pwminfo.ini","{\"showtype\":\"fix\",\"testmode\":\"test\",\"sysdate\":\"1525046400\",\"status\":\"stop\",\"conmode\": \"local\",\"version\":\"0.11\"}");
   writeFile(SPIFFS, "/p1.ini","{\"t0\":0,\"t1\":0,\"t2\":0,\"t3\":0,\"t4\":0,\"t5\":0,\"t6\":0,\"t7\":0,\"t8\":0,\"t9\":0,\"t10\":0,\"t11\":0,\"t12\":0,\"t13\":0,\"t14\":0,\"t15\":0,\"t16\":0,\"t17\":0,\"t18\":0,\"t19\":0,\"t20\":0,\"t21\":0,\"t22\":0,\"t23\":0,\"t24\":0}");
   writeFile(SPIFFS, "/p2.ini","{\"t0\":0,\"t1\":0,\"t2\":0,\"t3\":0,\"t4\":0,\"t5\":0,\"t6\":0,\"t7\":0,\"t8\":0,\"t9\":0,\"t10\":0,\"t11\":0,\"t12\":0,\"t13\":0,\"t14\":0,\"t15\":0,\"t16\":0,\"t17\":0,\"t18\":0,\"t19\":0,\"t20\":0,\"t21\":0,\"t22\":0,\"t23\":0,\"t24\":0}");
   writeFile(SPIFFS, "/p3.ini","{\"t0\":0,\"t1\":0,\"t2\":0,\"t3\":0,\"t4\":0,\"t5\":0,\"t6\":0,\"t7\":0,\"t8\":0,\"t9\":0,\"t10\":0,\"t11\":0,\"t12\":0,\"t13\":0,\"t14\":0,\"t15\":0,\"t16\":0,\"t17\":0,\"t18\":0,\"t19\":0,\"t20\":0,\"t21\":0,\"t22\":0,\"t23\":0,\"t24\":0}");
@@ -158,31 +170,46 @@ void initFileSystem() {
   writeFile(SPIFFS, "/p7.ini","{\"t0\":0,\"t1\":0,\"t2\":0,\"t3\":0,\"t4\":0,\"t5\":0,\"t6\":0,\"t7\":0,\"t8\":0,\"t9\":0,\"t10\":0,\"t11\":0,\"t12\":0,\"t13\":0,\"t14\":0,\"t15\":0,\"t16\":0,\"t17\":0,\"t18\":0,\"t19\":0,\"t20\":0,\"t21\":0,\"t22\":0,\"t23\":0,\"t24\":0}");
 }
 
+void onFileUpload(AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
+  // if(!index)
+  //   Serial.printf("UploadStart: %s\n", filename.c_str());
+  //   Serial.printf("%s..............\n", (const char*)data);
+  // if(final)
+  //   Serial.printf("UploadEnd: %s (%u)\n", filename.c_str(), index+len);
+  if(index == 0) {
+    Serial.printf("Update: %s\n",filename.c_str());
+    if(!Update.begin(UPDATE_SIZE_UNKNOWN)) {
+      Update.printError(Serial);
+    }
+  } 
+  Update.write(data,len);  
+  if(final) {
+    if(Update.end(true)) {
+      Serial.printf("Update Success: %u\nRebooting....\n",index+len);
+    } else {
+      Update.printError(Serial);
+    }
+  } 
+}
+
+int isreset = 0;
 #define RESET_BUTTON 16
 
-void handleRestButtonChanged() {
-  int level = digitalRead(RESET_BUTTON);
-  if(level == HIGH) {
-    Serial.println("Rest button high value...");
-    if (!SPIFFS.begin()) {
-      Serial.println("SPIFFS Mount Failed");
-      return;
-    }
-    initFileSystem();
-    SPIFFS.end();
-  } else if(level == LOW) {
-    Serial.println("Rest Button low value...");
-  }
-}
+
+
+
+
+
 
 const char* ssid = "esp32-03";
 const char* password = "13501983117";
 const char* PARAM_MODE = "mode";
 const char* host = "esp32";
 
-
+const char* url = "192.168.4.1";
 
 AsyncWebServer server(80);
+
 
 LED_ESP32 led1(4,0);
 LED_ESP32 led2(12,1);
@@ -191,22 +218,25 @@ LED_ESP32 led4(15,3);
 LED_ESP32 led5(22,4);
 LED_ESP32 led6(23,5);
 LED_ESP32 led7(25,6);
+LED_ESP32 led8(14,7);
 
+void handleRestButtonChanged() {
+  // int level = digitalRead(RESET_BUTTON);
+  // if(level == HIGH) {
 
+  // } else if(level == LOW) {
+  //   Serial.println("Rest Button low value...");
+  // }
+    Serial.println("Rest begin.....");
+    Serial.println("rest end.....");
+    detachInterrupt(RESET_BUTTON);
+    
+}
 
-int increase = 5;
-int val = 0;
+void notFound(AsyncWebServerRequest *request) {
+    request->send(404, "text/plain", "Not found");
+}
 
-
-
-String PWM_INFO_SHOWTYPE,PWM_INFO_TESTMODE,PWM_INFO_CONMODE,PWM_INFO_RTC;
-String P1_0, P1_1,P1_2,P1_3,P1_4,P1_5,P1_6,P1_7,P1_8,P1_9,P1_10,P1_11,P1_12,P1_13,P1_14,P1_15,P1_16,P1_17,P1_18,P1_19,P1_20,P1_21,P1_22,P1_23,P1_24;
-String P2_0, P2_1,P2_2,P2_3,P2_4,P2_5,P2_6,P2_7,P2_8,P2_9,P2_10,P2_11,P2_12,P2_13,P2_14,P2_15,P2_16,P2_17,P2_18,P2_19,P2_20,P2_21,P2_22,P2_23,P2_24;
-String P3_0, P3_1,P3_2,P3_3,P3_4,P3_5,P3_6,P3_7,P3_8,P3_9,P3_10,P3_11,P3_12,P3_13,P3_14,P3_15,P3_16,P3_17,P3_18,P3_19,P3_20,P3_21,P3_22,P3_23,P3_24;
-String P4_0, P4_1,P4_2,P4_3,P4_4,P4_5,P4_6,P4_7,P4_8,P4_9,P4_10,P4_11,P4_12,P4_13,P4_14,P4_15,P4_16,P4_17,P4_18,P4_19,P4_20,P4_21,P4_22,P4_23,P4_24;
-String P5_0, P5_1,P5_2,P5_3,P5_4,P5_5,P5_6,P5_7,P5_8,P5_9,P5_10,P5_11,P5_12,P5_13,P5_14,P5_15,P5_16,P5_17,P5_18,P5_19,P5_20,P5_21,P5_22,P5_23,P5_24;
-String P6_0, P6_1,P6_2,P6_3,P6_4,P6_5,P6_6,P6_7,P6_8,P6_9,P6_10,P6_11,P6_12,P6_13,P6_14,P6_15,P6_16,P6_17,P6_18,P6_19,P6_20,P6_21,P6_22,P6_23,P6_24;
-String P7_0, P7_1,P7_2,P7_3,P7_4,P7_5,P7_6,P7_7,P7_8,P7_9,P7_10,P7_11,P7_12,P7_13,P7_14,P7_15,P7_16,P7_17,P7_18,P7_19,P7_20,P7_21,P7_22,P7_23,P7_24;
 
 void setup() {
   Serial.begin(115200);
@@ -236,6 +266,7 @@ void setup() {
   led5.setup();
   led6.setup();
   led7.setup();
+  led8.setup();
 
   led1.set(0);
   led2.set(0);
@@ -277,9 +308,6 @@ void setup() {
         while((WiFi.status() != WL_CONNECTED) && i>0 ) {
           delay(1000);
           Serial.println("Connecting to WiFi");
-          // if(i==2) {
-          //   WiFi.enableSTA(false);
-          // }
           i = i-1;
         }
         Serial.println(WiFi.localIP());
@@ -310,11 +338,15 @@ void setup() {
       stime.tv_sec = PWM_INFO_RTC.toInt();
       settimeofday(&stime,NULL);  
 
-
       item = cJSON_GetObjectItem(root,"conmode");
       itemstr = cJSON_Print(item);
       PWM_INFO_CONMODE = itemstr;
       PWM_INFO_CONMODE.replace("\"","");
+
+      item = cJSON_GetObjectItem(root,"version");
+      itemstr = cJSON_Print(item);
+      PWM_INFO_VERSION = itemstr;
+      PWM_INFO_VERSION.replace("\"","");
 
       filestr = getFileString(SPIFFS,"/p1.ini");
       const char* p1json = filestr.c_str();
@@ -1085,10 +1117,14 @@ void setup() {
     item = cJSON_GetObjectItem(root,"conmode");
     itemstr = cJSON_Print(item);
     String conmode = itemstr;
+    item = cJSON_GetObjectItem(root,"version");
+    itemstr = cJSON_Print(item);
+    String version = itemstr;
+    version.replace("\"","");
 
 
     String html = "";
-    html = html + "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>NodeMCU Control Page</title><!--<script type=\"text/javascript\"src=\"jquery.js\"></script>--></head><body><div><h1 id=\"title\">基本信息</h1><table><tr><th style=\"text-align:left;\">系统时间</th></tr><tr><td><span id=\"spCurrent\"></span></td></tr><tr><th style=\"text-align: left;\">修改时间</th></tr><tr><td><input type=\"text\"value=\"2018-03-03 00:00:00\"id=\"txtsysdate\"/>*时间格式:2018-03-03 00:00:00</td></tr><tr><th style=\"text-align:left;\">循环模式</th></tr><tr><td><input type=\"radio\"value=\"repeat\"name=\"showtype\"id=\"rdRpt\"/>循环模式<input type=\"radio\"value=\"fix\"name=\"showtype\"id=\"rdFix\"/>固定模式</td></tr><tr id=\"thtest\"><th style=\"text-align:left;\">是否测试</th></tr><tr id=\"tdtest\"><td><input value=\"production\"type=\"radio\"name=\"testMode\"id=\"rdPrd\"/>否<input value=\"test\"type=\"radio\"name=\"testMode\"id=\"rdTest\"/>是</td></tr><tr id=\"thonline\"><th style=\"text-align:left;\">云端控制</th></tr><tr id=\"tdonline\"><td><input value=\"local\"type=\"radio\"name=\"onlineMode\"id=\"rdlocal\"/>否<input value=\"online\"type=\"radio\"name=\"onlineMode\"id=\"rdonline\"/>是</td></tr><tr><td><input type=\"button\"value=\"联网设置\"id=\"btnwifi\"onclick=\"wifi();\"/><input type=\"submit\"value=\"保存\"id=\"submit\"onclick=\"submit();\"/><input type=\"button\"value=\"恢复出厂\"id=\"btnstop\"onclick=\"init();\"/><input type=\"button\"value=\"重启\"id=\"btnReset\"onclick=\"reset();\"/></td></tr></table><hr/><h1 id=\"title\">灯光控制</h1><table><tr><th>第一排</th><th>第二排</th><th>第三排</th><th>第四排</th><th>第五排</th><th>第六排</th><th>第七排</th></tr><tr><td><a href=\"/p?mode=p1\">查看/修改</a></td><td><a href=\"/p?mode=p2\">查看/修改</a></td><td><a href=\"/p?mode=p3\">查看/修改</a></td><td><a href=\"/p?mode=p4\">查看/修改</a></td><td><a href=\"/p?mode=p5\">查看/修改</a></td><td><a href=\"/p?mode=p6\">查看/修改</a></td><td><a href=\"/p?mode=p7\">查看/修改</a></td></tr></table></div><script>function submit(){var selectshowtype=document.getElementsByName('showtype');var showtypevalue=\"\";for(var i=0;i<selectshowtype.length;i++){if(selectshowtype[i].checked){showtypevalue=selectshowtype[i].value;break}}var selecttestmode=document.getElementsByName('testMode');var testmodevalue=\"\";for(var i=0;i<selecttestmode.length;i++){if(selecttestmode[i].checked){testmodevalue=selecttestmode[i].value;break}}var str=document.getElementById('txtsysdate').value;str=str.replace(/-/g,\"/\");var date=new Date(str);var humanDate=new Date(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate(),date.getHours(),date.getMinutes(),date.getSeconds()));var unixDate=humanDate.getTime()/1000;var selectedconnectionmode=document.getElementsByName(\"onlineMode\");var connectionmodevalue=\"\";for(var i=0;i<selectedconnectionmode.length;i++){if(selectedconnectionmode[i].checked){connectionmodevalue=selectedconnectionmode[i].value;break}}alert('保存成功');var url=\"pwmopr?showtype=\"+showtypevalue+\"&testmode=\"+testmodevalue+\"&sysdate=\"+unixDate+\"&conmode=\"+connectionmodevalue;window.location.href=url}function init(){alert('已恢复出厂设置!');var url=\"init\";window.location.href=url}function wifi(){var url=\"wifi\";window.location.href=url}function reset(){var url=\"reset\";alert(\"已重启,请关闭当前页面\");window.location.href=url}</script></body></html>";
+    html = html + "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>NodeMCU Control Page</title><!--<script type=\"text/javascript\"src=\"jquery.js\"></script>--></head><body><div><h1 id=\"title\">基本信息</h1><table><tr><th style=\"text-align:left;\">版本号</th></tr><tr><td><span id=\"spversion\"></span></td></tr><tr><th style=\"text-align:left;\">系统时间</th></tr><tr><td><span id=\"spCurrent\"></span></td></tr><tr><th style=\"text-align: left;\">修改时间</th></tr><tr><td><input type=\"text\"value=\"2018-03-03 00:00:00\"id=\"txtsysdate\"/>*时间格式:2018-03-03 00:00:00</td></tr><tr><th style=\"text-align:left;\">循环模式</th></tr><tr><td><input type=\"radio\"value=\"repeat\"name=\"showtype\"id=\"rdRpt\"/>循环模式<input type=\"radio\"value=\"fix\"name=\"showtype\"id=\"rdFix\"/>固定模式</td></tr><tr id=\"thtest\"><th style=\"text-align:left;\">是否测试</th></tr><tr id=\"tdtest\"><td><input value=\"production\"type=\"radio\"name=\"testMode\"id=\"rdPrd\"/>否<input value=\"test\"type=\"radio\"name=\"testMode\"id=\"rdTest\"/>是</td></tr><tr id=\"thonline\"><th style=\"text-align:left;\">云端控制</th></tr><tr id=\"tdonline\"><td><input value=\"local\"type=\"radio\"name=\"onlineMode\"id=\"rdlocal\"/>否<input value=\"online\"type=\"radio\"name=\"onlineMode\"id=\"rdonline\"/>是</td></tr><tr><td><input type=\"button\"value=\"联网设置\"id=\"btnwifi\"onclick=\"wifi();\"/><input type=\"submit\"value=\"保存\"id=\"submit\"onclick=\"submit();\"/><input type=\"button\"value=\"恢复出厂\"id=\"btnstop\"onclick=\"init();\"/><input type=\"button\"value=\"重启\"id=\"btnReset\"onclick=\"reset();\"/></td></tr></table><hr/><h1 id=\"title\">灯光控制</h1><table><tr><th>第一排</th><th>第二排</th><th>第三排</th><th>第四排</th><th>第五排</th><th>第六排</th><th>第七排</th></tr><tr><td><a href=\"/p?mode=p1\">查看/修改</a></td><td><a href=\"/p?mode=p2\">查看/修改</a></td><td><a href=\"/p?mode=p3\">查看/修改</a></td><td><a href=\"/p?mode=p4\">查看/修改</a></td><td><a href=\"/p?mode=p5\">查看/修改</a></td><td><a href=\"/p?mode=p6\">查看/修改</a></td><td><a href=\"/p?mode=p7\">查看/修改</a></td></tr></table></div><script>function submit(){var selectshowtype=document.getElementsByName('showtype');var showtypevalue=\"\";for(var i=0;i<selectshowtype.length;i++){if(selectshowtype[i].checked){showtypevalue=selectshowtype[i].value;break}}var selecttestmode=document.getElementsByName('testMode');var testmodevalue=\"\";for(var i=0;i<selecttestmode.length;i++){if(selecttestmode[i].checked){testmodevalue=selecttestmode[i].value;break}}var str=document.getElementById('txtsysdate').value;str=str.replace(/-/g,\"/\");var date=new Date(str);var humanDate=new Date(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate(),date.getHours(),date.getMinutes(),date.getSeconds()));var unixDate=humanDate.getTime()/1000;var selectedconnectionmode=document.getElementsByName(\"onlineMode\");var connectionmodevalue=\"\";for(var i=0;i<selectedconnectionmode.length;i++){if(selectedconnectionmode[i].checked){connectionmodevalue=selectedconnectionmode[i].value;break}}alert('保存成功');var url=\"pwmopr?showtype=\"+showtypevalue+\"&testmode=\"+testmodevalue+\"&sysdate=\"+unixDate+\"&conmode=\"+connectionmodevalue;window.location.href=url}function init(){alert('已恢复出厂设置!');var url=\"init\";window.location.href=url}function wifi(){var url=\"wifi\";window.location.href=url}function reset(){var url=\"reset\";alert(\"已重启,请关闭当前页面\");window.location.href=url}</script></body></html>";
     String tpl_currentdate = "<span id=\"spCurrent\"></span>";
     String change_currentdate = "<span id=\"spCurrent\">";
         
@@ -1141,6 +1177,12 @@ void setup() {
       Change_connectiontype = "<input value=\"local\"type=\"radio\"name=\"onlineMode\"id=\"rdlocal\" checked/>";
       html.replace(tpl_localmode,Change_connectiontype);
     }
+
+    String tpl_version = "<span id=\"spversion\"></span>";
+    String change_version = "<span id=\"spversion\">";
+    change_version = change_version + version;
+    change_version = change_version + "</span>";
+    html.replace(tpl_version,change_version);
 
     request->send(200,"text/html",html);
   });
@@ -1818,10 +1860,19 @@ void setup() {
 
   server.on("/reset",HTTP_GET,[](AsyncWebServerRequest *request){
     Serial.println("Start to reset....");
-
-    //ESP.restart();
+    ESP.restart();
   });
 
+  server.on("/upload",HTTP_GET,[](AsyncWebServerRequest *request){
+    String html = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>Update System</title><script src='https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js'></script></head><body><div><h1 id=\"title\">更新固件</h1><hr/><form method='POST'action='#'enctype='multipart/form-data'id='upload_form'><input type='file'name='update'/><input type='submit'value='更新'/></form><div id='prg'>progress:0%</div></div><script>$('form').submit(function(e){e.preventDefault();var form=$('#upload_form')[0];var data=new FormData(form);$.ajax({url:'/update',type:'POST',data:data,contentType:false,processData:false,xhr:function(){var xhr=new window.XMLHttpRequest();xhr.upload.addEventListener('progress',function(evt){if(evt.lengthComputable){var per=evt.loaded/evt.total;$('#prg').html('progress: '+Math.round(per*100)+'%')}},false);return xhr},success:function(d,s){console.log('success!')},error:function(a,b,c){}})});</script></body></html>";
+    request->send(200,"text/html",html);
+  });
+
+  server.on("/update",HTTP_POST,[](AsyncWebServerRequest *request){
+    ESP.restart();
+  },onFileUpload);  
+
+  server.onNotFound(notFound);
   server.begin();
   
 }
