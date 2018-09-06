@@ -41,6 +41,7 @@ LED_ESP32 led4(15, 3);
 LED_ESP32 led5(22, 4);
 LED_ESP32 led6(23, 5);
 LED_ESP32 led7(25, 6);
+LED_ESP32 led8(2,7);
 
 AsyncWebServer server(80);
 WiFiClient espClient;
@@ -920,20 +921,23 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(RESET_BUTTON), handleRestButtonChanged, CHANGE);
 
   WiFi.mode(WIFI_AP_STA);
-  WiFi.softAP(ssid, password);
+  
 
   Serial.println();
   Serial.println("the AP name is : " + String(ssid) + " password is: " + String(password) + " the mac address is: " + WiFi.macAddress());
 
-  /*use mdns for host name resolution*/
-  if (!MDNS.begin(host))
-  { //http://esp32.local
-    Serial.println("Error setting up MDNS responder!");
-    while (1)
-    {
-      delay(1000);
-    }
-  }
+
+
+
+  // /*use mdns for host name resolution*/
+  // if (!MDNS.begin(host))
+  // { //http://esp32.local
+  //   Serial.println("Error setting up MDNS responder!");
+  //   while (1)
+  //   {
+  //     delay(1000);
+  //   }
+  // }
 
   led1.setup();
   led2.setup();
@@ -950,6 +954,9 @@ void setup()
   led5.set(0);
   led6.set(0);
   led7.set(0);
+  led8.setup();
+
+  
 
   if (!SPIFFS.begin(true))
   {
@@ -967,6 +974,10 @@ void setup()
     else
     {
       Serial.println("not the first time");
+      
+
+      
+      
       if (SPIFFS.exists("/wifi.ini"))
       {
         String filestr;
@@ -1037,6 +1048,39 @@ void setup()
           {
             Serial.println("MQTT connect failed");
             mqttcon = false;
+          }
+        }
+      } else {
+        int trytime = 50;
+        WiFi.beginSmartConfig();  
+        while(1) {
+          Serial.print('.');
+          led8.set(255);
+          delay(500);
+          led8.set(0);
+          delay(500);
+          if(WiFi.smartConfigDone()) {
+            led8.set(255);
+            MDNS.begin(host);
+            Serial.println("SmartConfig Success");
+            Serial.printf("SSID:%s\r\n", WiFi.SSID().c_str());
+            Serial.printf("PSW:%s\r\n", WiFi.psk().c_str());
+            String filecontent;
+            filecontent = filecontent + "{\"ssid\":\"";
+            filecontent = filecontent + WiFi.SSID().c_str();
+            filecontent = filecontent + "\",\"pwd\":\"";
+            filecontent = filecontent + WiFi.psk().c_str();
+            filecontent = filecontent + "\"}";
+            writeFile(SPIFFS, "/wifi.ini", filecontent.c_str());
+            break;
+          }
+          trytime = trytime -1;
+          if(trytime <0) {
+            Serial.println("");
+            Serial.println("smartconfig cancel");
+            WiFi.stopSmartConfig();
+            WiFi.softAP(ssid, password);
+            break;
           }
         }
       }
