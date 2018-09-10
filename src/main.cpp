@@ -5,7 +5,6 @@
 #include <ESPAsyncWebServer.h>
 #include <cJSON.h>
 #include <time.h>
-#include "ESP32Time.h"
 #include "LED_ESP32.h"
 #include <ESPmDNS.h>
 #include <Update.h>
@@ -13,7 +12,7 @@
 
 #define RESET_BUTTON 16
 #define VERSION_NUM "0.12"
-#define ESP_HOST_NAME "esp003"
+#define ESP_HOST_NAME "esp002"
 #define ESP_RTC_TICK 1535987038
 
 String PWM_INFO_SHOWTYPE, PWM_INFO_TESTMODE, PWM_INFO_CONMODE, PWM_INFO_RTC, PWM_INFO_VERSION;
@@ -930,14 +929,14 @@ void setup()
 
 
   // /*use mdns for host name resolution*/
-  // if (!MDNS.begin(host))
-  // { //http://esp32.local
-  //   Serial.println("Error setting up MDNS responder!");
-  //   while (1)
-  //   {
-  //     delay(1000);
-  //   }
-  // }
+  if (!MDNS.begin(host))
+  { //http://esp32.local
+    Serial.println("Error setting up MDNS responder!");
+    while (1)
+    {
+      delay(1000);
+    }
+  }
 
   led1.setup();
   led2.setup();
@@ -965,6 +964,8 @@ void setup()
   }
   else
   {
+    // deleteFile(SPIFFS,"/wifi.ini");
+    
     if (!SPIFFS.exists("/pwminfo.ini"))
     {
       Serial.println("begin to init system file");
@@ -973,15 +974,14 @@ void setup()
     }
     else
     {
-      Serial.println("not the first time");
-      
-
-      
-      
+      String tempfile = getFileString(SPIFFS,"/wifi.ini");
+      Serial.println(tempfile);
+            
       if (SPIFFS.exists("/wifi.ini"))
       {
         String filestr;
         filestr = getFileString(SPIFFS, "/wifi.ini");
+        
         cJSON *root = NULL;
         cJSON *item = NULL;
         const char *jsonstr = filestr.c_str();
@@ -990,6 +990,11 @@ void setup()
         item = cJSON_GetObjectItem(root, "ssid");
         itemstr = cJSON_Print(item);
         String ssid = itemstr;
+        if(strcmp(ssid.c_str(),"")==0) {
+          Serial.println("the ssid has missed");
+          deleteFile(SPIFFS,"/wifi.ini");
+          ESP.restart();
+        }
         item = cJSON_GetObjectItem(root, "pwd");
         itemstr = cJSON_Print(item);
         String pwd = itemstr;
@@ -998,22 +1003,26 @@ void setup()
         pwd.replace("\"", "");
         WiFi.begin(ssid.c_str(), pwd.c_str());
         int i = 30;
+        
         while ((WiFi.status() != WL_CONNECTED) && i > 0)
         {
-          delay(1000);
-          Serial.println("Connecting to WiFi");
+          delay(1000);          
+          Serial.printf(".");          
           i = i - 1;
         }
         Serial.println(WiFi.localIP());
+        if(WiFi.status() == WL_CONNECTED) {
+          led8.set(255);
+        }
+
         client.setServer(mqttServer, mqttPort);
         client.setCallback(callback);
         bool mqttcon = true;
         while (!client.connected() && mqttcon)
         {
-          Serial.println("Connectingto MQTT...");
           if (client.connect(ESP_HOST_NAME, mqttuser, mqttpwd))
           {
-            Serial.println("connected");
+            Serial.println("MQTT SERVER CONNECTED");
             String online_message = "[";
             online_message = online_message + ESP_HOST_NAME;
             online_message = online_message + "] has connected.";
@@ -1061,7 +1070,7 @@ void setup()
           delay(500);
           if(WiFi.smartConfigDone()) {
             led8.set(255);
-            MDNS.begin(host);
+            //MDNS.begin(host);
             Serial.println("SmartConfig Success");
             Serial.printf("SSID:%s\r\n", WiFi.SSID().c_str());
             Serial.printf("PSW:%s\r\n", WiFi.psk().c_str());
@@ -1071,7 +1080,15 @@ void setup()
             filecontent = filecontent + "\",\"pwd\":\"";
             filecontent = filecontent + WiFi.psk().c_str();
             filecontent = filecontent + "\"}";
-            writeFile(SPIFFS, "/wifi.ini", filecontent.c_str());
+            
+            if(strcmp(WiFi.SSID().c_str(),"")==0) {
+              String tempfile = getFileString(SPIFFS,"/wifi.ini");
+              Serial.println(tempfile);
+              led8.set(0);
+            } else {
+              writeFile(SPIFFS, "/wifi.ini", filecontent.c_str());
+              led8.set(255);
+            }
             break;
           }
           trytime = trytime -1;
@@ -1080,6 +1097,7 @@ void setup()
             Serial.println("smartconfig cancel");
             WiFi.stopSmartConfig();
             WiFi.softAP(ssid, password);
+            led8.set(0);
             break;
           }
         }
@@ -1858,7 +1876,6 @@ void setup()
 
   SPIFFS.end();
 
-  ESP32Time.begin();
 
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     if (!SPIFFS.begin())
