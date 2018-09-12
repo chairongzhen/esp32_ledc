@@ -10,9 +10,10 @@
 #include <Update.h>
 #include <PubSubClient.h>
 
+
 #define RESET_BUTTON 16
-#define VERSION_NUM "0.12"
-#define ESP_HOST_NAME "esp002"
+#define VERSION_NUM "0.13"
+#define ESP_HOST_NAME "esp003"
 #define ESP_RTC_TICK 1535987038
 
 String PWM_INFO_SHOWTYPE, PWM_INFO_TESTMODE, PWM_INFO_CONMODE, PWM_INFO_RTC, PWM_INFO_VERSION;
@@ -202,7 +203,6 @@ int split(char dst[][80], char *str, const char *spl)
 
 void callback(char *topic, byte *payload, unsigned int length)
 {
-  Serial.println(topic);
   if (!SPIFFS.begin())
   {
     Serial.println("SPIFFS Mount Failed");
@@ -229,7 +229,6 @@ void callback(char *topic, byte *payload, unsigned int length)
   {
     filecontent = filecontent + (char)payload[i];
   }
-  Serial.println(filecontent);
   String tpl_content = "{\"t0\":{t0},\"t1\":{t1},\"t2\":{t2},\"t3\":{t3},\"t4\":{t4},\"t5\":{t5},\"t6\":{t6},\"t7\":{t7},\"t8\":{t8},\"t9\":{t9},\"t10\":{t10},\"t11\":{t11},\"t12\":{t12},\"t13\":{t13},\"t14\":{t14},\"t15\":{t15},\"t16\":{t16},\"t17\":{t17},\"t18\":{t18},\"t19\":{t19},\"t20\":{t20},\"t21\":{t21},\"t22\":{t22},\"t23\":{t23},\"t24\":{t24}}";
   char *p_content;
   char dst[30][80];
@@ -240,7 +239,9 @@ void callback(char *topic, byte *payload, unsigned int length)
   root = cJSON_Parse(jsonstr);
   String itemstr;
 
-  if (String(topic) != topic_name_p)
+  String checktimetopic = "esp32/checktime";
+
+  if (String(topic) != topic_name_p && String(topic) != checktimetopic)
   {
     p_content = new char[200];
     strcpy(p_content, filecontent.c_str());
@@ -262,7 +263,7 @@ void callback(char *topic, byte *payload, unsigned int length)
     PWM_INFO_RTC = itemstr;
     PWM_INFO_RTC.replace("\"", "");
     struct timeval stime;
-    stime.tv_sec = PWM_INFO_RTC.toInt();
+    stime.tv_sec = PWM_INFO_RTC.toInt() + 28816;
     settimeofday(&stime, NULL);
     item = cJSON_GetObjectItem(root, "conmode");
     itemstr = cJSON_Print(item);
@@ -273,6 +274,29 @@ void callback(char *topic, byte *payload, unsigned int length)
     PWM_INFO_VERSION = itemstr;
     PWM_INFO_VERSION.replace("\"", "");
     writeFile(SPIFFS, "/pwminfo.ini", filecontent.c_str());
+  }
+  else if(String(topic) == checktimetopic) {
+    PWM_INFO_RTC = filecontent;
+    String pwmifnocontent = getFileString(SPIFFS,"/pwminfo.ini");
+    Serial.println(pwmifnocontent);
+    p_content = new char[200];
+    strcpy(p_content, pwmifnocontent.c_str());
+    cnt = split(dst, p_content, ",");
+    String tpl_sysdate;
+    String change_sysdate = "\"sysdate\":\"";
+    change_sysdate = change_sysdate + PWM_INFO_RTC;
+    change_sysdate = change_sysdate + "\"";
+    for(int i=0;i<cnt;i++) {
+      if(i==2) {
+        tpl_sysdate = dst[i];
+        break;
+      }
+    }
+    pwmifnocontent.replace(tpl_sysdate,change_sysdate);
+    writeFile(SPIFFS, "/pwminfo.ini", pwmifnocontent.c_str());
+    struct timeval stime;   
+    stime.tv_sec = PWM_INFO_RTC.toInt() + 28816;
+    settimeofday(&stime, NULL);
   }
   else if (String(topic) == topic_name_p1)
   {
@@ -912,22 +936,30 @@ void callback(char *topic, byte *payload, unsigned int length)
   SPIFFS.end();
 }
 
+
 void setup()
 {
   Serial.begin(115200);
   RESET_FLAG = false;
   pinMode(RESET_BUTTON, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(RESET_BUTTON), handleRestButtonChanged, CHANGE);
-
   WiFi.mode(WIFI_AP_STA);
-  
-
-  Serial.println();
-  Serial.println("the AP name is : " + String(ssid) + " password is: " + String(password) + " the mac address is: " + WiFi.macAddress());
 
 
-
-
+  // struct timeval stime;
+  // stime.tv_sec = 1536725527 + 30316;
+  // settimeofday(&stime, NULL);
+  // time_t t = time(NULL);
+  // struct tm *t_st;
+  // t_st = localtime(&t);
+  // char nowtime[24];
+  // memset(nowtime, 0, sizeof(nowtime));
+  // strftime(nowtime, 24, "%Y-%m-%d %H:%M:%S", t_st);
+  // String strDate = nowtime;    
+  // Serial.println(strDate);
+  Serial.println("the AP name is : " + String(ssid) + " password is: " + String(password) + "\n the mac address is: " + WiFi.macAddress());
+  Serial.print("the current version is: ");
+  Serial.println(VERSION_NUM);
   // /*use mdns for host name resolution*/
   if (!MDNS.begin(host))
   { //http://esp32.local
@@ -1023,11 +1055,18 @@ void setup()
           if (client.connect(ESP_HOST_NAME, mqttuser, mqttpwd))
           {
             Serial.println("MQTT SERVER CONNECTED");
-            String online_message = "[";
-            online_message = online_message + ESP_HOST_NAME;
-            online_message = online_message + "] has connected.";
+            // String online_message = "[";
+            // online_message = online_message + ESP_HOST_NAME;
+            // online_message = online_message + "] has connected.";
+            String online_message = "{mid:";
+            online_message = online_message +  ESP_HOST_NAME;
+            online_message = online_message + ",mac:";
+            online_message = online_message + WiFi.macAddress();
+            online_message = online_message + ",ip:";
+            online_message = online_message + WiFi.localIP();
+            online_message = online_message + "}";
             client.publish("esp32/online", online_message.c_str());
-            client.subscribe("esp32/test");
+            client.subscribe("esp32/checktime");
             String recv_topic_p = ESP_HOST_NAME;
             recv_topic_p = recv_topic_p + "/p";
             client.subscribe(recv_topic_p.c_str());
@@ -1123,9 +1162,8 @@ void setup()
       itemstr = cJSON_Print(item);
       PWM_INFO_RTC = itemstr;
       PWM_INFO_RTC.replace("\"", "");
-
       struct timeval stime;
-      stime.tv_sec = PWM_INFO_RTC.toInt();
+      stime.tv_sec = PWM_INFO_RTC.toInt() + 30316;
       settimeofday(&stime, NULL);
 
       item = cJSON_GetObjectItem(root, "conmode");
@@ -1899,31 +1937,42 @@ void setup()
     String testmode = itemstr;
     item = cJSON_GetObjectItem(root, "sysdate");
     itemstr = cJSON_Print(item);
-    String sysdate = itemstr;
+    String sysdate = itemstr;    
     sysdate.replace("\"", "");
+    PWM_INFO_RTC = sysdate;
     item = cJSON_GetObjectItem(root, "status");
     itemstr = cJSON_Print(item);
     String status = itemstr;
     item = cJSON_GetObjectItem(root, "conmode");
     itemstr = cJSON_Print(item);
     String conmode = itemstr;
-    item = cJSON_GetObjectItem(root, "version");
-    itemstr = cJSON_Print(item);
-    String version = itemstr;
-    version.replace("\"", "");
-
+    // item = cJSON_GetObjectItem(root, "version");
+    // itemstr = cJSON_Print(item);
+    //String version = itemstr;    
+    //version.replace("\"", "");
+    //todo
+    String version = VERSION_NUM;
+    Serial.println("the version is: " + version);
     String html = "";
-    html = html + "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>NodeMCU Control Page</title><!--<script type=\"text/javascript\"src=\"jquery.js\"></script>--></head><body><div><h1 id=\"title\">基本信息</h1><table><tr><th style=\"text-align:left;\">版本号</th></tr><tr><td><span id=\"spversion\"></span></td></tr><tr><th style=\"text-align:left;\">系统时间</th></tr><tr><td><span id=\"spCurrent\"></span></td></tr><tr><th style=\"text-align: left;\">修改时间</th></tr><tr><td><input type=\"text\"value=\"2018-03-03 00:00:00\"id=\"txtsysdate\"/>*时间格式:2018-03-03 00:00:00</td></tr><tr><th style=\"text-align:left;\">循环模式</th></tr><tr><td><input type=\"radio\"value=\"repeat\"name=\"showtype\"id=\"rdRpt\"/>循环模式<input type=\"radio\"value=\"fix\"name=\"showtype\"id=\"rdFix\"/>固定模式</td></tr><tr id=\"thtest\"><th style=\"text-align:left;\">是否测试</th></tr><tr id=\"tdtest\"><td><input value=\"production\"type=\"radio\"name=\"testMode\"id=\"rdPrd\"/>否<input value=\"test\"type=\"radio\"name=\"testMode\"id=\"rdTest\"/>是</td></tr><tr id=\"thonline\"><th style=\"text-align:left;\">云端控制</th></tr><tr id=\"tdonline\"><td><input value=\"local\"type=\"radio\"name=\"onlineMode\"id=\"rdlocal\"/>否<input value=\"online\"type=\"radio\"name=\"onlineMode\"id=\"rdonline\"/>是</td></tr><tr><td><input type=\"button\"value=\"联网设置\"id=\"btnwifi\"onclick=\"wifi();\"/><input type=\"submit\"value=\"保存\"id=\"submit\"onclick=\"submit();\"/><input type=\"button\"value=\"恢复出厂\"id=\"btnstop\"onclick=\"init();\"/><input type=\"button\"value=\"重启\"id=\"btnReset\"onclick=\"reset();\"/><input type=\"button\"value=\"更新固件\"id=\"btnupload\"onclick=\"upload();\"/></td></tr></table><hr/><h1 id=\"title\">灯光控制</h1><table><tr><th>第一排</th><th>第二排</th><th>第三排</th><th>第四排</th><th>第五排</th><th>第六排</th><th>第七排</th></tr><tr><td><a href=\"/p?mode=p1\">查看/修改</a></td><td><a href=\"/p?mode=p2\">查看/修改</a></td><td><a href=\"/p?mode=p3\">查看/修改</a></td><td><a href=\"/p?mode=p4\">查看/修改</a></td><td><a href=\"/p?mode=p5\">查看/修改</a></td><td><a href=\"/p?mode=p6\">查看/修改</a></td><td><a href=\"/p?mode=p7\">查看/修改</a></td></tr></table></div><script>function submit(){var selectshowtype=document.getElementsByName('showtype');var showtypevalue=\"\";for(var i=0;i<selectshowtype.length;i++){if(selectshowtype[i].checked){showtypevalue=selectshowtype[i].value;break}}var selecttestmode=document.getElementsByName('testMode');var testmodevalue=\"\";for(var i=0;i<selecttestmode.length;i++){if(selecttestmode[i].checked){testmodevalue=selecttestmode[i].value;break}}var str=document.getElementById('txtsysdate').value;str=str.replace(/-/g,\"/\");var date=new Date(str);var humanDate=new Date(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate(),date.getHours(),date.getMinutes(),date.getSeconds()));var unixDate=humanDate.getTime()/1000;var selectedconnectionmode=document.getElementsByName(\"onlineMode\");var connectionmodevalue=\"\";for(var i=0;i<selectedconnectionmode.length;i++){if(selectedconnectionmode[i].checked){connectionmodevalue=selectedconnectionmode[i].value;break}}alert('保存成功');var url=\"pwmopr?showtype=\"+showtypevalue+\"&testmode=\"+testmodevalue+\"&sysdate=\"+unixDate+\"&conmode=\"+connectionmodevalue;window.location.href=url}function init(){alert('已恢复出厂设置!');var url=\"init\";window.location.href=url}function wifi(){var url=\"wifi\";window.location.href=url}function reset(){var url=\"reset\";alert(\"已重启,请关闭当前页面\");window.location.href=url}function upload(){var url=\"upload\";window.location.href=url}</script></body></html>";
+    html = html + "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>NodeMCU Control Page</title><!--<script type=\"text/javascript\"src=\"jquery.js\"></script>--></head><body><div><h1 id=\"title\">基本信息</h1><table><tr><th style=\"text-align:left;\">版本号</th></tr><tr><td><span id=\"spversion\"></span></td></tr><tr><th style=\"text-align:left;\">系统时间</th></tr><tr><td><span id=\"spCurrent\"></span></td></tr><tr><th style=\"text-align: left;\">修改时间</th></tr><tr><td><input type=\"text\"value=\"2018-03-03 00:00:00\"id=\"txtsysdate\"/>*时间格式:2018-03-03 00:00:00</td></tr><tr><th style=\"text-align:left;\">循环模式</th></tr><tr><td><input type=\"radio\"value=\"repeat\"name=\"showtype\"id=\"rdRpt\"/>循环模式<input type=\"radio\"value=\"fix\"name=\"showtype\"id=\"rdFix\"/>固定模式</td></tr><tr id=\"thtest\"><th style=\"text-align:left;\">是否测试</th></tr><tr id=\"tdtest\"><td><input value=\"production\"type=\"radio\"name=\"testMode\"id=\"rdPrd\"/>否<input value=\"test\"type=\"radio\"name=\"testMode\"id=\"rdTest\"/>是</td></tr><tr id=\"thonline\"><th style=\"text-align:left;\">云端控制</th></tr><tr id=\"tdonline\"><td><input value=\"local\"type=\"radio\"name=\"onlineMode\"id=\"rdlocal\"/>否<input value=\"online\"type=\"radio\"name=\"onlineMode\"id=\"rdonline\"/>是</td></tr><tr><td><input type=\"button\"value=\"联网设置\"id=\"btnwifi\"onclick=\"wifi();\"/><input type=\"submit\"value=\"保存\"id=\"submit\"onclick=\"submit();\"/><input type=\"button\"value=\"恢复出厂\"id=\"btnstop\"onclick=\"init();\"/><input type=\"button\"value=\"重启\"id=\"btnReset\"onclick=\"reset();\"/><input type=\"button\"value=\"更新固件\"id=\"btnupload\"onclick=\"upload();\"/></td></tr></table><hr/><h1 id=\"title\">灯光控制</h1><table><tr><th>第一排</th><th>第二排</th><th>第三排</th><th>第四排</th><th>第五排</th><th>第六排</th><th>第七排</th></tr><tr><td><a href=\"/p?mode=p1\">查看/修改</a></td><td><a href=\"/p?mode=p2\">查看/修改</a></td><td><a href=\"/p?mode=p3\">查看/修改</a></td><td><a href=\"/p?mode=p4\">查看/修改</a></td><td><a href=\"/p?mode=p5\">查看/修改</a></td><td><a href=\"/p?mode=p6\">查看/修改</a></td><td><a href=\"/p?mode=p7\">查看/修改</a></td></tr></table></div><script>function submit(){var selectshowtype=document.getElementsByName('showtype');var showtypevalue=\"\";for(var i=0;i<selectshowtype.length;i++){if(selectshowtype[i].checked){showtypevalue=selectshowtype[i].value;break}}var selecttestmode=document.getElementsByName('testMode');var testmodevalue=\"\";for(var i=0;i<selecttestmode.length;i++){if(selecttestmode[i].checked){testmodevalue=selecttestmode[i].value;break}}var str=document.getElementById('txtsysdate').value;str=str.replace(/-/g,\"/\");var date=new Date(str);var unixDate=date.getTime()/1000|0;console.log(unixDate);var selectedconnectionmode=document.getElementsByName(\"onlineMode\");var connectionmodevalue=\"\";for(var i=0;i<selectedconnectionmode.length;i++){if(selectedconnectionmode[i].checked){connectionmodevalue=selectedconnectionmode[i].value;break}}alert('保存成功');var url=\"pwmopr?showtype=\"+showtypevalue+\"&testmode=\"+testmodevalue+\"&sysdate=\"+unixDate+\"&conmode=\"+connectionmodevalue;window.location.href=url}function init(){alert('已恢复出厂设置!');var url=\"init\";window.location.href=url}function wifi(){var url=\"wifi\";window.location.href=url}function reset(){var url=\"reset\";alert(\"已重启,请关闭当前页面\");window.location.href=url}function upload(){var url=\"upload\";window.location.href=url}</script></body></html>";
+    
+    // String tpl_version = "<span id=\"spversion\"></span>";
+    // String change_version = "<span id=\"spversion\">";
+    // change_version = change_version + version;
+    // change_version = change_version + "</span>";
+    // html.replace(tpl_version, change_version);
+    
     String tpl_currentdate = "<span id=\"spCurrent\"></span>";
     String change_currentdate = "<span id=\"spCurrent\">";
-
     time_t t = time(NULL);
     struct tm *t_st;
     t_st = localtime(&t);
     char nowtime[24];
     memset(nowtime, 0, sizeof(nowtime));
     strftime(nowtime, 24, "%Y-%m-%d %H:%M:%S", t_st);
-    String strDate = nowtime;
+    String strDate = nowtime;    
+    //Serial.println(strDate);
+    
     change_currentdate = change_currentdate + strDate;
     change_currentdate = change_currentdate + "</span>";
     html.replace(tpl_currentdate, change_currentdate);
@@ -1976,6 +2025,7 @@ void setup()
       html.replace(tpl_localmode, Change_connectiontype);
     }
 
+    // todo version
     String tpl_version = "<span id=\"spversion\"></span>";
     String change_version = "<span id=\"spversion\">";
     change_version = change_version + version;
@@ -2592,9 +2642,9 @@ void setup()
       PWM_INFO_RTC = sysdate;
 
       struct timeval stime;
-      stime.tv_sec = PWM_INFO_RTC.toInt();
+      stime.tv_sec = PWM_INFO_RTC.toInt() +28816;
       settimeofday(&stime, NULL);
-      Serial.println("the new time is: " + PWM_INFO_RTC);
+      //Serial.println("the new time is: " + PWM_INFO_RTC);
       writeFile(SPIFFS, "/pwminfo.ini", filecontent.c_str());
       SPIFFS.end();
     }
@@ -2747,6 +2797,7 @@ void loop()
     RESET_FLAG = false;
     ESP.restart();
   }
+
   time_t t = time(NULL);
   struct tm *t_st;
   t_st = localtime(&t);
