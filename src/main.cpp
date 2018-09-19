@@ -12,8 +12,8 @@
 
 
 #define RESET_BUTTON 16
-#define VERSION_NUM "0.13"
-#define ESP_HOST_NAME "esp003"
+#define VERSION_NUM "0.15"
+#define ESP_HOST_NAME "esp004"
 #define ESP_RTC_TICK 1535987038
 
 String PWM_INFO_SHOWTYPE, PWM_INFO_TESTMODE, PWM_INFO_CONMODE, PWM_INFO_RTC, PWM_INFO_VERSION;
@@ -34,14 +34,14 @@ const int mqttPort = 16610;
 const char *mqttuser = "cqyjmitd";
 const char *mqttpwd = "SXLMuaorn881";
 
-LED_ESP32 led1(4, 0);
-LED_ESP32 led2(12, 1);
-LED_ESP32 led3(13, 2);
-LED_ESP32 led4(15, 3);
-LED_ESP32 led5(22, 4);
-LED_ESP32 led6(23, 5);
-LED_ESP32 led7(25, 6);
-LED_ESP32 led8(2,7);
+LED_ESP32 led1(4, 0,100);
+LED_ESP32 led2(12, 1,100);
+LED_ESP32 led3(13, 2,100);
+LED_ESP32 led4(15, 3,100);
+LED_ESP32 led5(22, 4,100);
+LED_ESP32 led6(23, 5,100);
+LED_ESP32 led7(25, 6,100);
+LED_ESP32 led8(2,7,100);
 
 AsyncWebServer server(80);
 WiFiClient espClient;
@@ -203,6 +203,8 @@ int split(char dst[][80], char *str, const char *spl)
 
 void callback(char *topic, byte *payload, unsigned int length)
 {
+  Serial.println("the topic is: " + String(topic));
+  
   if (!SPIFFS.begin())
   {
     Serial.println("SPIFFS Mount Failed");
@@ -238,7 +240,6 @@ void callback(char *topic, byte *payload, unsigned int length)
   const char *jsonstr = filecontent.c_str();
   root = cJSON_Parse(jsonstr);
   String itemstr;
-
   String checktimetopic = "esp32/checktime";
 
   if (String(topic) != topic_name_p && String(topic) != checktimetopic)
@@ -276,6 +277,7 @@ void callback(char *topic, byte *payload, unsigned int length)
     writeFile(SPIFFS, "/pwminfo.ini", filecontent.c_str());
   }
   else if(String(topic) == checktimetopic) {
+    Serial.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
     PWM_INFO_RTC = filecontent;
     String pwmifnocontent = getFileString(SPIFFS,"/pwminfo.ini");
     Serial.println(pwmifnocontent);
@@ -293,6 +295,7 @@ void callback(char *topic, byte *payload, unsigned int length)
       }
     }
     pwmifnocontent.replace(tpl_sysdate,change_sysdate);
+
     writeFile(SPIFFS, "/pwminfo.ini", pwmifnocontent.c_str());
     struct timeval stime;   
     stime.tv_sec = PWM_INFO_RTC.toInt() + 28816;
@@ -1044,7 +1047,7 @@ void setup()
         }
         Serial.println(WiFi.localIP());
         if(WiFi.status() == WL_CONNECTED) {
-          led8.set(255);
+          led8.set(100);
         }
 
         client.setServer(mqttServer, mqttPort);
@@ -1055,6 +1058,7 @@ void setup()
           if (client.connect(ESP_HOST_NAME, mqttuser, mqttpwd))
           {
             Serial.println("MQTT SERVER CONNECTED");
+            client.subscribe("esp32/checktime");
             // String online_message = "[";
             // online_message = online_message + ESP_HOST_NAME;
             // online_message = online_message + "] has connected.";
@@ -1063,10 +1067,10 @@ void setup()
             online_message = online_message + ",mac:";
             online_message = online_message + WiFi.macAddress();
             online_message = online_message + ",ip:";
-            online_message = online_message + WiFi.localIP();
+            online_message = online_message + String(WiFi.localIP());
             online_message = online_message + "}";
             client.publish("esp32/online", online_message.c_str());
-            client.subscribe("esp32/checktime");
+            // client.subscribe("esp32/checktime");
             String recv_topic_p = ESP_HOST_NAME;
             recv_topic_p = recv_topic_p + "/p";
             client.subscribe(recv_topic_p.c_str());
@@ -1103,12 +1107,12 @@ void setup()
         WiFi.beginSmartConfig();  
         while(1) {
           Serial.print('.');
-          led8.set(255);
+          led8.set(100);
           delay(500);
           led8.set(0);
           delay(500);
           if(WiFi.smartConfigDone()) {
-            led8.set(255);
+            led8.set(100);
             //MDNS.begin(host);
             Serial.println("SmartConfig Success");
             Serial.printf("SSID:%s\r\n", WiFi.SSID().c_str());
@@ -1126,7 +1130,7 @@ void setup()
               led8.set(0);
             } else {
               writeFile(SPIFFS, "/wifi.ini", filecontent.c_str());
-              led8.set(255);
+              led8.set(100);
             }
             break;
           }
@@ -2090,7 +2094,7 @@ void setup()
       else
       {
         //String lid;
-        String rawhtml = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>操作</title></head><body><h1><span id=\"sptitle\">亮度操作</span></h1><Table><tr><th>0点</th><th>1点</th><th>2点</th><th>3点</th><th>4点</th><th>5点</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl0\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl1\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl2\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl3\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl4\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl5\"/></td></tr><tr><th>6点</th><th>7点</th><th>8点</th><th>9点</th><th>10点</th><th>11点</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl6\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl7\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl8\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl9\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl10\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl11\"/></td></tr><tr><th>12点</th><th>13点</th><th>14点</th><th>15点</th><th>16点</th><th>17点</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl12\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl13\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl14\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl15\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl16\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl17\"/></td></tr><tr><th>18点</th><th>19点</th><th>20点</th><th>21点</th><th>22点</th><th>23点</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl18\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl19\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl20\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl21\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl22\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl23\"/></td></tr><tr><th>固定</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl24\"/></td></tr><tr><td><input onclick=\"submit();\"type=\"submit\"id=\"submit\"value=\"保存\"/><input onclick=\"back();\"type=\"button\"id=\"btnback\"value=\"返回\"/></td></tr><tr><td sylte=\"color:red\">取值范围0~255</td></tr></Table></body><script language=\"javascript\">function submit(){var t0=document.getElementById(\"txtl0\").value;var t1=document.getElementById(\"txtl1\").value;var t2=document.getElementById(\"txtl2\").value;var t3=document.getElementById(\"txtl3\").value;var t4=document.getElementById(\"txtl4\").value;var t5=document.getElementById(\"txtl5\").value;var t6=document.getElementById(\"txtl6\").value;var t7=document.getElementById(\"txtl7\").value;var t8=document.getElementById(\"txtl8\").value;var t9=document.getElementById(\"txtl9\").value;var t10=document.getElementById(\"txtl10\").value;var t11=document.getElementById(\"txtl11\").value;var t12=document.getElementById(\"txtl12\").value;var t13=document.getElementById(\"txtl13\").value;var t14=document.getElementById(\"txtl14\").value;var t15=document.getElementById(\"txtl15\").value;var t16=document.getElementById(\"txtl16\").value;var t17=document.getElementById(\"txtl17\").value;var t18=document.getElementById(\"txtl18\").value;var t19=document.getElementById(\"txtl19\").value;var t20=document.getElementById(\"txtl20\").value;var t21=document.getElementById(\"txtl21\").value;var t22=document.getElementById(\"txtl22\").value;var t23=document.getElementById(\"txtl23\").value;var t24=document.getElementById(\"txtl24\").value;var mode=document.getElementById(\"sptitle\").innerHTML;var url=\"setp?mode=\"+mode+\"&t0=\"+t0+\"&t1=\"+t1+\"&t2=\"+t2+\"&t3=\"+t3+\"&t4=\"+t4+\"&t5=\"+t5+\"&t6=\"+t6+\"&t7=\"+t7+\"&t8=\"+t8+\"&t9=\"+t9+\"&t10=\"+t10+\"&t11=\"+t11+\"&t12=\"+t12+\"&t13=\"+t13+\"&t14=\"+t14+\"&t15=\"+t15+\"&t16=\"+t16+\"&t17=\"+t17+\"&t18=\"+t18+\"&t19=\"+t19+\"&t20=\"+t20+\"&t21=\"+t21+\"&t22=\"+t22+\"&t23=\"+t23+\"&t24=\"+t24;alert('保存成功');window.location.href=url}function back(){var url=\"/\";window.location.href=url}</script></html>";
+        String rawhtml = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>操作</title></head><body><h1><span id=\"sptitle\">亮度操作</span></h1><Table><tr><th>0点</th><th>1点</th><th>2点</th><th>3点</th><th>4点</th><th>5点</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl0\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl1\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl2\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl3\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl4\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl5\"/></td></tr><tr><th>6点</th><th>7点</th><th>8点</th><th>9点</th><th>10点</th><th>11点</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl6\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl7\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl8\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl9\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl10\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl11\"/></td></tr><tr><th>12点</th><th>13点</th><th>14点</th><th>15点</th><th>16点</th><th>17点</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl12\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl13\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl14\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl15\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl16\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl17\"/></td></tr><tr><th>18点</th><th>19点</th><th>20点</th><th>21点</th><th>22点</th><th>23点</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl18\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl19\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl20\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl21\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl22\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl23\"/></td></tr><tr><th>固定</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl24\"/></td></tr><tr><td><input onclick=\"submit();\"type=\"submit\"id=\"submit\"value=\"保存\"/><input onclick=\"back();\"type=\"button\"id=\"btnback\"value=\"返回\"/></td></tr><tr><td sylte=\"color:red\">取值范围0~100</td></tr></Table></body><script language=\"javascript\">function submit(){var t0=document.getElementById(\"txtl0\").value;var t1=document.getElementById(\"txtl1\").value;var t2=document.getElementById(\"txtl2\").value;var t3=document.getElementById(\"txtl3\").value;var t4=document.getElementById(\"txtl4\").value;var t5=document.getElementById(\"txtl5\").value;var t6=document.getElementById(\"txtl6\").value;var t7=document.getElementById(\"txtl7\").value;var t8=document.getElementById(\"txtl8\").value;var t9=document.getElementById(\"txtl9\").value;var t10=document.getElementById(\"txtl10\").value;var t11=document.getElementById(\"txtl11\").value;var t12=document.getElementById(\"txtl12\").value;var t13=document.getElementById(\"txtl13\").value;var t14=document.getElementById(\"txtl14\").value;var t15=document.getElementById(\"txtl15\").value;var t16=document.getElementById(\"txtl16\").value;var t17=document.getElementById(\"txtl17\").value;var t18=document.getElementById(\"txtl18\").value;var t19=document.getElementById(\"txtl19\").value;var t20=document.getElementById(\"txtl20\").value;var t21=document.getElementById(\"txtl21\").value;var t22=document.getElementById(\"txtl22\").value;var t23=document.getElementById(\"txtl23\").value;var t24=document.getElementById(\"txtl24\").value;var mode=document.getElementById(\"sptitle\").innerHTML;var url=\"setp?mode=\"+mode+\"&t0=\"+t0+\"&t1=\"+t1+\"&t2=\"+t2+\"&t3=\"+t3+\"&t4=\"+t4+\"&t5=\"+t5+\"&t6=\"+t6+\"&t7=\"+t7+\"&t8=\"+t8+\"&t9=\"+t9+\"&t10=\"+t10+\"&t11=\"+t11+\"&t12=\"+t12+\"&t13=\"+t13+\"&t14=\"+t14+\"&t15=\"+t15+\"&t16=\"+t16+\"&t17=\"+t17+\"&t18=\"+t18+\"&t19=\"+t19+\"&t20=\"+t20+\"&t21=\"+t21+\"&t22=\"+t22+\"&t23=\"+t23+\"&t24=\"+t24;alert('保存成功');window.location.href=url}function back(){var url=\"/\";window.location.href=url}</script></html>";
         String tpl_data = "<input type=\"text\"width=\"50\"id=\"txtl{lid}\"/>";
         String itemstr;
         String changeinput;
@@ -3321,7 +3325,7 @@ void loop()
       led6.set(P6_24.toInt());
       led7.set(P7_24.toInt());
       //Serial.println("....let7: " +P7_24);
-      //led7.set(255);
+      //led7.set(100);
     }
   }
   delay(1000);
