@@ -14,7 +14,7 @@
 #define RESET_BUTTON 16
 #define VERSION_NUM "0.15"
 #define ESP_HOST_NAME "esp004"
-#define ESP_RTC_TICK 1535987038
+#define ESP_RTC_TICK 1539666903
 
 String PWM_INFO_SHOWTYPE, PWM_INFO_TESTMODE, PWM_INFO_CONMODE, PWM_INFO_RTC, PWM_INFO_VERSION;
 String P1_0, P1_1, P1_2, P1_3, P1_4, P1_5, P1_6, P1_7, P1_8, P1_9, P1_10, P1_11, P1_12, P1_13, P1_14, P1_15, P1_16, P1_17, P1_18, P1_19, P1_20, P1_21, P1_22, P1_23, P1_24;
@@ -24,6 +24,8 @@ String P4_0, P4_1, P4_2, P4_3, P4_4, P4_5, P4_6, P4_7, P4_8, P4_9, P4_10, P4_11,
 String P5_0, P5_1, P5_2, P5_3, P5_4, P5_5, P5_6, P5_7, P5_8, P5_9, P5_10, P5_11, P5_12, P5_13, P5_14, P5_15, P5_16, P5_17, P5_18, P5_19, P5_20, P5_21, P5_22, P5_23, P5_24;
 String P6_0, P6_1, P6_2, P6_3, P6_4, P6_5, P6_6, P6_7, P6_8, P6_9, P6_10, P6_11, P6_12, P6_13, P6_14, P6_15, P6_16, P6_17, P6_18, P6_19, P6_20, P6_21, P6_22, P6_23, P6_24;
 String P7_0, P7_1, P7_2, P7_3, P7_4, P7_5, P7_6, P7_7, P7_8, P7_9, P7_10, P7_11, P7_12, P7_13, P7_14, P7_15, P7_16, P7_17, P7_18, P7_19, P7_20, P7_21, P7_22, P7_23, P7_24;
+String SSID,SSID_PWD;
+bool IS_SMART = false;
 bool RESET_FLAG = false;
 
 const char *ssid = ESP_HOST_NAME;
@@ -60,7 +62,7 @@ String getFileString(fs::FS &fs, const char *path)
 
 void writeFile(fs::FS &fs, const char *path, const char *message)
 {
-  Serial.printf("Writing file: %s\n", path);
+  //Serial.printf("Writing file: %s\n", path);
 
   File file = fs.open(path, FILE_WRITE);
   if (!file)
@@ -70,7 +72,7 @@ void writeFile(fs::FS &fs, const char *path, const char *message)
   }
   if (file.print(message))
   {
-    Serial.println("File written");
+    //Serial.println("File written");
   }
   else
   {
@@ -210,6 +212,7 @@ void callback(char *topic, byte *payload, unsigned int length)
     Serial.println("SPIFFS Mount Failed");
     return;
   }
+
   String topic_name_p = ESP_HOST_NAME;
   topic_name_p = topic_name_p + "/p";
   String topic_name_p1 = ESP_HOST_NAME;
@@ -226,6 +229,10 @@ void callback(char *topic, byte *payload, unsigned int length)
   topic_name_p6 = topic_name_p6 + "/p6";
   String topic_name_p7 = ESP_HOST_NAME;
   topic_name_p7 = topic_name_p7 + "/p7";
+
+  String checkonine = ESP_HOST_NAME;
+  checkonine = checkonine + "/check";
+
   String filecontent;
   for (int i = 0; i < length; i++)
   {
@@ -277,7 +284,6 @@ void callback(char *topic, byte *payload, unsigned int length)
     writeFile(SPIFFS, "/pwminfo.ini", filecontent.c_str());
   }
   else if(String(topic) == checktimetopic) {
-    Serial.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
     PWM_INFO_RTC = filecontent;
     String pwmifnocontent = getFileString(SPIFFS,"/pwminfo.ini");
     Serial.println(pwmifnocontent);
@@ -931,6 +937,11 @@ void callback(char *topic, byte *payload, unsigned int length)
     filecontent = tpl_content;
     writeFile(SPIFFS, "/p7.ini", filecontent.c_str());
   }
+  else if(String(topic) == "esp004/check")
+  {
+    Serial.println("i am online");
+    ESP.restart();
+  }
   else
   {
     Serial.println("mqtt action not found!");
@@ -944,6 +955,7 @@ void setup()
 {
   Serial.begin(115200);
   RESET_FLAG = false;
+  IS_SMART = false;
   pinMode(RESET_BUTTON, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(RESET_BUTTON), handleRestButtonChanged, CHANGE);
   WiFi.mode(WIFI_AP_STA);
@@ -1036,6 +1048,8 @@ void setup()
 
         ssid.replace("\"", "");
         pwd.replace("\"", "");
+        SSID = ssid.c_str();
+        SSID_PWD = pwd.c_str();
         WiFi.begin(ssid.c_str(), pwd.c_str());
         int i = 30;
         
@@ -1045,6 +1059,7 @@ void setup()
           Serial.printf(".");          
           i = i - 1;
         }
+        IS_SMART = true;
         Serial.println(WiFi.localIP());
         if(WiFi.status() == WL_CONNECTED) {
           led8.set(100);
@@ -1059,6 +1074,11 @@ void setup()
           {
             Serial.println("MQTT SERVER CONNECTED");
             client.subscribe("esp32/checktime");
+            String checkonine = ESP_HOST_NAME;
+            checkonine = checkonine + "/check";
+            // todo
+            client.subscribe(checkonine.c_str());
+
             // String online_message = "[";
             // online_message = online_message + ESP_HOST_NAME;
             // online_message = online_message + "] has connected.";
@@ -1112,11 +1132,14 @@ void setup()
           led8.set(0);
           delay(500);
           if(WiFi.smartConfigDone()) {
+            IS_SMART = true;
             led8.set(100);
             //MDNS.begin(host);
             Serial.println("SmartConfig Success");
             Serial.printf("SSID:%s\r\n", WiFi.SSID().c_str());
             Serial.printf("PSW:%s\r\n", WiFi.psk().c_str());
+            SSID = WiFi.SSID();
+            SSID_PWD = WiFi.psk();
             String filecontent;
             filecontent = filecontent + "{\"ssid\":\"";
             filecontent = filecontent + WiFi.SSID().c_str();
@@ -3081,6 +3104,7 @@ void loop()
           led5.set(P5_0.toInt());
           led6.set(P6_0.toInt());
           led7.set(P7_0.toInt());
+          client.publish("esp32/heart","esp004 alive");
         }
         else if (currentsec == 1 || currentsec == 31)
         {
@@ -3324,6 +3348,32 @@ void loop()
       led5.set(P5_24.toInt());
       led6.set(P6_24.toInt());
       led7.set(P7_24.toInt());
+      String topiccontent = ESP_HOST_NAME;
+      
+      // if(IS_SMART)
+      // {
+      //   if(WiFi.status() != WL_CONNECTED) {
+      //     Serial.printf("%s disconnected ..\n",ESP_HOST_NAME);
+      //     client.publish("esp32/disnotify",ESP_HOST_NAME);
+      //   }
+      // }
+      Serial.printf("the connect status is %d, the ssid is %s: \n",WL_CONNECTED,SSID.c_str());
+      if(IS_SMART)
+      {
+        if(WiFi.status() != WL_CONNECTED)
+        {
+            led8.set(0);
+            Serial.printf("%s disconnected ..\n",ESP_HOST_NAME);
+            client.publish("esp32/disnotify",ESP_HOST_NAME);
+            if(SSID != "")
+            {
+               WiFi.begin(SSID.c_str(), SSID_PWD.c_str());
+            }
+        }
+      }
+      
+      topiccontent = topiccontent + " is alive";
+      client.publish("esp32/heart",topiccontent.c_str());
       //Serial.println("....let7: " +P7_24);
       //led7.set(100);
     }
