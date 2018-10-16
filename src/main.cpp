@@ -2055,6 +2055,9 @@ void setup()
     // todo version
     String tpl_version = "<span id=\"spversion\"></span>";
     String change_version = "<span id=\"spversion\">";
+    change_version = change_version + "[";
+    change_version = change_version + ESP_HOST_NAME;
+    change_version = change_version + "] v";
     change_version = change_version + version;
     change_version = change_version + "</span>";
     html.replace(tpl_version, change_version);
@@ -3357,7 +3360,7 @@ void loop()
       //     client.publish("esp32/disnotify",ESP_HOST_NAME);
       //   }
       // }
-      Serial.printf("the connect status is %d, the ssid is %s: \n",WL_CONNECTED,SSID.c_str());
+      Serial.printf("the connect status is: %d, the ssid is: %s\n",WL_CONNECTED,SSID.c_str());
       if(IS_SMART)
       {
         if(WiFi.status() != WL_CONNECTED)
