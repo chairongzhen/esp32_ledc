@@ -10,9 +10,8 @@
 #include <Update.h>
 #include <PubSubClient.h>
 
-
 #define RESET_BUTTON 16
-#define VERSION_NUM "0.15"
+#define VERSION_NUM "0.16"
 #define ESP_HOST_NAME "esp004"
 #define ESP_RTC_TICK 1539666903
 
@@ -24,7 +23,7 @@ String P4_0, P4_1, P4_2, P4_3, P4_4, P4_5, P4_6, P4_7, P4_8, P4_9, P4_10, P4_11,
 String P5_0, P5_1, P5_2, P5_3, P5_4, P5_5, P5_6, P5_7, P5_8, P5_9, P5_10, P5_11, P5_12, P5_13, P5_14, P5_15, P5_16, P5_17, P5_18, P5_19, P5_20, P5_21, P5_22, P5_23, P5_24;
 String P6_0, P6_1, P6_2, P6_3, P6_4, P6_5, P6_6, P6_7, P6_8, P6_9, P6_10, P6_11, P6_12, P6_13, P6_14, P6_15, P6_16, P6_17, P6_18, P6_19, P6_20, P6_21, P6_22, P6_23, P6_24;
 String P7_0, P7_1, P7_2, P7_3, P7_4, P7_5, P7_6, P7_7, P7_8, P7_9, P7_10, P7_11, P7_12, P7_13, P7_14, P7_15, P7_16, P7_17, P7_18, P7_19, P7_20, P7_21, P7_22, P7_23, P7_24;
-String SSID,SSID_PWD;
+String SSID, SSID_PWD;
 bool IS_SMART = false;
 bool RESET_FLAG = false;
 
@@ -36,19 +35,21 @@ const int mqttPort = 16610;
 const char *mqttuser = "cqyjmitd";
 const char *mqttpwd = "SXLMuaorn881";
 
-LED_ESP32 led1(4, 0,100);
-LED_ESP32 led2(12, 1,100);
-LED_ESP32 led3(13, 2,100);
-LED_ESP32 led4(15, 3,100);
-LED_ESP32 led5(22, 4,100);
-LED_ESP32 led6(23, 5,100);
-LED_ESP32 led7(25, 6,100);
-LED_ESP32 led8(2,7,100);
+LED_ESP32 led1(4, 0, 100);
+LED_ESP32 led2(12, 1, 100);
+LED_ESP32 led3(13, 2, 100);
+LED_ESP32 led4(15, 3, 100);
+LED_ESP32 led5(22, 4, 100);
+LED_ESP32 led6(23, 5, 100);
+LED_ESP32 led7(25, 6, 100);
+LED_ESP32 led8(2, 7, 100);
 
 AsyncWebServer server(80);
 WiFiClient espClient;
 PubSubClient client(espClient);
 
+
+// file operation begin
 String getFileString(fs::FS &fs, const char *path)
 {
   File file = fs.open(path);
@@ -137,6 +138,7 @@ void initFileSystem()
 {
   if (SPIFFS.exists("/wifi.ini"))
   {
+    Serial.println("delete the wifi config file");
     deleteFile(SPIFFS, "/wifi.ini");
   }
   String pwminfocontent = "{\"showtype\":\"fix\",\"testmode\":\"test\",\"sysdate\":\"{unixtick}\",\"status\":\"stop\",\"conmode\": \"local\",\"version\":\"{version_num}\"}";
@@ -176,20 +178,25 @@ void onFileUpload(AsyncWebServerRequest *request, const String &filename, size_t
     }
   }
 }
+// file operation end
 
+// reset button handle event
 void handleRestButtonChanged()
 {
+  Serial.println("");
   Serial.println("Rest begin.....");
   RESET_FLAG = true;
   Serial.println("rest end.....");
   detachInterrupt(RESET_BUTTON);
 }
 
+// 404 not found hook
 void notFound(AsyncWebServerRequest *request)
 {
   request->send(404, "text/plain", "Not found");
 }
 
+// common function begin
 int split(char dst[][80], char *str, const char *spl)
 {
   int n = 0;
@@ -202,11 +209,13 @@ int split(char dst[][80], char *str, const char *spl)
   }
   return n;
 }
+// common fucntion end
 
+// mqtt callback function
 void callback(char *topic, byte *payload, unsigned int length)
 {
   Serial.println("the topic is: " + String(topic));
-  
+
   if (!SPIFFS.begin())
   {
     Serial.println("SPIFFS Mount Failed");
@@ -283,9 +292,10 @@ void callback(char *topic, byte *payload, unsigned int length)
     PWM_INFO_VERSION.replace("\"", "");
     writeFile(SPIFFS, "/pwminfo.ini", filecontent.c_str());
   }
-  else if(String(topic) == checktimetopic) {
+  else if (String(topic) == checktimetopic)
+  {
     PWM_INFO_RTC = filecontent;
-    String pwmifnocontent = getFileString(SPIFFS,"/pwminfo.ini");
+    String pwmifnocontent = getFileString(SPIFFS, "/pwminfo.ini");
     Serial.println(pwmifnocontent);
     p_content = new char[200];
     strcpy(p_content, pwmifnocontent.c_str());
@@ -294,16 +304,18 @@ void callback(char *topic, byte *payload, unsigned int length)
     String change_sysdate = "\"sysdate\":\"";
     change_sysdate = change_sysdate + PWM_INFO_RTC;
     change_sysdate = change_sysdate + "\"";
-    for(int i=0;i<cnt;i++) {
-      if(i==2) {
+    for (int i = 0; i < cnt; i++)
+    {
+      if (i == 2)
+      {
         tpl_sysdate = dst[i];
         break;
       }
     }
-    pwmifnocontent.replace(tpl_sysdate,change_sysdate);
+    pwmifnocontent.replace(tpl_sysdate, change_sysdate);
 
     writeFile(SPIFFS, "/pwminfo.ini", pwmifnocontent.c_str());
-    struct timeval stime;   
+    struct timeval stime;
     stime.tv_sec = PWM_INFO_RTC.toInt() + 28816;
     settimeofday(&stime, NULL);
   }
@@ -937,7 +949,7 @@ void callback(char *topic, byte *payload, unsigned int length)
     filecontent = tpl_content;
     writeFile(SPIFFS, "/p7.ini", filecontent.c_str());
   }
-  else if(String(topic) == "esp004/check")
+  else if (String(topic) == "esp004/check")
   {
     Serial.println("i am online");
     ESP.restart();
@@ -950,7 +962,850 @@ void callback(char *topic, byte *payload, unsigned int length)
   SPIFFS.end();
 }
 
+// mqtt service
+void mqttconn()
+{
+  while (!client.connected())
+  {
+    Serial.println("MQTT connecting...");
+    if (client.connect(ESP_HOST_NAME, mqttuser, mqttpwd))
+    {
+      led8.set(100);
+      Serial.println("MQTT connected...");
+      // subscribe the checktime service
+      client.subscribe("esp32/checktime");
 
+      // subscribe the checkonine servcie
+      String checkonine = ESP_HOST_NAME;
+      checkonine = checkonine + "/check";
+      client.subscribe(checkonine.c_str());
+
+      // subscribe the light basic service
+      String recv_topic_p = ESP_HOST_NAME;
+      recv_topic_p = recv_topic_p + "/p";
+      client.subscribe(recv_topic_p.c_str());
+
+      // subscibe the p1 light service
+      String recv_topic_p1 = ESP_HOST_NAME;
+      recv_topic_p1 = recv_topic_p1 + "/p1";
+      client.subscribe(recv_topic_p1.c_str());
+      // subscibe the p2 light service
+      String recv_topic_p2 = ESP_HOST_NAME;
+      recv_topic_p2 = recv_topic_p2 + "/p2";
+      client.subscribe(recv_topic_p2.c_str());
+      // subscibe the p3 light service
+      String recv_topic_p3 = ESP_HOST_NAME;
+      recv_topic_p3 = recv_topic_p3 + "/p3";
+      client.subscribe(recv_topic_p3.c_str());
+      // subscibe the p4 light service
+      String recv_topic_p4 = ESP_HOST_NAME;
+      recv_topic_p4 = recv_topic_p4 + "/p4";
+      client.subscribe(recv_topic_p4.c_str());
+      // subscibe the p5 light service
+      String recv_topic_p5 = ESP_HOST_NAME;
+      recv_topic_p5 = recv_topic_p5 + "/p5";
+      client.subscribe(recv_topic_p5.c_str());
+      // subscibe the p6 light service
+      String recv_topic_p6 = ESP_HOST_NAME;
+      recv_topic_p6 = recv_topic_p6 + "/p6";
+      client.subscribe(recv_topic_p6.c_str());
+      // subscibe the p7 light service
+      String recv_topic_p7 = ESP_HOST_NAME;
+      recv_topic_p7 = recv_topic_p7 + "/p7";
+      client.subscribe(recv_topic_p7.c_str());
+
+      // publish the oline notification
+      String online_message = "{mid:";
+      online_message = online_message + ESP_HOST_NAME;
+      online_message = online_message + ",mac:";
+      online_message = online_message + WiFi.macAddress();
+      online_message = online_message + ",ip:";
+      online_message = online_message + String(WiFi.localIP());
+      online_message = online_message + "}";
+      client.publish("esp32/online", online_message.c_str());
+    }
+    else
+    {
+      Serial.printf("MQTT connect failed, the rc=%d; try again in 2 second", client.state());
+      delay(2000);
+    }
+  }
+}
+
+// light operation
+void lightopr()
+{
+  cJSON *root = NULL;
+  cJSON *item = NULL;
+
+  String filestr = getFileString(SPIFFS, "/pwminfo.ini");
+  const char *jsonstr = filestr.c_str();
+  root = cJSON_Parse(jsonstr);
+  String itemstr;
+  item = cJSON_GetObjectItem(root, "showtype");
+  itemstr = cJSON_Print(item);
+  PWM_INFO_SHOWTYPE = itemstr;
+  PWM_INFO_SHOWTYPE.replace("\"", "");
+
+  item = cJSON_GetObjectItem(root, "testmode");
+  itemstr = cJSON_Print(item);
+  PWM_INFO_TESTMODE = itemstr;
+  PWM_INFO_TESTMODE.replace("\"", "");
+
+  item = cJSON_GetObjectItem(root, "sysdate");
+  itemstr = cJSON_Print(item);
+  PWM_INFO_RTC = itemstr;
+  PWM_INFO_RTC.replace("\"", "");
+  struct timeval stime;
+  stime.tv_sec = PWM_INFO_RTC.toInt() + 30316;
+  settimeofday(&stime, NULL);
+
+  item = cJSON_GetObjectItem(root, "conmode");
+  itemstr = cJSON_Print(item);
+  PWM_INFO_CONMODE = itemstr;
+  PWM_INFO_CONMODE.replace("\"", "");
+
+  item = cJSON_GetObjectItem(root, "version");
+  itemstr = cJSON_Print(item);
+  PWM_INFO_VERSION = itemstr;
+  PWM_INFO_VERSION.replace("\"", "");
+
+  filestr = getFileString(SPIFFS, "/p1.ini");
+  const char *p1json = filestr.c_str();
+  root = cJSON_Parse(p1json);
+
+  item = cJSON_GetObjectItem(root, "t0");
+  itemstr = cJSON_Print(item);
+  P1_0 = itemstr;
+  P1_0.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t1");
+  itemstr = cJSON_Print(item);
+  P1_1 = itemstr;
+  P1_1.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t2");
+  itemstr = cJSON_Print(item);
+  P1_2 = itemstr;
+  P1_2.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t3");
+  itemstr = cJSON_Print(item);
+  P1_3 = itemstr;
+  P1_3.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t4");
+  itemstr = cJSON_Print(item);
+  P1_4 = itemstr;
+  P1_4.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t5");
+  itemstr = cJSON_Print(item);
+  P1_5 = itemstr;
+  P1_5.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t6");
+  itemstr = cJSON_Print(item);
+  P1_6 = itemstr;
+  P1_6.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t7");
+  itemstr = cJSON_Print(item);
+  P1_7 = itemstr;
+  P1_7.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t8");
+  itemstr = cJSON_Print(item);
+  P1_8 = itemstr;
+  P1_8.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t9");
+  itemstr = cJSON_Print(item);
+  P1_9 = itemstr;
+  P1_9.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t10");
+  itemstr = cJSON_Print(item);
+  P1_10 = itemstr;
+  P1_10.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t11");
+  itemstr = cJSON_Print(item);
+  P1_11 = itemstr;
+  P1_11.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t12");
+  itemstr = cJSON_Print(item);
+  P1_12 = itemstr;
+  P1_12.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t13");
+  itemstr = cJSON_Print(item);
+  P1_13 = itemstr;
+  P1_13.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t14");
+  itemstr = cJSON_Print(item);
+  P1_14 = itemstr;
+  P1_14.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t15");
+  itemstr = cJSON_Print(item);
+  P1_15 = itemstr;
+  P1_15.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t16");
+  itemstr = cJSON_Print(item);
+  P1_16 = itemstr;
+  P1_16.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t17");
+  itemstr = cJSON_Print(item);
+  P1_17 = itemstr;
+  P1_17.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t18");
+  itemstr = cJSON_Print(item);
+  P1_18 = itemstr;
+  P1_18.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t19");
+  itemstr = cJSON_Print(item);
+  P1_19 = itemstr;
+  P1_19.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t20");
+  itemstr = cJSON_Print(item);
+  P1_20 = itemstr;
+  P1_20.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t21");
+  itemstr = cJSON_Print(item);
+  P1_21 = itemstr;
+  P1_21.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t22");
+  itemstr = cJSON_Print(item);
+  P1_22 = itemstr;
+  P1_22.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t23");
+  itemstr = cJSON_Print(item);
+  P1_23 = itemstr;
+  P1_23.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t24");
+  itemstr = cJSON_Print(item);
+  P1_24 = itemstr;
+  P1_24.replace("\"", "");
+
+  filestr = getFileString(SPIFFS, "/p2.ini");
+  const char *p2json = filestr.c_str();
+  root = cJSON_Parse(p2json);
+
+  item = cJSON_GetObjectItem(root, "t0");
+  itemstr = cJSON_Print(item);
+  P2_0 = itemstr;
+  P2_0.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t1");
+  itemstr = cJSON_Print(item);
+  P2_1 = itemstr;
+  P2_1.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t2");
+  itemstr = cJSON_Print(item);
+  P2_2 = itemstr;
+  P2_2.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t3");
+  itemstr = cJSON_Print(item);
+  P2_3 = itemstr;
+  P2_3.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t4");
+  itemstr = cJSON_Print(item);
+  P2_4 = itemstr;
+  P2_4.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t5");
+  itemstr = cJSON_Print(item);
+  P2_5 = itemstr;
+  P2_5.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t6");
+  itemstr = cJSON_Print(item);
+  P2_6 = itemstr;
+  P2_6.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t7");
+  itemstr = cJSON_Print(item);
+  P2_7 = itemstr;
+  P2_7.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t8");
+  itemstr = cJSON_Print(item);
+  P2_8 = itemstr;
+  P2_8.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t9");
+  itemstr = cJSON_Print(item);
+  P2_9 = itemstr;
+  P2_9.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t10");
+  itemstr = cJSON_Print(item);
+  P2_10 = itemstr;
+  P2_10.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t11");
+  itemstr = cJSON_Print(item);
+  P2_11 = itemstr;
+  P2_11.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t12");
+  itemstr = cJSON_Print(item);
+  P2_12 = itemstr;
+  P2_12.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t13");
+  itemstr = cJSON_Print(item);
+  P2_13 = itemstr;
+  P2_13.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t14");
+  itemstr = cJSON_Print(item);
+  P2_14 = itemstr;
+  P2_14.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t15");
+  itemstr = cJSON_Print(item);
+  P2_15 = itemstr;
+  P2_15.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t16");
+  itemstr = cJSON_Print(item);
+  P2_16 = itemstr;
+  P2_16.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t17");
+  itemstr = cJSON_Print(item);
+  P2_17 = itemstr;
+  P2_17.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t18");
+  itemstr = cJSON_Print(item);
+  P2_18 = itemstr;
+  P2_18.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t19");
+  itemstr = cJSON_Print(item);
+  P2_19 = itemstr;
+  P2_19.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t20");
+  itemstr = cJSON_Print(item);
+  P2_20 = itemstr;
+  P2_20.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t21");
+  itemstr = cJSON_Print(item);
+  P2_21 = itemstr;
+  P2_21.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t22");
+  itemstr = cJSON_Print(item);
+  P2_22 = itemstr;
+  P2_22.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t23");
+  itemstr = cJSON_Print(item);
+  P2_23 = itemstr;
+  P2_23.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t24");
+  itemstr = cJSON_Print(item);
+  P2_24 = itemstr;
+  P2_24.replace("\"", "");
+
+  filestr = getFileString(SPIFFS, "/p3.ini");
+  const char *p3json = filestr.c_str();
+  root = cJSON_Parse(p3json);
+  item = cJSON_GetObjectItem(root, "t0");
+  itemstr = cJSON_Print(item);
+  P3_0 = itemstr;
+  P3_0.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t1");
+  itemstr = cJSON_Print(item);
+  P3_1 = itemstr;
+  P3_1.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t2");
+  itemstr = cJSON_Print(item);
+  P3_2 = itemstr;
+  P3_2.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t3");
+  itemstr = cJSON_Print(item);
+  P3_3 = itemstr;
+  P3_3.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t4");
+  itemstr = cJSON_Print(item);
+  P3_4 = itemstr;
+  P3_4.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t5");
+  itemstr = cJSON_Print(item);
+  P3_5 = itemstr;
+  P3_5.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t6");
+  itemstr = cJSON_Print(item);
+  P3_6 = itemstr;
+  P3_6.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t7");
+  itemstr = cJSON_Print(item);
+  P3_7 = itemstr;
+  P3_7.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t8");
+  itemstr = cJSON_Print(item);
+  P3_8 = itemstr;
+  P3_8.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t9");
+  itemstr = cJSON_Print(item);
+  P3_9 = itemstr;
+  P3_9.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t10");
+  itemstr = cJSON_Print(item);
+  P3_10 = itemstr;
+  P3_10.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t11");
+  itemstr = cJSON_Print(item);
+  P3_11 = itemstr;
+  P3_11.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t12");
+  itemstr = cJSON_Print(item);
+  P3_12 = itemstr;
+  P3_12.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t13");
+  itemstr = cJSON_Print(item);
+  P3_13 = itemstr;
+  P3_13.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t14");
+  itemstr = cJSON_Print(item);
+  P3_14 = itemstr;
+  P3_14.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t15");
+  itemstr = cJSON_Print(item);
+  P3_15 = itemstr;
+  P3_15.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t16");
+  itemstr = cJSON_Print(item);
+  P3_16 = itemstr;
+  P3_16.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t17");
+  itemstr = cJSON_Print(item);
+  P3_17 = itemstr;
+  P3_17.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t18");
+  itemstr = cJSON_Print(item);
+  P3_18 = itemstr;
+  P3_18.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t19");
+  itemstr = cJSON_Print(item);
+  P3_19 = itemstr;
+  P3_19.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t20");
+  itemstr = cJSON_Print(item);
+  P3_20 = itemstr;
+  P3_20.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t21");
+  itemstr = cJSON_Print(item);
+  P3_21 = itemstr;
+  P3_21.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t22");
+  itemstr = cJSON_Print(item);
+  P3_22 = itemstr;
+  P3_22.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t23");
+  itemstr = cJSON_Print(item);
+  P3_23 = itemstr;
+  P3_23.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t24");
+  itemstr = cJSON_Print(item);
+  P3_24 = itemstr;
+  P3_24.replace("\"", "");
+
+  filestr = getFileString(SPIFFS, "/p4.ini");
+  const char *p4json = filestr.c_str();
+  root = cJSON_Parse(p4json);
+
+  item = cJSON_GetObjectItem(root, "t0");
+  itemstr = cJSON_Print(item);
+  P4_0 = itemstr;
+  P4_0.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t1");
+  itemstr = cJSON_Print(item);
+  P4_1 = itemstr;
+  P4_1.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t2");
+  itemstr = cJSON_Print(item);
+  P4_2 = itemstr;
+  P4_2.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t3");
+  itemstr = cJSON_Print(item);
+  P4_3 = itemstr;
+  P4_3.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t4");
+  itemstr = cJSON_Print(item);
+  P4_4 = itemstr;
+  P4_4.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t5");
+  itemstr = cJSON_Print(item);
+  P4_5 = itemstr;
+  P4_5.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t6");
+  itemstr = cJSON_Print(item);
+  P4_6 = itemstr;
+  P4_6.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t7");
+  itemstr = cJSON_Print(item);
+  P4_7 = itemstr;
+  P4_7.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t8");
+  itemstr = cJSON_Print(item);
+  P4_8 = itemstr;
+  P4_8.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t9");
+  itemstr = cJSON_Print(item);
+  P4_9 = itemstr;
+  P4_9.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t10");
+  itemstr = cJSON_Print(item);
+  P4_10 = itemstr;
+  P4_10.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t11");
+  itemstr = cJSON_Print(item);
+  P4_11 = itemstr;
+  P4_11.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t12");
+  itemstr = cJSON_Print(item);
+  P4_12 = itemstr;
+  P4_12.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t13");
+  itemstr = cJSON_Print(item);
+  P4_13 = itemstr;
+  P4_13.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t14");
+  itemstr = cJSON_Print(item);
+  P4_14 = itemstr;
+  P4_14.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t15");
+  itemstr = cJSON_Print(item);
+  P4_15 = itemstr;
+  P4_15.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t16");
+  itemstr = cJSON_Print(item);
+  P4_16 = itemstr;
+  P4_16.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t17");
+  itemstr = cJSON_Print(item);
+  P4_17 = itemstr;
+  P4_17.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t18");
+  itemstr = cJSON_Print(item);
+  P4_18 = itemstr;
+  P4_18.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t19");
+  itemstr = cJSON_Print(item);
+  P4_19 = itemstr;
+  P4_19.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t20");
+  itemstr = cJSON_Print(item);
+  P4_20 = itemstr;
+  P4_20.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t21");
+  itemstr = cJSON_Print(item);
+  P4_21 = itemstr;
+  P4_21.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t22");
+  itemstr = cJSON_Print(item);
+  P4_22 = itemstr;
+  P4_22.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t23");
+  itemstr = cJSON_Print(item);
+  P4_23 = itemstr;
+  P4_23.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t24");
+  itemstr = cJSON_Print(item);
+  P4_24 = itemstr;
+  P4_24.replace("\"", "");
+
+  filestr = getFileString(SPIFFS, "/p5.ini");
+  const char *p5json = filestr.c_str();
+  root = cJSON_Parse(p5json);
+
+  item = cJSON_GetObjectItem(root, "t0");
+  itemstr = cJSON_Print(item);
+  P5_0 = itemstr;
+  P5_0.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t1");
+  itemstr = cJSON_Print(item);
+  P5_1 = itemstr;
+  P5_1.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t2");
+  itemstr = cJSON_Print(item);
+  P5_2 = itemstr;
+  P5_2.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t3");
+  itemstr = cJSON_Print(item);
+  P5_3 = itemstr;
+  P5_3.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t4");
+  itemstr = cJSON_Print(item);
+  P5_4 = itemstr;
+  P5_4.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t5");
+  itemstr = cJSON_Print(item);
+  P5_5 = itemstr;
+  P5_5.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t6");
+  itemstr = cJSON_Print(item);
+  P5_6 = itemstr;
+  P5_6.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t7");
+  itemstr = cJSON_Print(item);
+  P5_7 = itemstr;
+  P5_7.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t8");
+  itemstr = cJSON_Print(item);
+  P5_8 = itemstr;
+  P5_8.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t9");
+  itemstr = cJSON_Print(item);
+  P5_9 = itemstr;
+  P5_9.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t10");
+  itemstr = cJSON_Print(item);
+  P5_10 = itemstr;
+  P5_10.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t11");
+  itemstr = cJSON_Print(item);
+  P5_11 = itemstr;
+  P5_11.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t12");
+  itemstr = cJSON_Print(item);
+  P5_12 = itemstr;
+  P5_12.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t13");
+  itemstr = cJSON_Print(item);
+  P5_13 = itemstr;
+  P5_13.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t14");
+  itemstr = cJSON_Print(item);
+  P5_14 = itemstr;
+  P5_14.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t15");
+  itemstr = cJSON_Print(item);
+  P5_15 = itemstr;
+  P5_15.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t16");
+  itemstr = cJSON_Print(item);
+  P5_16 = itemstr;
+  P5_16.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t17");
+  itemstr = cJSON_Print(item);
+  P5_17 = itemstr;
+  P5_17.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t18");
+  itemstr = cJSON_Print(item);
+  P5_18 = itemstr;
+  P5_18.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t19");
+  itemstr = cJSON_Print(item);
+  P5_19 = itemstr;
+  P5_19.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t20");
+  itemstr = cJSON_Print(item);
+  P5_20 = itemstr;
+  P5_20.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t21");
+  itemstr = cJSON_Print(item);
+  P5_21 = itemstr;
+  P5_21.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t22");
+  itemstr = cJSON_Print(item);
+  P5_22 = itemstr;
+  P5_22.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t23");
+  itemstr = cJSON_Print(item);
+  P5_23 = itemstr;
+  P5_23.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t24");
+  itemstr = cJSON_Print(item);
+  P5_24 = itemstr;
+  P5_24.replace("\"", "");
+
+  filestr = getFileString(SPIFFS, "/p6.ini");
+  const char *p6json = filestr.c_str();
+  root = cJSON_Parse(p6json);
+
+  item = cJSON_GetObjectItem(root, "t0");
+  itemstr = cJSON_Print(item);
+  P6_0 = itemstr;
+  P6_0.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t1");
+  itemstr = cJSON_Print(item);
+  P6_1 = itemstr;
+  P6_1.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t2");
+  itemstr = cJSON_Print(item);
+  P6_2 = itemstr;
+  P6_2.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t3");
+  itemstr = cJSON_Print(item);
+  P6_3 = itemstr;
+  P6_3.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t4");
+  itemstr = cJSON_Print(item);
+  P6_4 = itemstr;
+  P6_4.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t5");
+  itemstr = cJSON_Print(item);
+  P6_5 = itemstr;
+  P6_5.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t6");
+  itemstr = cJSON_Print(item);
+  P6_6 = itemstr;
+  P6_6.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t7");
+  itemstr = cJSON_Print(item);
+  P6_7 = itemstr;
+  P6_7.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t8");
+  itemstr = cJSON_Print(item);
+  P6_8 = itemstr;
+  P6_8.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t9");
+  itemstr = cJSON_Print(item);
+  P6_9 = itemstr;
+  P6_9.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t10");
+  itemstr = cJSON_Print(item);
+  P6_10 = itemstr;
+  P6_10.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t11");
+  itemstr = cJSON_Print(item);
+  P6_11 = itemstr;
+  P6_11.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t12");
+  itemstr = cJSON_Print(item);
+  P6_12 = itemstr;
+  P6_12.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t13");
+  itemstr = cJSON_Print(item);
+  P6_13 = itemstr;
+  P6_13.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t14");
+  itemstr = cJSON_Print(item);
+  P6_14 = itemstr;
+  P6_14.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t15");
+  itemstr = cJSON_Print(item);
+  P6_15 = itemstr;
+  P6_15.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t16");
+  itemstr = cJSON_Print(item);
+  P6_16 = itemstr;
+  P6_16.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t17");
+  itemstr = cJSON_Print(item);
+  P6_17 = itemstr;
+  P6_17.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t18");
+  itemstr = cJSON_Print(item);
+  P6_18 = itemstr;
+  P6_18.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t19");
+  itemstr = cJSON_Print(item);
+  P6_19 = itemstr;
+  P6_19.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t20");
+  itemstr = cJSON_Print(item);
+  P6_20 = itemstr;
+  P6_20.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t21");
+  itemstr = cJSON_Print(item);
+  P6_21 = itemstr;
+  P6_21.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t22");
+  itemstr = cJSON_Print(item);
+  P6_22 = itemstr;
+  P6_22.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t23");
+  itemstr = cJSON_Print(item);
+  P6_23 = itemstr;
+  P6_23.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t24");
+  itemstr = cJSON_Print(item);
+  P6_24 = itemstr;
+  P6_24.replace("\"", "");
+
+  filestr = getFileString(SPIFFS, "/p7.ini");
+  const char *p7json = filestr.c_str();
+  root = cJSON_Parse(p7json);
+
+  item = cJSON_GetObjectItem(root, "t0");
+  itemstr = cJSON_Print(item);
+  P7_0 = itemstr;
+  P7_0.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t1");
+  itemstr = cJSON_Print(item);
+  P7_1 = itemstr;
+  P7_1.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t2");
+  itemstr = cJSON_Print(item);
+  P7_2 = itemstr;
+  P7_2.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t3");
+  itemstr = cJSON_Print(item);
+  P7_3 = itemstr;
+  P7_3.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t4");
+  itemstr = cJSON_Print(item);
+  P7_4 = itemstr;
+  P7_4.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t5");
+  itemstr = cJSON_Print(item);
+  P7_5 = itemstr;
+  P7_5.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t6");
+  itemstr = cJSON_Print(item);
+  P7_6 = itemstr;
+  P7_6.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t7");
+  itemstr = cJSON_Print(item);
+  P7_7 = itemstr;
+  P7_7.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t8");
+  itemstr = cJSON_Print(item);
+  P7_8 = itemstr;
+  P7_8.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t9");
+  itemstr = cJSON_Print(item);
+  P7_9 = itemstr;
+  P7_9.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t10");
+  itemstr = cJSON_Print(item);
+  P7_10 = itemstr;
+  P7_10.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t11");
+  itemstr = cJSON_Print(item);
+  P7_11 = itemstr;
+  P7_11.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t12");
+  itemstr = cJSON_Print(item);
+  P7_12 = itemstr;
+  P7_12.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t13");
+  itemstr = cJSON_Print(item);
+  P7_13 = itemstr;
+  P7_13.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t14");
+  itemstr = cJSON_Print(item);
+  P7_14 = itemstr;
+  P7_14.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t15");
+  itemstr = cJSON_Print(item);
+  P7_15 = itemstr;
+  P7_15.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t16");
+  itemstr = cJSON_Print(item);
+  P7_16 = itemstr;
+  P7_16.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t17");
+  itemstr = cJSON_Print(item);
+  P7_17 = itemstr;
+  P7_17.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t18");
+  itemstr = cJSON_Print(item);
+  P7_18 = itemstr;
+  P7_18.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t19");
+  itemstr = cJSON_Print(item);
+  P7_19 = itemstr;
+  P7_19.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t20");
+  itemstr = cJSON_Print(item);
+  P7_20 = itemstr;
+  P7_20.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t21");
+  itemstr = cJSON_Print(item);
+  P7_21 = itemstr;
+  P7_21.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t22");
+  itemstr = cJSON_Print(item);
+  P7_22 = itemstr;
+  P7_22.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t23");
+  itemstr = cJSON_Print(item);
+  P7_23 = itemstr;
+  P7_23.replace("\"", "");
+  item = cJSON_GetObjectItem(root, "t24");
+  itemstr = cJSON_Print(item);
+  P7_24 = itemstr;
+  P7_24.replace("\"", "");
+}
+
+// esp32 init config
 void setup()
 {
   Serial.begin(115200);
@@ -959,7 +1814,6 @@ void setup()
   pinMode(RESET_BUTTON, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(RESET_BUTTON), handleRestButtonChanged, CHANGE);
   WiFi.mode(WIFI_AP_STA);
-
 
   // struct timeval stime;
   // stime.tv_sec = 1536725527 + 30316;
@@ -970,7 +1824,7 @@ void setup()
   // char nowtime[24];
   // memset(nowtime, 0, sizeof(nowtime));
   // strftime(nowtime, 24, "%Y-%m-%d %H:%M:%S", t_st);
-  // String strDate = nowtime;    
+  // String strDate = nowtime;
   // Serial.println(strDate);
   Serial.println("the AP name is : " + String(ssid) + " password is: " + String(password) + "\n the mac address is: " + WiFi.macAddress());
   Serial.print("the current version is: ");
@@ -992,6 +1846,7 @@ void setup()
   led5.setup();
   led6.setup();
   led7.setup();
+  led8.setup();
 
   led1.set(0);
   led2.set(0);
@@ -1000,9 +1855,7 @@ void setup()
   led5.set(0);
   led6.set(0);
   led7.set(0);
-  led8.setup();
-
-  
+  led8.set(0);
 
   if (!SPIFFS.begin(true))
   {
@@ -1012,7 +1865,7 @@ void setup()
   else
   {
     // deleteFile(SPIFFS,"/wifi.ini");
-    
+
     if (!SPIFFS.exists("/pwminfo.ini"))
     {
       Serial.println("begin to init system file");
@@ -1021,14 +1874,13 @@ void setup()
     }
     else
     {
-      String tempfile = getFileString(SPIFFS,"/wifi.ini");
-      Serial.println(tempfile);
-            
+      // String tempfile = getFileString(SPIFFS,"/wifi.ini");
+      // Serial.println(tempfile);
       if (SPIFFS.exists("/wifi.ini"))
       {
         String filestr;
         filestr = getFileString(SPIFFS, "/wifi.ini");
-        
+
         cJSON *root = NULL;
         cJSON *item = NULL;
         const char *jsonstr = filestr.c_str();
@@ -1037,9 +1889,10 @@ void setup()
         item = cJSON_GetObjectItem(root, "ssid");
         itemstr = cJSON_Print(item);
         String ssid = itemstr;
-        if(strcmp(ssid.c_str(),"")==0) {
+        if (strcmp(ssid.c_str(), "") == 0)
+        {
           Serial.println("the ssid has missed");
-          deleteFile(SPIFFS,"/wifi.ini");
+          deleteFile(SPIFFS, "/wifi.ini");
           ESP.restart();
         }
         item = cJSON_GetObjectItem(root, "pwd");
@@ -1052,92 +1905,47 @@ void setup()
         SSID_PWD = pwd.c_str();
         WiFi.begin(ssid.c_str(), pwd.c_str());
         int i = 30;
-        
+        Serial.printf("wifi connecting");
         while ((WiFi.status() != WL_CONNECTED) && i > 0)
         {
-          delay(1000);          
-          Serial.printf(".");          
+          delay(1000);
+          Serial.printf(".");
           i = i - 1;
+          // if (i == 1 || RESET_FLAG)
+          // {
+          //   deleteFile(SPIFFS, "/wifi.ini");
+          //   ESP.restart();
+          // }
         }
-        IS_SMART = true;
-        Serial.println(WiFi.localIP());
-        if(WiFi.status() == WL_CONNECTED) {
-          led8.set(100);
-        }
-
-        client.setServer(mqttServer, mqttPort);
-        client.setCallback(callback);
-        bool mqttcon = true;
-        while (!client.connected() && mqttcon)
+        if (WiFi.status() == WL_CONNECTED)
         {
-          if (client.connect(ESP_HOST_NAME, mqttuser, mqttpwd))
-          {
-            Serial.println("MQTT SERVER CONNECTED");
-            client.subscribe("esp32/checktime");
-            String checkonine = ESP_HOST_NAME;
-            checkonine = checkonine + "/check";
-            // todo
-            client.subscribe(checkonine.c_str());
-
-            // String online_message = "[";
-            // online_message = online_message + ESP_HOST_NAME;
-            // online_message = online_message + "] has connected.";
-            String online_message = "{mid:";
-            online_message = online_message +  ESP_HOST_NAME;
-            online_message = online_message + ",mac:";
-            online_message = online_message + WiFi.macAddress();
-            online_message = online_message + ",ip:";
-            online_message = online_message + String(WiFi.localIP());
-            online_message = online_message + "}";
-            client.publish("esp32/online", online_message.c_str());
-            // client.subscribe("esp32/checktime");
-            String recv_topic_p = ESP_HOST_NAME;
-            recv_topic_p = recv_topic_p + "/p";
-            client.subscribe(recv_topic_p.c_str());
-            String recv_topic_p1 = ESP_HOST_NAME;
-            recv_topic_p1 = recv_topic_p1 + "/p1";
-            client.subscribe(recv_topic_p1.c_str());
-            String recv_topic_p2 = ESP_HOST_NAME;
-            recv_topic_p2 = recv_topic_p2 + "/p2";
-            client.subscribe(recv_topic_p2.c_str());
-            String recv_topic_p3 = ESP_HOST_NAME;
-            recv_topic_p3 = recv_topic_p3 + "/p3";
-            client.subscribe(recv_topic_p3.c_str());
-            String recv_topic_p4 = ESP_HOST_NAME;
-            recv_topic_p4 = recv_topic_p4 + "/p4";
-            client.subscribe(recv_topic_p4.c_str());
-            String recv_topic_p5 = ESP_HOST_NAME;
-            recv_topic_p5 = recv_topic_p5 + "/p5";
-            client.subscribe(recv_topic_p5.c_str());
-            String recv_topic_p6 = ESP_HOST_NAME;
-            recv_topic_p6 = recv_topic_p6 + "/p6";
-            client.subscribe(recv_topic_p6.c_str());
-            String recv_topic_p7 = ESP_HOST_NAME;
-            recv_topic_p7 = recv_topic_p7 + "/p7";
-            client.subscribe(recv_topic_p7.c_str());
-          }
-          else
-          {
-            Serial.println("MQTT connect failed");
-            mqttcon = false;
-          }
+          IS_SMART = true;
+          Serial.println(WiFi.localIP());
+          led8.set(100);
+          client.setServer(mqttServer, mqttPort);
+          client.setCallback(callback);
+          mqttconn();
         }
-      } else {
+      }
+      else
+      {
         int trytime = 50;
-        WiFi.beginSmartConfig();  
-        while(1) {
+        WiFi.beginSmartConfig();
+        Serial.printf("smart config begin");
+        while (1)
+        {
           Serial.print('.');
           led8.set(100);
           delay(500);
           led8.set(0);
           delay(500);
-          if(WiFi.smartConfigDone()) {
+          if (WiFi.smartConfigDone())
+          {
             IS_SMART = true;
             led8.set(100);
             //MDNS.begin(host);
             Serial.println("SmartConfig Success");
-            Serial.printf("SSID:%s\r\n", WiFi.SSID().c_str());
-            Serial.printf("PSW:%s\r\n", WiFi.psk().c_str());
+
             SSID = WiFi.SSID();
             SSID_PWD = WiFi.psk();
             String filecontent;
@@ -1146,19 +1954,26 @@ void setup()
             filecontent = filecontent + "\",\"pwd\":\"";
             filecontent = filecontent + WiFi.psk().c_str();
             filecontent = filecontent + "\"}";
-            
-            if(strcmp(WiFi.SSID().c_str(),"")==0) {
-              String tempfile = getFileString(SPIFFS,"/wifi.ini");
+
+            if (strcmp(WiFi.SSID().c_str(), "") == 0)
+            {
+              String tempfile = getFileString(SPIFFS, "/wifi.ini");
               Serial.println(tempfile);
+              deleteFile(SPIFFS, "/wifi.ini");
               led8.set(0);
-            } else {
+            }
+            else
+            {
               writeFile(SPIFFS, "/wifi.ini", filecontent.c_str());
               led8.set(100);
+              delay(2000);
+              ESP.restart();
             }
             break;
           }
-          trytime = trytime -1;
-          if(trytime <0) {
+          trytime = trytime - 1;
+          if (trytime < 0)
+          {
             Serial.println("");
             Serial.println("smartconfig cancel");
             WiFi.stopSmartConfig();
@@ -1168,780 +1983,14 @@ void setup()
           }
         }
       }
-      cJSON *root = NULL;
-      cJSON *item = NULL;
-
-      String filestr = getFileString(SPIFFS, "/pwminfo.ini");
-      const char *jsonstr = filestr.c_str();
-      root = cJSON_Parse(jsonstr);
-      String itemstr;
-      item = cJSON_GetObjectItem(root, "showtype");
-      itemstr = cJSON_Print(item);
-      PWM_INFO_SHOWTYPE = itemstr;
-      PWM_INFO_SHOWTYPE.replace("\"", "");
-
-      item = cJSON_GetObjectItem(root, "testmode");
-      itemstr = cJSON_Print(item);
-      PWM_INFO_TESTMODE = itemstr;
-      PWM_INFO_TESTMODE.replace("\"", "");
-
-      item = cJSON_GetObjectItem(root, "sysdate");
-      itemstr = cJSON_Print(item);
-      PWM_INFO_RTC = itemstr;
-      PWM_INFO_RTC.replace("\"", "");
-      struct timeval stime;
-      stime.tv_sec = PWM_INFO_RTC.toInt() + 30316;
-      settimeofday(&stime, NULL);
-
-      item = cJSON_GetObjectItem(root, "conmode");
-      itemstr = cJSON_Print(item);
-      PWM_INFO_CONMODE = itemstr;
-      PWM_INFO_CONMODE.replace("\"", "");
-
-      item = cJSON_GetObjectItem(root, "version");
-      itemstr = cJSON_Print(item);
-      PWM_INFO_VERSION = itemstr;
-      PWM_INFO_VERSION.replace("\"", "");
-
-      filestr = getFileString(SPIFFS, "/p1.ini");
-      const char *p1json = filestr.c_str();
-      root = cJSON_Parse(p1json);
-
-      item = cJSON_GetObjectItem(root, "t0");
-      itemstr = cJSON_Print(item);
-      P1_0 = itemstr;
-      P1_0.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t1");
-      itemstr = cJSON_Print(item);
-      P1_1 = itemstr;
-      P1_1.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t2");
-      itemstr = cJSON_Print(item);
-      P1_2 = itemstr;
-      P1_2.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t3");
-      itemstr = cJSON_Print(item);
-      P1_3 = itemstr;
-      P1_3.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t4");
-      itemstr = cJSON_Print(item);
-      P1_4 = itemstr;
-      P1_4.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t5");
-      itemstr = cJSON_Print(item);
-      P1_5 = itemstr;
-      P1_5.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t6");
-      itemstr = cJSON_Print(item);
-      P1_6 = itemstr;
-      P1_6.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t7");
-      itemstr = cJSON_Print(item);
-      P1_7 = itemstr;
-      P1_7.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t8");
-      itemstr = cJSON_Print(item);
-      P1_8 = itemstr;
-      P1_8.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t9");
-      itemstr = cJSON_Print(item);
-      P1_9 = itemstr;
-      P1_9.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t10");
-      itemstr = cJSON_Print(item);
-      P1_10 = itemstr;
-      P1_10.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t11");
-      itemstr = cJSON_Print(item);
-      P1_11 = itemstr;
-      P1_11.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t12");
-      itemstr = cJSON_Print(item);
-      P1_12 = itemstr;
-      P1_12.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t13");
-      itemstr = cJSON_Print(item);
-      P1_13 = itemstr;
-      P1_13.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t14");
-      itemstr = cJSON_Print(item);
-      P1_14 = itemstr;
-      P1_14.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t15");
-      itemstr = cJSON_Print(item);
-      P1_15 = itemstr;
-      P1_15.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t16");
-      itemstr = cJSON_Print(item);
-      P1_16 = itemstr;
-      P1_16.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t17");
-      itemstr = cJSON_Print(item);
-      P1_17 = itemstr;
-      P1_17.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t18");
-      itemstr = cJSON_Print(item);
-      P1_18 = itemstr;
-      P1_18.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t19");
-      itemstr = cJSON_Print(item);
-      P1_19 = itemstr;
-      P1_19.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t20");
-      itemstr = cJSON_Print(item);
-      P1_20 = itemstr;
-      P1_20.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t21");
-      itemstr = cJSON_Print(item);
-      P1_21 = itemstr;
-      P1_21.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t22");
-      itemstr = cJSON_Print(item);
-      P1_22 = itemstr;
-      P1_22.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t23");
-      itemstr = cJSON_Print(item);
-      P1_23 = itemstr;
-      P1_23.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t24");
-      itemstr = cJSON_Print(item);
-      P1_24 = itemstr;
-      P1_24.replace("\"", "");
-
-      filestr = getFileString(SPIFFS, "/p2.ini");
-      const char *p2json = filestr.c_str();
-      root = cJSON_Parse(p2json);
-
-      item = cJSON_GetObjectItem(root, "t0");
-      itemstr = cJSON_Print(item);
-      P2_0 = itemstr;
-      P2_0.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t1");
-      itemstr = cJSON_Print(item);
-      P2_1 = itemstr;
-      P2_1.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t2");
-      itemstr = cJSON_Print(item);
-      P2_2 = itemstr;
-      P2_2.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t3");
-      itemstr = cJSON_Print(item);
-      P2_3 = itemstr;
-      P2_3.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t4");
-      itemstr = cJSON_Print(item);
-      P2_4 = itemstr;
-      P2_4.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t5");
-      itemstr = cJSON_Print(item);
-      P2_5 = itemstr;
-      P2_5.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t6");
-      itemstr = cJSON_Print(item);
-      P2_6 = itemstr;
-      P2_6.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t7");
-      itemstr = cJSON_Print(item);
-      P2_7 = itemstr;
-      P2_7.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t8");
-      itemstr = cJSON_Print(item);
-      P2_8 = itemstr;
-      P2_8.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t9");
-      itemstr = cJSON_Print(item);
-      P2_9 = itemstr;
-      P2_9.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t10");
-      itemstr = cJSON_Print(item);
-      P2_10 = itemstr;
-      P2_10.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t11");
-      itemstr = cJSON_Print(item);
-      P2_11 = itemstr;
-      P2_11.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t12");
-      itemstr = cJSON_Print(item);
-      P2_12 = itemstr;
-      P2_12.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t13");
-      itemstr = cJSON_Print(item);
-      P2_13 = itemstr;
-      P2_13.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t14");
-      itemstr = cJSON_Print(item);
-      P2_14 = itemstr;
-      P2_14.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t15");
-      itemstr = cJSON_Print(item);
-      P2_15 = itemstr;
-      P2_15.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t16");
-      itemstr = cJSON_Print(item);
-      P2_16 = itemstr;
-      P2_16.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t17");
-      itemstr = cJSON_Print(item);
-      P2_17 = itemstr;
-      P2_17.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t18");
-      itemstr = cJSON_Print(item);
-      P2_18 = itemstr;
-      P2_18.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t19");
-      itemstr = cJSON_Print(item);
-      P2_19 = itemstr;
-      P2_19.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t20");
-      itemstr = cJSON_Print(item);
-      P2_20 = itemstr;
-      P2_20.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t21");
-      itemstr = cJSON_Print(item);
-      P2_21 = itemstr;
-      P2_21.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t22");
-      itemstr = cJSON_Print(item);
-      P2_22 = itemstr;
-      P2_22.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t23");
-      itemstr = cJSON_Print(item);
-      P2_23 = itemstr;
-      P2_23.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t24");
-      itemstr = cJSON_Print(item);
-      P2_24 = itemstr;
-      P2_24.replace("\"", "");
-
-      filestr = getFileString(SPIFFS, "/p3.ini");
-      const char *p3json = filestr.c_str();
-      root = cJSON_Parse(p3json);
-      item = cJSON_GetObjectItem(root, "t0");
-      itemstr = cJSON_Print(item);
-      P3_0 = itemstr;
-      P3_0.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t1");
-      itemstr = cJSON_Print(item);
-      P3_1 = itemstr;
-      P3_1.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t2");
-      itemstr = cJSON_Print(item);
-      P3_2 = itemstr;
-      P3_2.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t3");
-      itemstr = cJSON_Print(item);
-      P3_3 = itemstr;
-      P3_3.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t4");
-      itemstr = cJSON_Print(item);
-      P3_4 = itemstr;
-      P3_4.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t5");
-      itemstr = cJSON_Print(item);
-      P3_5 = itemstr;
-      P3_5.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t6");
-      itemstr = cJSON_Print(item);
-      P3_6 = itemstr;
-      P3_6.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t7");
-      itemstr = cJSON_Print(item);
-      P3_7 = itemstr;
-      P3_7.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t8");
-      itemstr = cJSON_Print(item);
-      P3_8 = itemstr;
-      P3_8.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t9");
-      itemstr = cJSON_Print(item);
-      P3_9 = itemstr;
-      P3_9.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t10");
-      itemstr = cJSON_Print(item);
-      P3_10 = itemstr;
-      P3_10.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t11");
-      itemstr = cJSON_Print(item);
-      P3_11 = itemstr;
-      P3_11.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t12");
-      itemstr = cJSON_Print(item);
-      P3_12 = itemstr;
-      P3_12.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t13");
-      itemstr = cJSON_Print(item);
-      P3_13 = itemstr;
-      P3_13.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t14");
-      itemstr = cJSON_Print(item);
-      P3_14 = itemstr;
-      P3_14.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t15");
-      itemstr = cJSON_Print(item);
-      P3_15 = itemstr;
-      P3_15.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t16");
-      itemstr = cJSON_Print(item);
-      P3_16 = itemstr;
-      P3_16.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t17");
-      itemstr = cJSON_Print(item);
-      P3_17 = itemstr;
-      P3_17.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t18");
-      itemstr = cJSON_Print(item);
-      P3_18 = itemstr;
-      P3_18.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t19");
-      itemstr = cJSON_Print(item);
-      P3_19 = itemstr;
-      P3_19.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t20");
-      itemstr = cJSON_Print(item);
-      P3_20 = itemstr;
-      P3_20.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t21");
-      itemstr = cJSON_Print(item);
-      P3_21 = itemstr;
-      P3_21.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t22");
-      itemstr = cJSON_Print(item);
-      P3_22 = itemstr;
-      P3_22.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t23");
-      itemstr = cJSON_Print(item);
-      P3_23 = itemstr;
-      P3_23.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t24");
-      itemstr = cJSON_Print(item);
-      P3_24 = itemstr;
-      P3_24.replace("\"", "");
-
-      filestr = getFileString(SPIFFS, "/p4.ini");
-      const char *p4json = filestr.c_str();
-      root = cJSON_Parse(p4json);
-
-      item = cJSON_GetObjectItem(root, "t0");
-      itemstr = cJSON_Print(item);
-      P4_0 = itemstr;
-      P4_0.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t1");
-      itemstr = cJSON_Print(item);
-      P4_1 = itemstr;
-      P4_1.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t2");
-      itemstr = cJSON_Print(item);
-      P4_2 = itemstr;
-      P4_2.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t3");
-      itemstr = cJSON_Print(item);
-      P4_3 = itemstr;
-      P4_3.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t4");
-      itemstr = cJSON_Print(item);
-      P4_4 = itemstr;
-      P4_4.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t5");
-      itemstr = cJSON_Print(item);
-      P4_5 = itemstr;
-      P4_5.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t6");
-      itemstr = cJSON_Print(item);
-      P4_6 = itemstr;
-      P4_6.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t7");
-      itemstr = cJSON_Print(item);
-      P4_7 = itemstr;
-      P4_7.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t8");
-      itemstr = cJSON_Print(item);
-      P4_8 = itemstr;
-      P4_8.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t9");
-      itemstr = cJSON_Print(item);
-      P4_9 = itemstr;
-      P4_9.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t10");
-      itemstr = cJSON_Print(item);
-      P4_10 = itemstr;
-      P4_10.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t11");
-      itemstr = cJSON_Print(item);
-      P4_11 = itemstr;
-      P4_11.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t12");
-      itemstr = cJSON_Print(item);
-      P4_12 = itemstr;
-      P4_12.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t13");
-      itemstr = cJSON_Print(item);
-      P4_13 = itemstr;
-      P4_13.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t14");
-      itemstr = cJSON_Print(item);
-      P4_14 = itemstr;
-      P4_14.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t15");
-      itemstr = cJSON_Print(item);
-      P4_15 = itemstr;
-      P4_15.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t16");
-      itemstr = cJSON_Print(item);
-      P4_16 = itemstr;
-      P4_16.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t17");
-      itemstr = cJSON_Print(item);
-      P4_17 = itemstr;
-      P4_17.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t18");
-      itemstr = cJSON_Print(item);
-      P4_18 = itemstr;
-      P4_18.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t19");
-      itemstr = cJSON_Print(item);
-      P4_19 = itemstr;
-      P4_19.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t20");
-      itemstr = cJSON_Print(item);
-      P4_20 = itemstr;
-      P4_20.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t21");
-      itemstr = cJSON_Print(item);
-      P4_21 = itemstr;
-      P4_21.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t22");
-      itemstr = cJSON_Print(item);
-      P4_22 = itemstr;
-      P4_22.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t23");
-      itemstr = cJSON_Print(item);
-      P4_23 = itemstr;
-      P4_23.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t24");
-      itemstr = cJSON_Print(item);
-      P4_24 = itemstr;
-      P4_24.replace("\"", "");
-
-      filestr = getFileString(SPIFFS, "/p5.ini");
-      const char *p5json = filestr.c_str();
-      root = cJSON_Parse(p5json);
-
-      item = cJSON_GetObjectItem(root, "t0");
-      itemstr = cJSON_Print(item);
-      P5_0 = itemstr;
-      P5_0.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t1");
-      itemstr = cJSON_Print(item);
-      P5_1 = itemstr;
-      P5_1.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t2");
-      itemstr = cJSON_Print(item);
-      P5_2 = itemstr;
-      P5_2.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t3");
-      itemstr = cJSON_Print(item);
-      P5_3 = itemstr;
-      P5_3.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t4");
-      itemstr = cJSON_Print(item);
-      P5_4 = itemstr;
-      P5_4.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t5");
-      itemstr = cJSON_Print(item);
-      P5_5 = itemstr;
-      P5_5.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t6");
-      itemstr = cJSON_Print(item);
-      P5_6 = itemstr;
-      P5_6.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t7");
-      itemstr = cJSON_Print(item);
-      P5_7 = itemstr;
-      P5_7.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t8");
-      itemstr = cJSON_Print(item);
-      P5_8 = itemstr;
-      P5_8.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t9");
-      itemstr = cJSON_Print(item);
-      P5_9 = itemstr;
-      P5_9.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t10");
-      itemstr = cJSON_Print(item);
-      P5_10 = itemstr;
-      P5_10.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t11");
-      itemstr = cJSON_Print(item);
-      P5_11 = itemstr;
-      P5_11.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t12");
-      itemstr = cJSON_Print(item);
-      P5_12 = itemstr;
-      P5_12.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t13");
-      itemstr = cJSON_Print(item);
-      P5_13 = itemstr;
-      P5_13.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t14");
-      itemstr = cJSON_Print(item);
-      P5_14 = itemstr;
-      P5_14.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t15");
-      itemstr = cJSON_Print(item);
-      P5_15 = itemstr;
-      P5_15.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t16");
-      itemstr = cJSON_Print(item);
-      P5_16 = itemstr;
-      P5_16.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t17");
-      itemstr = cJSON_Print(item);
-      P5_17 = itemstr;
-      P5_17.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t18");
-      itemstr = cJSON_Print(item);
-      P5_18 = itemstr;
-      P5_18.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t19");
-      itemstr = cJSON_Print(item);
-      P5_19 = itemstr;
-      P5_19.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t20");
-      itemstr = cJSON_Print(item);
-      P5_20 = itemstr;
-      P5_20.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t21");
-      itemstr = cJSON_Print(item);
-      P5_21 = itemstr;
-      P5_21.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t22");
-      itemstr = cJSON_Print(item);
-      P5_22 = itemstr;
-      P5_22.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t23");
-      itemstr = cJSON_Print(item);
-      P5_23 = itemstr;
-      P5_23.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t24");
-      itemstr = cJSON_Print(item);
-      P5_24 = itemstr;
-      P5_24.replace("\"", "");
-
-      filestr = getFileString(SPIFFS, "/p6.ini");
-      const char *p6json = filestr.c_str();
-      root = cJSON_Parse(p6json);
-
-      item = cJSON_GetObjectItem(root, "t0");
-      itemstr = cJSON_Print(item);
-      P6_0 = itemstr;
-      P6_0.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t1");
-      itemstr = cJSON_Print(item);
-      P6_1 = itemstr;
-      P6_1.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t2");
-      itemstr = cJSON_Print(item);
-      P6_2 = itemstr;
-      P6_2.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t3");
-      itemstr = cJSON_Print(item);
-      P6_3 = itemstr;
-      P6_3.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t4");
-      itemstr = cJSON_Print(item);
-      P6_4 = itemstr;
-      P6_4.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t5");
-      itemstr = cJSON_Print(item);
-      P6_5 = itemstr;
-      P6_5.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t6");
-      itemstr = cJSON_Print(item);
-      P6_6 = itemstr;
-      P6_6.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t7");
-      itemstr = cJSON_Print(item);
-      P6_7 = itemstr;
-      P6_7.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t8");
-      itemstr = cJSON_Print(item);
-      P6_8 = itemstr;
-      P6_8.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t9");
-      itemstr = cJSON_Print(item);
-      P6_9 = itemstr;
-      P6_9.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t10");
-      itemstr = cJSON_Print(item);
-      P6_10 = itemstr;
-      P6_10.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t11");
-      itemstr = cJSON_Print(item);
-      P6_11 = itemstr;
-      P6_11.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t12");
-      itemstr = cJSON_Print(item);
-      P6_12 = itemstr;
-      P6_12.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t13");
-      itemstr = cJSON_Print(item);
-      P6_13 = itemstr;
-      P6_13.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t14");
-      itemstr = cJSON_Print(item);
-      P6_14 = itemstr;
-      P6_14.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t15");
-      itemstr = cJSON_Print(item);
-      P6_15 = itemstr;
-      P6_15.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t16");
-      itemstr = cJSON_Print(item);
-      P6_16 = itemstr;
-      P6_16.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t17");
-      itemstr = cJSON_Print(item);
-      P6_17 = itemstr;
-      P6_17.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t18");
-      itemstr = cJSON_Print(item);
-      P6_18 = itemstr;
-      P6_18.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t19");
-      itemstr = cJSON_Print(item);
-      P6_19 = itemstr;
-      P6_19.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t20");
-      itemstr = cJSON_Print(item);
-      P6_20 = itemstr;
-      P6_20.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t21");
-      itemstr = cJSON_Print(item);
-      P6_21 = itemstr;
-      P6_21.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t22");
-      itemstr = cJSON_Print(item);
-      P6_22 = itemstr;
-      P6_22.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t23");
-      itemstr = cJSON_Print(item);
-      P6_23 = itemstr;
-      P6_23.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t24");
-      itemstr = cJSON_Print(item);
-      P6_24 = itemstr;
-      P6_24.replace("\"", "");
-
-      filestr = getFileString(SPIFFS, "/p7.ini");
-      const char *p7json = filestr.c_str();
-      root = cJSON_Parse(p7json);
-
-      item = cJSON_GetObjectItem(root, "t0");
-      itemstr = cJSON_Print(item);
-      P7_0 = itemstr;
-      P7_0.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t1");
-      itemstr = cJSON_Print(item);
-      P7_1 = itemstr;
-      P7_1.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t2");
-      itemstr = cJSON_Print(item);
-      P7_2 = itemstr;
-      P7_2.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t3");
-      itemstr = cJSON_Print(item);
-      P7_3 = itemstr;
-      P7_3.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t4");
-      itemstr = cJSON_Print(item);
-      P7_4 = itemstr;
-      P7_4.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t5");
-      itemstr = cJSON_Print(item);
-      P7_5 = itemstr;
-      P7_5.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t6");
-      itemstr = cJSON_Print(item);
-      P7_6 = itemstr;
-      P7_6.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t7");
-      itemstr = cJSON_Print(item);
-      P7_7 = itemstr;
-      P7_7.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t8");
-      itemstr = cJSON_Print(item);
-      P7_8 = itemstr;
-      P7_8.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t9");
-      itemstr = cJSON_Print(item);
-      P7_9 = itemstr;
-      P7_9.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t10");
-      itemstr = cJSON_Print(item);
-      P7_10 = itemstr;
-      P7_10.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t11");
-      itemstr = cJSON_Print(item);
-      P7_11 = itemstr;
-      P7_11.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t12");
-      itemstr = cJSON_Print(item);
-      P7_12 = itemstr;
-      P7_12.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t13");
-      itemstr = cJSON_Print(item);
-      P7_13 = itemstr;
-      P7_13.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t14");
-      itemstr = cJSON_Print(item);
-      P7_14 = itemstr;
-      P7_14.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t15");
-      itemstr = cJSON_Print(item);
-      P7_15 = itemstr;
-      P7_15.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t16");
-      itemstr = cJSON_Print(item);
-      P7_16 = itemstr;
-      P7_16.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t17");
-      itemstr = cJSON_Print(item);
-      P7_17 = itemstr;
-      P7_17.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t18");
-      itemstr = cJSON_Print(item);
-      P7_18 = itemstr;
-      P7_18.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t19");
-      itemstr = cJSON_Print(item);
-      P7_19 = itemstr;
-      P7_19.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t20");
-      itemstr = cJSON_Print(item);
-      P7_20 = itemstr;
-      P7_20.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t21");
-      itemstr = cJSON_Print(item);
-      P7_21 = itemstr;
-      P7_21.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t22");
-      itemstr = cJSON_Print(item);
-      P7_22 = itemstr;
-      P7_22.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t23");
-      itemstr = cJSON_Print(item);
-      P7_23 = itemstr;
-      P7_23.replace("\"", "");
-      item = cJSON_GetObjectItem(root, "t24");
-      itemstr = cJSON_Print(item);
-      P7_24 = itemstr;
-      P7_24.replace("\"", "");
+      // online or offline light operation
+      lightopr();
     }
   }
 
   SPIFFS.end();
 
-
+  // index page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     if (!SPIFFS.begin())
     {
@@ -1964,7 +2013,7 @@ void setup()
     String testmode = itemstr;
     item = cJSON_GetObjectItem(root, "sysdate");
     itemstr = cJSON_Print(item);
-    String sysdate = itemstr;    
+    String sysdate = itemstr;
     sysdate.replace("\"", "");
     PWM_INFO_RTC = sysdate;
     item = cJSON_GetObjectItem(root, "status");
@@ -1975,20 +2024,20 @@ void setup()
     String conmode = itemstr;
     // item = cJSON_GetObjectItem(root, "version");
     // itemstr = cJSON_Print(item);
-    //String version = itemstr;    
+    //String version = itemstr;
     //version.replace("\"", "");
     //todo
     String version = VERSION_NUM;
     Serial.println("the version is: " + version);
     String html = "";
     html = html + "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>NodeMCU Control Page</title><!--<script type=\"text/javascript\"src=\"jquery.js\"></script>--></head><body><div><h1 id=\"title\">基本信息</h1><table><tr><th style=\"text-align:left;\">版本号</th></tr><tr><td><span id=\"spversion\"></span></td></tr><tr><th style=\"text-align:left;\">系统时间</th></tr><tr><td><span id=\"spCurrent\"></span></td></tr><tr><th style=\"text-align: left;\">修改时间</th></tr><tr><td><input type=\"text\"value=\"2018-03-03 00:00:00\"id=\"txtsysdate\"/>*时间格式:2018-03-03 00:00:00</td></tr><tr><th style=\"text-align:left;\">循环模式</th></tr><tr><td><input type=\"radio\"value=\"repeat\"name=\"showtype\"id=\"rdRpt\"/>循环模式<input type=\"radio\"value=\"fix\"name=\"showtype\"id=\"rdFix\"/>固定模式</td></tr><tr id=\"thtest\"><th style=\"text-align:left;\">是否测试</th></tr><tr id=\"tdtest\"><td><input value=\"production\"type=\"radio\"name=\"testMode\"id=\"rdPrd\"/>否<input value=\"test\"type=\"radio\"name=\"testMode\"id=\"rdTest\"/>是</td></tr><tr id=\"thonline\"><th style=\"text-align:left;\">云端控制</th></tr><tr id=\"tdonline\"><td><input value=\"local\"type=\"radio\"name=\"onlineMode\"id=\"rdlocal\"/>否<input value=\"online\"type=\"radio\"name=\"onlineMode\"id=\"rdonline\"/>是</td></tr><tr><td><input type=\"button\"value=\"联网设置\"id=\"btnwifi\"onclick=\"wifi();\"/><input type=\"submit\"value=\"保存\"id=\"submit\"onclick=\"submit();\"/><input type=\"button\"value=\"恢复出厂\"id=\"btnstop\"onclick=\"init();\"/><input type=\"button\"value=\"重启\"id=\"btnReset\"onclick=\"reset();\"/><input type=\"button\"value=\"更新固件\"id=\"btnupload\"onclick=\"upload();\"/></td></tr></table><hr/><h1 id=\"title\">灯光控制</h1><table><tr><th>第一排</th><th>第二排</th><th>第三排</th><th>第四排</th><th>第五排</th><th>第六排</th><th>第七排</th></tr><tr><td><a href=\"/p?mode=p1\">查看/修改</a></td><td><a href=\"/p?mode=p2\">查看/修改</a></td><td><a href=\"/p?mode=p3\">查看/修改</a></td><td><a href=\"/p?mode=p4\">查看/修改</a></td><td><a href=\"/p?mode=p5\">查看/修改</a></td><td><a href=\"/p?mode=p6\">查看/修改</a></td><td><a href=\"/p?mode=p7\">查看/修改</a></td></tr></table></div><script>function submit(){var selectshowtype=document.getElementsByName('showtype');var showtypevalue=\"\";for(var i=0;i<selectshowtype.length;i++){if(selectshowtype[i].checked){showtypevalue=selectshowtype[i].value;break}}var selecttestmode=document.getElementsByName('testMode');var testmodevalue=\"\";for(var i=0;i<selecttestmode.length;i++){if(selecttestmode[i].checked){testmodevalue=selecttestmode[i].value;break}}var str=document.getElementById('txtsysdate').value;str=str.replace(/-/g,\"/\");var date=new Date(str);var unixDate=date.getTime()/1000|0;console.log(unixDate);var selectedconnectionmode=document.getElementsByName(\"onlineMode\");var connectionmodevalue=\"\";for(var i=0;i<selectedconnectionmode.length;i++){if(selectedconnectionmode[i].checked){connectionmodevalue=selectedconnectionmode[i].value;break}}alert('保存成功');var url=\"pwmopr?showtype=\"+showtypevalue+\"&testmode=\"+testmodevalue+\"&sysdate=\"+unixDate+\"&conmode=\"+connectionmodevalue;window.location.href=url}function init(){alert('已恢复出厂设置!');var url=\"init\";window.location.href=url}function wifi(){var url=\"wifi\";window.location.href=url}function reset(){var url=\"reset\";alert(\"已重启,请关闭当前页面\");window.location.href=url}function upload(){var url=\"upload\";window.location.href=url}</script></body></html>";
-    
+
     // String tpl_version = "<span id=\"spversion\"></span>";
     // String change_version = "<span id=\"spversion\">";
     // change_version = change_version + version;
     // change_version = change_version + "</span>";
     // html.replace(tpl_version, change_version);
-    
+
     String tpl_currentdate = "<span id=\"spCurrent\"></span>";
     String change_currentdate = "<span id=\"spCurrent\">";
     time_t t = time(NULL);
@@ -1997,9 +2046,9 @@ void setup()
     char nowtime[24];
     memset(nowtime, 0, sizeof(nowtime));
     strftime(nowtime, 24, "%Y-%m-%d %H:%M:%S", t_st);
-    String strDate = nowtime;    
+    String strDate = nowtime;
     //Serial.println(strDate);
-    
+
     change_currentdate = change_currentdate + strDate;
     change_currentdate = change_currentdate + "</span>";
     html.replace(tpl_currentdate, change_currentdate);
@@ -2065,6 +2114,7 @@ void setup()
     request->send(200, "text/html", html);
   });
 
+  // light page
   server.on("/p", HTTP_GET, [](AsyncWebServerRequest *request) {
     String lightSeq;
     String html = "";
@@ -2339,6 +2389,7 @@ void setup()
     request->send(200, "text/html", html);
   });
 
+  // light setting
   server.on("/setp", HTTP_GET, [](AsyncWebServerRequest *request) {
     String lightSeq;
     String t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24;
@@ -2638,6 +2689,7 @@ void setup()
     request->redirect("/p?mode=" + lightSeq);
   });
 
+  // basic page
   server.on("/pwmopr", HTTP_GET, [](AsyncWebServerRequest *request) {
     String showtype;
     String testmode;
@@ -2672,7 +2724,7 @@ void setup()
       PWM_INFO_RTC = sysdate;
 
       struct timeval stime;
-      stime.tv_sec = PWM_INFO_RTC.toInt() +28816;
+      stime.tv_sec = PWM_INFO_RTC.toInt() + 28816;
       settimeofday(&stime, NULL);
       //Serial.println("the new time is: " + PWM_INFO_RTC);
       writeFile(SPIFFS, "/pwminfo.ini", filecontent.c_str());
@@ -2681,6 +2733,7 @@ void setup()
     request->redirect("/");
   });
 
+  // init system
   server.on("/init", HTTP_GET, [](AsyncWebServerRequest *request) {
     if (!SPIFFS.begin())
     {
@@ -2694,6 +2747,7 @@ void setup()
     request->redirect("/");
   });
 
+  // wifi page
   server.on("/wifi", HTTP_GET, [](AsyncWebServerRequest *request) {
     String rawhtml = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>WiFi Setup Page</title></head><body><div><h1 id=\"title\">联网设置</h1><table><tr><th style=\"text-align:left;\">WIFI名称</th></tr><tr><td><input type=\"text\"id=\"txtssid\"/></td></tr><tr><th style=\"text-align:left;\">WIFI密码</th></tr><tr><td><input type=\"text\"id=\"txtpwd\"/></td></tr><tr><td><input type=\"submit\"value=\"连接\"id=\"btnConnect\"onclick=\"submit()\"/><input type=\"button\"value=\"返回\"id=\"btnBack\"onclick=\"back()\"/></td></tr><tr><td><span id=\"spResult\"></span></td></tr></table><hr/><h1 id=\"title\">WIFI热点扫描</h1><table id=\"wifilist\"></table></div><script>function submit(){var ssid=document.getElementById('txtssid').value;var pwd=document.getElementById('txtpwd').value;alert(\"正在连接热点,请关闭此页面并切换选择的热点，通过http://esp32访问\");var url=\"savewifi?ssid=\"+ssid+\"&pwd=\"+pwd;window.location.href=url}function back(){var url=\"/\";window.location.href=url}</script></body></html>";
     if (!SPIFFS.begin())
@@ -2754,6 +2808,7 @@ void setup()
     request->send(200, "text/html", rawhtml);
   });
 
+  // wifi setting
   server.on("/savewifi", HTTP_GET, [](AsyncWebServerRequest *request) {
     if (request->hasParam("ssid"))
     {
@@ -2782,16 +2837,19 @@ void setup()
     request->redirect("/");
   });
 
+  // reset operation
   server.on("/reset", HTTP_GET, [](AsyncWebServerRequest *request) {
     Serial.println("Start to reset....");
     ESP.restart();
   });
 
+  // bin upload page
   server.on("/upload", HTTP_GET, [](AsyncWebServerRequest *request) {
     String html = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>Update System</title><script src='https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js'></script></head><body><div><h1 id=\"title\">更新固件</h1><hr/><form method='POST'action='#'enctype='multipart/form-data'id='upload_form'><input type='file'name='update'/><input type='submit'value='更新'/></form><div id='prg'>progress:0%</div></div><script>$('form').submit(function(e){e.preventDefault();var form=$('#upload_form')[0];var data=new FormData(form);$.ajax({url:'/update',type:'POST',data:data,contentType:false,processData:false,xhr:function(){var xhr=new window.XMLHttpRequest();xhr.upload.addEventListener('progress',function(evt){if(evt.lengthComputable){var per=evt.loaded/evt.total;$('#prg').html('progress: '+Math.round(per*100)+'%')}},false);return xhr},success:function(d,s){console.log('success!')},error:function(a,b,c){}})});</script></body></html>";
     request->send(200, "text/html", html);
   });
 
+  // update operation
   server.on("/update", HTTP_POST, [](AsyncWebServerRequest *request) {
     if (!SPIFFS.begin())
     {
@@ -2811,6 +2869,7 @@ void setup()
   server.begin();
 }
 
+// esp32 loop operation
 void loop()
 {
   client.loop();
@@ -3107,7 +3166,7 @@ void loop()
           led5.set(P5_0.toInt());
           led6.set(P6_0.toInt());
           led7.set(P7_0.toInt());
-          client.publish("esp32/heart","esp004 alive");
+          client.publish("esp32/heart", "esp004 alive");
         }
         else if (currentsec == 1 || currentsec == 31)
         {
@@ -3351,34 +3410,32 @@ void loop()
       led5.set(P5_24.toInt());
       led6.set(P6_24.toInt());
       led7.set(P7_24.toInt());
-      String topiccontent = ESP_HOST_NAME;
-      
-      // if(IS_SMART)
-      // {
-      //   if(WiFi.status() != WL_CONNECTED) {
-      //     Serial.printf("%s disconnected ..\n",ESP_HOST_NAME);
-      //     client.publish("esp32/disnotify",ESP_HOST_NAME);
-      //   }
-      // }
-      Serial.printf("the connect status is: %d, the ssid is: %s\n",WL_CONNECTED,SSID.c_str());
-      if(IS_SMART)
+      //String topiccontent = ESP_HOST_NAME;
+      Serial.printf("the connect status is: %d, the smart status is: %d, the mqtt is: %d, the ssid is: %s \n", WiFi.status(), WiFi.smartConfigDone(), client.connected(), SSID.c_str());
+      if (IS_SMART)
       {
-        if(WiFi.status() != WL_CONNECTED)
+        if (WiFi.status() != WL_CONNECTED && !WiFi.smartConfigDone())
         {
-            led8.set(0);
-            Serial.printf("%s disconnected ..\n",ESP_HOST_NAME);
-            client.publish("esp32/disnotify",ESP_HOST_NAME);
-            if(SSID != "")
-            {
-               WiFi.begin(SSID.c_str(), SSID_PWD.c_str());
-            }
+          led8.set(0);
+          Serial.printf("here it is: %s disconnected ..\n", ESP_HOST_NAME);
+          client.publish("esp32/disnotify", ESP_HOST_NAME);
+          if (SSID != "")
+          {
+            WiFi.begin(SSID.c_str(), SSID_PWD.c_str());
+          }
+        }
+        else if ((WiFi.status() == WL_CONNECTED || WiFi.smartConfigDone()) && !client.connected())
+        {
+          led8.set(5);
+          Serial.println("the mqtt service is disconnected");
+          mqttconn();
+          client.publish("esp32/disnotify", ESP_HOST_NAME);
         }
       }
-      
-      topiccontent = topiccontent + " is alive";
-      client.publish("esp32/heart",topiccontent.c_str());
-      //Serial.println("....let7: " +P7_24);
-      //led7.set(100);
+      if (client.connected())
+      {
+        client.publish("esp32/heart", ESP_HOST_NAME);
+      }
     }
   }
   delay(1000);
