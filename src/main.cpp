@@ -11,7 +11,7 @@
 #include <PubSubClient.h>
 
 #define RESET_BUTTON 16
-#define VERSION_NUM "0.16"
+#define VERSION_NUM "0.18"
 #define ESP_HOST_NAME "esp004"
 #define ESP_RTC_TICK 1539666903
 
@@ -30,6 +30,10 @@ bool RESET_FLAG = false;
 const char *ssid = ESP_HOST_NAME;
 const char *password = "11111111";
 const char *host = ESP_HOST_NAME;
+// const char *mqttServer = "m12.cloudmqtt.com";
+// const int mqttPort = 16610;
+// const char *mqttuser = "cqyjmitd";
+// const char *mqttpwd = "SXLMuaorn881";
 const char *mqttServer = "m12.cloudmqtt.com";
 const int mqttPort = 16610;
 const char *mqttuser = "cqyjmitd";
@@ -47,7 +51,6 @@ LED_ESP32 led8(2, 7, 100);
 AsyncWebServer server(80);
 WiFiClient espClient;
 PubSubClient client(espClient);
-
 
 // file operation begin
 String getFileString(fs::FS &fs, const char *path)
@@ -146,6 +149,7 @@ void initFileSystem()
   pwminfocontent.replace("{unixtick}", String(ESP_RTC_TICK));
   writeFile(SPIFFS, "/pwminfo.ini", pwminfocontent.c_str());
 
+  writeFile(SPIFFS, "/p.ini", "{\"p1\":{\"t0\":0,\"t1\":0,\"t2\":0,\"t3\":0,\"t4\":0,\"t5\":0,\"t6\":0,\"t7\":0,\"t8\":0,\"t9\":0,\"t10\":0,\"t11\":0,\"t12\":0,\"t13\":0,\"t14\":0,\"t15\":0,\"t16\":0,\"t17\":0,\"t18\":0,\"t19\":0,\"t20\":0,\"t21\":0,\"t22\":0,\"t23\":0,\"t24\":0},\"p2\":{\"t0\":0,\"t1\":0,\"t2\":0,\"t3\":0,\"t4\":0,\"t5\":0,\"t6\":0,\"t7\":0,\"t8\":0,\"t9\":0,\"t10\":0,\"t11\":0,\"t12\":0,\"t13\":0,\"t14\":0,\"t15\":0,\"t16\":0,\"t17\":0,\"t18\":0,\"t19\":0,\"t20\":0,\"t21\":0,\"t22\":0,\"t23\":0,\"t24\":0},\"p3\":{\"t0\":0,\"t1\":0,\"t2\":0,\"t3\":0,\"t4\":0,\"t5\":0,\"t6\":0,\"t7\":0,\"t8\":0,\"t9\":0,\"t10\":0,\"t11\":0,\"t12\":0,\"t13\":0,\"t14\":0,\"t15\":0,\"t16\":0,\"t17\":0,\"t18\":0,\"t19\":0,\"t20\":0,\"t21\":0,\"t22\":0,\"t23\":0,\"t24\":0},\"p4\":{\"t0\":0,\"t1\":0,\"t2\":0,\"t3\":0,\"t4\":0,\"t5\":0,\"t6\":0,\"t7\":0,\"t8\":0,\"t9\":0,\"t10\":0,\"t11\":0,\"t12\":0,\"t13\":0,\"t14\":0,\"t15\":0,\"t16\":0,\"t17\":0,\"t18\":0,\"t19\":0,\"t20\":0,\"t21\":0,\"t22\":0,\"t23\":0,\"t24\":0},\"p5\":{\"t0\":0,\"t1\":0,\"t2\":0,\"t3\":0,\"t4\":0,\"t5\":0,\"t6\":0,\"t7\":0,\"t8\":0,\"t9\":0,\"t10\":0,\"t11\":0,\"t12\":0,\"t13\":0,\"t14\":0,\"t15\":0,\"t16\":0,\"t17\":0,\"t18\":0,\"t19\":0,\"t20\":0,\"t21\":0,\"t22\":0,\"t23\":0,\"t24\":0},\"p6\":{\"t0\":0,\"t1\":0,\"t2\":0,\"t3\":0,\"t4\":0,\"t5\":0,\"t6\":0,\"t7\":0,\"t8\":0,\"t9\":0,\"t10\":0,\"t11\":0,\"t12\":0,\"t13\":0,\"t14\":0,\"t15\":0,\"t16\":0,\"t17\":0,\"t18\":0,\"t19\":0,\"t20\":0,\"t21\":0,\"t22\":0,\"t23\":0,\"t24\":0}}");
   writeFile(SPIFFS, "/p1.ini", "{\"t0\":0,\"t1\":0,\"t2\":0,\"t3\":0,\"t4\":0,\"t5\":0,\"t6\":0,\"t7\":0,\"t8\":0,\"t9\":0,\"t10\":0,\"t11\":0,\"t12\":0,\"t13\":0,\"t14\":0,\"t15\":0,\"t16\":0,\"t17\":0,\"t18\":0,\"t19\":0,\"t20\":0,\"t21\":0,\"t22\":0,\"t23\":0,\"t24\":0}");
   writeFile(SPIFFS, "/p2.ini", "{\"t0\":0,\"t1\":0,\"t2\":0,\"t3\":0,\"t4\":0,\"t5\":0,\"t6\":0,\"t7\":0,\"t8\":0,\"t9\":0,\"t10\":0,\"t11\":0,\"t12\":0,\"t13\":0,\"t14\":0,\"t15\":0,\"t16\":0,\"t17\":0,\"t18\":0,\"t19\":0,\"t20\":0,\"t21\":0,\"t22\":0,\"t23\":0,\"t24\":0}");
   writeFile(SPIFFS, "/p3.ini", "{\"t0\":0,\"t1\":0,\"t2\":0,\"t3\":0,\"t4\":0,\"t5\":0,\"t6\":0,\"t7\":0,\"t8\":0,\"t9\":0,\"t10\":0,\"t11\":0,\"t12\":0,\"t13\":0,\"t14\":0,\"t15\":0,\"t16\":0,\"t17\":0,\"t18\":0,\"t19\":0,\"t20\":0,\"t21\":0,\"t22\":0,\"t23\":0,\"t24\":0}");
@@ -238,6 +242,8 @@ void callback(char *topic, byte *payload, unsigned int length)
   topic_name_p6 = topic_name_p6 + "/p6";
   String topic_name_p7 = ESP_HOST_NAME;
   topic_name_p7 = topic_name_p7 + "/p7";
+  String topic_name_pt = ESP_HOST_NAME;
+  topic_name_pt = topic_name_pt + "/pt";
 
   String checkonine = ESP_HOST_NAME;
   checkonine = checkonine + "/check";
@@ -247,6 +253,9 @@ void callback(char *topic, byte *payload, unsigned int length)
   {
     filecontent = filecontent + (char)payload[i];
   }
+
+  //Serial.println("the content is: " + filecontent);
+
   String tpl_content = "{\"t0\":{t0},\"t1\":{t1},\"t2\":{t2},\"t3\":{t3},\"t4\":{t4},\"t5\":{t5},\"t6\":{t6},\"t7\":{t7},\"t8\":{t8},\"t9\":{t9},\"t10\":{t10},\"t11\":{t11},\"t12\":{t12},\"t13\":{t13},\"t14\":{t14},\"t15\":{t15},\"t16\":{t16},\"t17\":{t17},\"t18\":{t18},\"t19\":{t19},\"t20\":{t20},\"t21\":{t21},\"t22\":{t22},\"t23\":{t23},\"t24\":{t24}}";
   char *p_content;
   char dst[30][80];
@@ -318,6 +327,13 @@ void callback(char *topic, byte *payload, unsigned int length)
     struct timeval stime;
     stime.tv_sec = PWM_INFO_RTC.toInt() + 28816;
     settimeofday(&stime, NULL);
+  }
+  else if(String(topic) == topic_name_pt) {
+    for(int i=0;i<cnt;i++) {
+      Serial.println(dst[i]);
+      Serial.println(strlen(dst[i]));
+      
+    }
   }
   else if (String(topic) == topic_name_p1)
   {
@@ -949,11 +965,6 @@ void callback(char *topic, byte *payload, unsigned int length)
     filecontent = tpl_content;
     writeFile(SPIFFS, "/p7.ini", filecontent.c_str());
   }
-  else if (String(topic) == "esp004/check")
-  {
-    Serial.println("i am online");
-    ESP.restart();
-  }
   else
   {
     Serial.println("mqtt action not found!");
@@ -967,11 +978,11 @@ void mqttconn()
 {
   while (!client.connected())
   {
-    Serial.println("MQTT connecting...");
+    Serial.println("MQTT is connecting...");
     if (client.connect(ESP_HOST_NAME, mqttuser, mqttpwd))
     {
       led8.set(100);
-      Serial.println("MQTT connected...");
+      Serial.println("MQTT has connected...");
       // subscribe the checktime service
       client.subscribe("esp32/checktime");
 
@@ -984,6 +995,12 @@ void mqttconn()
       String recv_topic_p = ESP_HOST_NAME;
       recv_topic_p = recv_topic_p + "/p";
       client.subscribe(recv_topic_p.c_str());
+
+      // subscribe the all light service
+      String recv_topic_pt = ESP_HOST_NAME;
+      recv_topic_pt = recv_topic_pt + "/pt";      
+      client.subscribe(recv_topic_pt.c_str());
+
 
       // subscibe the p1 light service
       String recv_topic_p1 = ESP_HOST_NAME;
@@ -1905,17 +1922,12 @@ void setup()
         SSID_PWD = pwd.c_str();
         WiFi.begin(ssid.c_str(), pwd.c_str());
         int i = 30;
-        Serial.printf("wifi connecting");
+        Serial.printf("WIFI is connecting");
         while ((WiFi.status() != WL_CONNECTED) && i > 0)
         {
           delay(1000);
           Serial.printf(".");
           i = i - 1;
-          // if (i == 1 || RESET_FLAG)
-          // {
-          //   deleteFile(SPIFFS, "/wifi.ini");
-          //   ESP.restart();
-          // }
         }
         if (WiFi.status() == WL_CONNECTED)
         {
@@ -1943,7 +1955,6 @@ void setup()
           {
             IS_SMART = true;
             led8.set(100);
-            //MDNS.begin(host);
             Serial.println("SmartConfig Success");
 
             SSID = WiFi.SSID();
@@ -2022,21 +2033,12 @@ void setup()
     item = cJSON_GetObjectItem(root, "conmode");
     itemstr = cJSON_Print(item);
     String conmode = itemstr;
-    // item = cJSON_GetObjectItem(root, "version");
-    // itemstr = cJSON_Print(item);
-    //String version = itemstr;
-    //version.replace("\"", "");
+
     //todo
     String version = VERSION_NUM;
     Serial.println("the version is: " + version);
     String html = "";
     html = html + "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>NodeMCU Control Page</title><!--<script type=\"text/javascript\"src=\"jquery.js\"></script>--></head><body><div><h1 id=\"title\">基本信息</h1><table><tr><th style=\"text-align:left;\">版本号</th></tr><tr><td><span id=\"spversion\"></span></td></tr><tr><th style=\"text-align:left;\">系统时间</th></tr><tr><td><span id=\"spCurrent\"></span></td></tr><tr><th style=\"text-align: left;\">修改时间</th></tr><tr><td><input type=\"text\"value=\"2018-03-03 00:00:00\"id=\"txtsysdate\"/>*时间格式:2018-03-03 00:00:00</td></tr><tr><th style=\"text-align:left;\">循环模式</th></tr><tr><td><input type=\"radio\"value=\"repeat\"name=\"showtype\"id=\"rdRpt\"/>循环模式<input type=\"radio\"value=\"fix\"name=\"showtype\"id=\"rdFix\"/>固定模式</td></tr><tr id=\"thtest\"><th style=\"text-align:left;\">是否测试</th></tr><tr id=\"tdtest\"><td><input value=\"production\"type=\"radio\"name=\"testMode\"id=\"rdPrd\"/>否<input value=\"test\"type=\"radio\"name=\"testMode\"id=\"rdTest\"/>是</td></tr><tr id=\"thonline\"><th style=\"text-align:left;\">云端控制</th></tr><tr id=\"tdonline\"><td><input value=\"local\"type=\"radio\"name=\"onlineMode\"id=\"rdlocal\"/>否<input value=\"online\"type=\"radio\"name=\"onlineMode\"id=\"rdonline\"/>是</td></tr><tr><td><input type=\"button\"value=\"联网设置\"id=\"btnwifi\"onclick=\"wifi();\"/><input type=\"submit\"value=\"保存\"id=\"submit\"onclick=\"submit();\"/><input type=\"button\"value=\"恢复出厂\"id=\"btnstop\"onclick=\"init();\"/><input type=\"button\"value=\"重启\"id=\"btnReset\"onclick=\"reset();\"/><input type=\"button\"value=\"更新固件\"id=\"btnupload\"onclick=\"upload();\"/></td></tr></table><hr/><h1 id=\"title\">灯光控制</h1><table><tr><th>第一排</th><th>第二排</th><th>第三排</th><th>第四排</th><th>第五排</th><th>第六排</th><th>第七排</th></tr><tr><td><a href=\"/p?mode=p1\">查看/修改</a></td><td><a href=\"/p?mode=p2\">查看/修改</a></td><td><a href=\"/p?mode=p3\">查看/修改</a></td><td><a href=\"/p?mode=p4\">查看/修改</a></td><td><a href=\"/p?mode=p5\">查看/修改</a></td><td><a href=\"/p?mode=p6\">查看/修改</a></td><td><a href=\"/p?mode=p7\">查看/修改</a></td></tr></table></div><script>function submit(){var selectshowtype=document.getElementsByName('showtype');var showtypevalue=\"\";for(var i=0;i<selectshowtype.length;i++){if(selectshowtype[i].checked){showtypevalue=selectshowtype[i].value;break}}var selecttestmode=document.getElementsByName('testMode');var testmodevalue=\"\";for(var i=0;i<selecttestmode.length;i++){if(selecttestmode[i].checked){testmodevalue=selecttestmode[i].value;break}}var str=document.getElementById('txtsysdate').value;str=str.replace(/-/g,\"/\");var date=new Date(str);var unixDate=date.getTime()/1000|0;console.log(unixDate);var selectedconnectionmode=document.getElementsByName(\"onlineMode\");var connectionmodevalue=\"\";for(var i=0;i<selectedconnectionmode.length;i++){if(selectedconnectionmode[i].checked){connectionmodevalue=selectedconnectionmode[i].value;break}}alert('保存成功');var url=\"pwmopr?showtype=\"+showtypevalue+\"&testmode=\"+testmodevalue+\"&sysdate=\"+unixDate+\"&conmode=\"+connectionmodevalue;window.location.href=url}function init(){alert('已恢复出厂设置!');var url=\"init\";window.location.href=url}function wifi(){var url=\"wifi\";window.location.href=url}function reset(){var url=\"reset\";alert(\"已重启,请关闭当前页面\");window.location.href=url}function upload(){var url=\"upload\";window.location.href=url}</script></body></html>";
-
-    // String tpl_version = "<span id=\"spversion\"></span>";
-    // String change_version = "<span id=\"spversion\">";
-    // change_version = change_version + version;
-    // change_version = change_version + "</span>";
-    // html.replace(tpl_version, change_version);
 
     String tpl_currentdate = "<span id=\"spCurrent\"></span>";
     String change_currentdate = "<span id=\"spCurrent\">";
@@ -2891,7 +2893,36 @@ void loop()
   struct tm *t_st;
   t_st = localtime(&t);
   int currenthour = t_st->tm_hour;
+  int currentmin = t_st->tm_min;
   int currentsec = t_st->tm_sec;
+
+  if (currentmin == 0 || currentmin == 5 || currentmin == 10 || currentmin == 15 || currentmin == 20 || currentmin == 25 || currentmin == 30 || currentmin == 35 || currentmin == 40 || currentmin == 45 || currentmin == 50 || currentmin == 55)
+  {
+    if (SSID != "" && WiFi.status() != WL_CONNECTED)
+    {
+      led8.set(0);
+      Serial.printf(" %s try to reconnecting ..\n", ESP_HOST_NAME);
+      WiFi.begin(SSID.c_str(), SSID_PWD.c_str());
+      int i = 30;
+      while ((WiFi.status() != WL_CONNECTED) && i > 0)
+      {
+        led8.set(100);
+        delay(500);
+        led8.set(0);
+        Serial.printf(".");
+        i = i - 1;
+      }
+      if (WiFi.status() == WL_CONNECTED)
+      {
+        Serial.println(WiFi.localIP());
+        led8.set(100);
+        client.setServer(mqttServer, mqttPort);
+        client.setCallback(callback);
+        mqttconn();
+      }
+    }
+  }
+
   if (PWM_INFO_CONMODE == "online")
   {
     Serial.println("connection to the cloud....");
@@ -3166,7 +3197,6 @@ void loop()
           led5.set(P5_0.toInt());
           led6.set(P6_0.toInt());
           led7.set(P7_0.toInt());
-          client.publish("esp32/heart", "esp004 alive");
         }
         else if (currentsec == 1 || currentsec == 31)
         {
@@ -3399,6 +3429,22 @@ void loop()
           led7.set(P7_23.toInt());
         }
       }
+
+      if (IS_SMART)
+      {
+
+        if ((WiFi.status() == WL_CONNECTED || WiFi.smartConfigDone()) && !client.connected())
+        {
+          led8.set(5);
+          Serial.println("the mqtt service is disconnected");
+          mqttconn();
+          client.publish("esp32/disnotify", ESP_HOST_NAME);
+        }
+      }
+      if (client.connected())
+      {
+        client.publish("esp32/heart", ESP_HOST_NAME);
+      }
     }
     else if (PWM_INFO_SHOWTYPE == "fix")
     {
@@ -3411,20 +3457,11 @@ void loop()
       led6.set(P6_24.toInt());
       led7.set(P7_24.toInt());
       //String topiccontent = ESP_HOST_NAME;
-      Serial.printf("the connect status is: %d, the smart status is: %d, the mqtt is: %d, the ssid is: %s \n", WiFi.status(), WiFi.smartConfigDone(), client.connected(), SSID.c_str());
+      //Serial.printf("the connect status is: %d, the smart status is: %d, the mqtt is: %d, the ssid is: %s \n", WiFi.status(), WiFi.smartConfigDone(), client.connected(), SSID.c_str());
       if (IS_SMART)
       {
-        if (WiFi.status() != WL_CONNECTED && !WiFi.smartConfigDone())
-        {
-          led8.set(0);
-          Serial.printf("here it is: %s disconnected ..\n", ESP_HOST_NAME);
-          client.publish("esp32/disnotify", ESP_HOST_NAME);
-          if (SSID != "")
-          {
-            WiFi.begin(SSID.c_str(), SSID_PWD.c_str());
-          }
-        }
-        else if ((WiFi.status() == WL_CONNECTED || WiFi.smartConfigDone()) && !client.connected())
+
+        if ((WiFi.status() == WL_CONNECTED || WiFi.smartConfigDone()) && !client.connected())
         {
           led8.set(5);
           Serial.println("the mqtt service is disconnected");
