@@ -23,6 +23,17 @@ String P4_0, P4_1, P4_2, P4_3, P4_4, P4_5, P4_6, P4_7, P4_8, P4_9, P4_10, P4_11,
 String P5_0, P5_1, P5_2, P5_3, P5_4, P5_5, P5_6, P5_7, P5_8, P5_9, P5_10, P5_11, P5_12, P5_13, P5_14, P5_15, P5_16, P5_17, P5_18, P5_19, P5_20, P5_21, P5_22, P5_23, P5_24;
 String P6_0, P6_1, P6_2, P6_3, P6_4, P6_5, P6_6, P6_7, P6_8, P6_9, P6_10, P6_11, P6_12, P6_13, P6_14, P6_15, P6_16, P6_17, P6_18, P6_19, P6_20, P6_21, P6_22, P6_23, P6_24;
 String P7_0, P7_1, P7_2, P7_3, P7_4, P7_5, P7_6, P7_7, P7_8, P7_9, P7_10, P7_11, P7_12, P7_13, P7_14, P7_15, P7_16, P7_17, P7_18, P7_19, P7_20, P7_21, P7_22, P7_23, P7_24;
+
+int P1[145] = {};
+int P2[145] = {};
+int P3[145] = {};
+int P4[145] = {};
+int P5[145] = {};
+int P6[145] = {};
+int P7[145] = {};
+
+int TESTMODE_COUNT = 0;
+
 String SSID, SSID_PWD;
 //char LIGHTDEF[] = "000,001,002,003,004,005,010,011,012,013,014,015,020,021,022,023,024,025,030,031,032,033,034,035,040,041,042,043,044,045,050,051,052,053,054,055,060,061,062,063,064,065,070,071,072,073,074,075,080,081,082,083,084,085,090,091,092,093,094,095,100,101,102,103,104,105,110,111,112,113,114,115,120,121,122,123,124,125,130,131,132,133,134,135,140,141,142,143,144,145,150,151,152,153,154,155,160,161,162,163,164,165,170,171,172,173,174,175,180,181,182,183,184,185,190,191,192,193,194,195,200,201,202,203,204,205,210,211,212,213,214,215,220,221,222,223,224,225,230,231,232,233,234,235,fix";
 
@@ -1051,8 +1062,23 @@ void mqttconn()
   }
 }
 
+// void printJson(cJSON *root)
+// {
+//   for (int i = 0; i < cJSON_GetArraySize(root); i++)
+//   {
+//     cJSON *item = cJSON_GetArrayItem(root, i);
+//     if (cJSON_Object == item->type)
+//       printJson(item);
+//     else
+//     {
+//       Serial.printf("%s->", item->string);
+//       printf("%s\n", cJSON_Print(item));
+//     }
+//   }
+// }
+
 // light operation
-void lightopr()
+void lightopr(String content)
 {
   cJSON *root = NULL;
   cJSON *item = NULL;
@@ -1089,739 +1115,38 @@ void lightopr()
   PWM_INFO_VERSION = itemstr;
   PWM_INFO_VERSION.replace("\"", "");
 
-  filestr = getFileString(SPIFFS, "/p1.ini");
-  const char *p1json = filestr.c_str();
-  root = cJSON_Parse(p1json);
 
-  item = cJSON_GetObjectItem(root, "t0");
-  itemstr = cJSON_Print(item);
-  P1_0 = itemstr;
-  P1_0.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t1");
-  itemstr = cJSON_Print(item);
-  P1_1 = itemstr;
-  P1_1.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t2");
-  itemstr = cJSON_Print(item);
-  P1_2 = itemstr;
-  P1_2.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t3");
-  itemstr = cJSON_Print(item);
-  P1_3 = itemstr;
-  P1_3.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t4");
-  itemstr = cJSON_Print(item);
-  P1_4 = itemstr;
-  P1_4.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t5");
-  itemstr = cJSON_Print(item);
-  P1_5 = itemstr;
-  P1_5.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t6");
-  itemstr = cJSON_Print(item);
-  P1_6 = itemstr;
-  P1_6.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t7");
-  itemstr = cJSON_Print(item);
-  P1_7 = itemstr;
-  P1_7.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t8");
-  itemstr = cJSON_Print(item);
-  P1_8 = itemstr;
-  P1_8.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t9");
-  itemstr = cJSON_Print(item);
-  P1_9 = itemstr;
-  P1_9.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t10");
-  itemstr = cJSON_Print(item);
-  P1_10 = itemstr;
-  P1_10.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t11");
-  itemstr = cJSON_Print(item);
-  P1_11 = itemstr;
-  P1_11.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t12");
-  itemstr = cJSON_Print(item);
-  P1_12 = itemstr;
-  P1_12.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t13");
-  itemstr = cJSON_Print(item);
-  P1_13 = itemstr;
-  P1_13.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t14");
-  itemstr = cJSON_Print(item);
-  P1_14 = itemstr;
-  P1_14.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t15");
-  itemstr = cJSON_Print(item);
-  P1_15 = itemstr;
-  P1_15.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t16");
-  itemstr = cJSON_Print(item);
-  P1_16 = itemstr;
-  P1_16.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t17");
-  itemstr = cJSON_Print(item);
-  P1_17 = itemstr;
-  P1_17.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t18");
-  itemstr = cJSON_Print(item);
-  P1_18 = itemstr;
-  P1_18.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t19");
-  itemstr = cJSON_Print(item);
-  P1_19 = itemstr;
-  P1_19.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t20");
-  itemstr = cJSON_Print(item);
-  P1_20 = itemstr;
-  P1_20.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t21");
-  itemstr = cJSON_Print(item);
-  P1_21 = itemstr;
-  P1_21.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t22");
-  itemstr = cJSON_Print(item);
-  P1_22 = itemstr;
-  P1_22.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t23");
-  itemstr = cJSON_Print(item);
-  P1_23 = itemstr;
-  P1_23.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t24");
-  itemstr = cJSON_Print(item);
-  P1_24 = itemstr;
-  P1_24.replace("\"", "");
+  String sval;
+  root = cJSON_Parse(content.c_str());
+  for (int i = 0; i < cJSON_GetArraySize(root); i++)
+  {
+    String content = cJSON_GetArrayItem(root, i)->valuestring;
 
-  filestr = getFileString(SPIFFS, "/p2.ini");
-  const char *p2json = filestr.c_str();
-  root = cJSON_Parse(p2json);
+    int intval;
+    sval = content.substring(0, 2);
+    sscanf(sval.c_str(), "%x", &intval);
+    P1[i] = intval;
+    sval = content.substring(2, 4);
+    sscanf(sval.c_str(), "%x", &intval);
+    P2[i] = intval;
+    sval = content.substring(4, 6);
+    sscanf(sval.c_str(), "%x", &intval);
+    P3[i] = intval;
+    sval = content.substring(6, 8);
+    sscanf(sval.c_str(), "%x", &intval);
+    P4[i] = intval;
+    sval = content.substring(8, 10);
+    sscanf(sval.c_str(), "%x", &intval);
+    P5[i] = intval;
+    sval = content.substring(10, 12);
+    sscanf(sval.c_str(), "%x", &intval);
+    P6[i] = intval;
+    sval = content.substring(12, 14);
+    sscanf(sval.c_str(), "%x", &intval);
+    P7[i] = intval;
+  }
 
-  item = cJSON_GetObjectItem(root, "t0");
-  itemstr = cJSON_Print(item);
-  P2_0 = itemstr;
-  P2_0.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t1");
-  itemstr = cJSON_Print(item);
-  P2_1 = itemstr;
-  P2_1.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t2");
-  itemstr = cJSON_Print(item);
-  P2_2 = itemstr;
-  P2_2.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t3");
-  itemstr = cJSON_Print(item);
-  P2_3 = itemstr;
-  P2_3.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t4");
-  itemstr = cJSON_Print(item);
-  P2_4 = itemstr;
-  P2_4.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t5");
-  itemstr = cJSON_Print(item);
-  P2_5 = itemstr;
-  P2_5.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t6");
-  itemstr = cJSON_Print(item);
-  P2_6 = itemstr;
-  P2_6.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t7");
-  itemstr = cJSON_Print(item);
-  P2_7 = itemstr;
-  P2_7.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t8");
-  itemstr = cJSON_Print(item);
-  P2_8 = itemstr;
-  P2_8.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t9");
-  itemstr = cJSON_Print(item);
-  P2_9 = itemstr;
-  P2_9.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t10");
-  itemstr = cJSON_Print(item);
-  P2_10 = itemstr;
-  P2_10.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t11");
-  itemstr = cJSON_Print(item);
-  P2_11 = itemstr;
-  P2_11.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t12");
-  itemstr = cJSON_Print(item);
-  P2_12 = itemstr;
-  P2_12.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t13");
-  itemstr = cJSON_Print(item);
-  P2_13 = itemstr;
-  P2_13.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t14");
-  itemstr = cJSON_Print(item);
-  P2_14 = itemstr;
-  P2_14.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t15");
-  itemstr = cJSON_Print(item);
-  P2_15 = itemstr;
-  P2_15.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t16");
-  itemstr = cJSON_Print(item);
-  P2_16 = itemstr;
-  P2_16.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t17");
-  itemstr = cJSON_Print(item);
-  P2_17 = itemstr;
-  P2_17.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t18");
-  itemstr = cJSON_Print(item);
-  P2_18 = itemstr;
-  P2_18.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t19");
-  itemstr = cJSON_Print(item);
-  P2_19 = itemstr;
-  P2_19.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t20");
-  itemstr = cJSON_Print(item);
-  P2_20 = itemstr;
-  P2_20.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t21");
-  itemstr = cJSON_Print(item);
-  P2_21 = itemstr;
-  P2_21.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t22");
-  itemstr = cJSON_Print(item);
-  P2_22 = itemstr;
-  P2_22.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t23");
-  itemstr = cJSON_Print(item);
-  P2_23 = itemstr;
-  P2_23.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t24");
-  itemstr = cJSON_Print(item);
-  P2_24 = itemstr;
-  P2_24.replace("\"", "");
-
-  filestr = getFileString(SPIFFS, "/p3.ini");
-  const char *p3json = filestr.c_str();
-  root = cJSON_Parse(p3json);
-  item = cJSON_GetObjectItem(root, "t0");
-  itemstr = cJSON_Print(item);
-  P3_0 = itemstr;
-  P3_0.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t1");
-  itemstr = cJSON_Print(item);
-  P3_1 = itemstr;
-  P3_1.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t2");
-  itemstr = cJSON_Print(item);
-  P3_2 = itemstr;
-  P3_2.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t3");
-  itemstr = cJSON_Print(item);
-  P3_3 = itemstr;
-  P3_3.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t4");
-  itemstr = cJSON_Print(item);
-  P3_4 = itemstr;
-  P3_4.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t5");
-  itemstr = cJSON_Print(item);
-  P3_5 = itemstr;
-  P3_5.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t6");
-  itemstr = cJSON_Print(item);
-  P3_6 = itemstr;
-  P3_6.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t7");
-  itemstr = cJSON_Print(item);
-  P3_7 = itemstr;
-  P3_7.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t8");
-  itemstr = cJSON_Print(item);
-  P3_8 = itemstr;
-  P3_8.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t9");
-  itemstr = cJSON_Print(item);
-  P3_9 = itemstr;
-  P3_9.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t10");
-  itemstr = cJSON_Print(item);
-  P3_10 = itemstr;
-  P3_10.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t11");
-  itemstr = cJSON_Print(item);
-  P3_11 = itemstr;
-  P3_11.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t12");
-  itemstr = cJSON_Print(item);
-  P3_12 = itemstr;
-  P3_12.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t13");
-  itemstr = cJSON_Print(item);
-  P3_13 = itemstr;
-  P3_13.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t14");
-  itemstr = cJSON_Print(item);
-  P3_14 = itemstr;
-  P3_14.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t15");
-  itemstr = cJSON_Print(item);
-  P3_15 = itemstr;
-  P3_15.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t16");
-  itemstr = cJSON_Print(item);
-  P3_16 = itemstr;
-  P3_16.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t17");
-  itemstr = cJSON_Print(item);
-  P3_17 = itemstr;
-  P3_17.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t18");
-  itemstr = cJSON_Print(item);
-  P3_18 = itemstr;
-  P3_18.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t19");
-  itemstr = cJSON_Print(item);
-  P3_19 = itemstr;
-  P3_19.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t20");
-  itemstr = cJSON_Print(item);
-  P3_20 = itemstr;
-  P3_20.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t21");
-  itemstr = cJSON_Print(item);
-  P3_21 = itemstr;
-  P3_21.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t22");
-  itemstr = cJSON_Print(item);
-  P3_22 = itemstr;
-  P3_22.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t23");
-  itemstr = cJSON_Print(item);
-  P3_23 = itemstr;
-  P3_23.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t24");
-  itemstr = cJSON_Print(item);
-  P3_24 = itemstr;
-  P3_24.replace("\"", "");
-
-  filestr = getFileString(SPIFFS, "/p4.ini");
-  const char *p4json = filestr.c_str();
-  root = cJSON_Parse(p4json);
-
-  item = cJSON_GetObjectItem(root, "t0");
-  itemstr = cJSON_Print(item);
-  P4_0 = itemstr;
-  P4_0.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t1");
-  itemstr = cJSON_Print(item);
-  P4_1 = itemstr;
-  P4_1.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t2");
-  itemstr = cJSON_Print(item);
-  P4_2 = itemstr;
-  P4_2.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t3");
-  itemstr = cJSON_Print(item);
-  P4_3 = itemstr;
-  P4_3.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t4");
-  itemstr = cJSON_Print(item);
-  P4_4 = itemstr;
-  P4_4.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t5");
-  itemstr = cJSON_Print(item);
-  P4_5 = itemstr;
-  P4_5.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t6");
-  itemstr = cJSON_Print(item);
-  P4_6 = itemstr;
-  P4_6.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t7");
-  itemstr = cJSON_Print(item);
-  P4_7 = itemstr;
-  P4_7.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t8");
-  itemstr = cJSON_Print(item);
-  P4_8 = itemstr;
-  P4_8.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t9");
-  itemstr = cJSON_Print(item);
-  P4_9 = itemstr;
-  P4_9.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t10");
-  itemstr = cJSON_Print(item);
-  P4_10 = itemstr;
-  P4_10.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t11");
-  itemstr = cJSON_Print(item);
-  P4_11 = itemstr;
-  P4_11.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t12");
-  itemstr = cJSON_Print(item);
-  P4_12 = itemstr;
-  P4_12.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t13");
-  itemstr = cJSON_Print(item);
-  P4_13 = itemstr;
-  P4_13.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t14");
-  itemstr = cJSON_Print(item);
-  P4_14 = itemstr;
-  P4_14.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t15");
-  itemstr = cJSON_Print(item);
-  P4_15 = itemstr;
-  P4_15.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t16");
-  itemstr = cJSON_Print(item);
-  P4_16 = itemstr;
-  P4_16.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t17");
-  itemstr = cJSON_Print(item);
-  P4_17 = itemstr;
-  P4_17.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t18");
-  itemstr = cJSON_Print(item);
-  P4_18 = itemstr;
-  P4_18.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t19");
-  itemstr = cJSON_Print(item);
-  P4_19 = itemstr;
-  P4_19.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t20");
-  itemstr = cJSON_Print(item);
-  P4_20 = itemstr;
-  P4_20.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t21");
-  itemstr = cJSON_Print(item);
-  P4_21 = itemstr;
-  P4_21.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t22");
-  itemstr = cJSON_Print(item);
-  P4_22 = itemstr;
-  P4_22.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t23");
-  itemstr = cJSON_Print(item);
-  P4_23 = itemstr;
-  P4_23.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t24");
-  itemstr = cJSON_Print(item);
-  P4_24 = itemstr;
-  P4_24.replace("\"", "");
-
-  filestr = getFileString(SPIFFS, "/p5.ini");
-  const char *p5json = filestr.c_str();
-  root = cJSON_Parse(p5json);
-
-  item = cJSON_GetObjectItem(root, "t0");
-  itemstr = cJSON_Print(item);
-  P5_0 = itemstr;
-  P5_0.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t1");
-  itemstr = cJSON_Print(item);
-  P5_1 = itemstr;
-  P5_1.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t2");
-  itemstr = cJSON_Print(item);
-  P5_2 = itemstr;
-  P5_2.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t3");
-  itemstr = cJSON_Print(item);
-  P5_3 = itemstr;
-  P5_3.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t4");
-  itemstr = cJSON_Print(item);
-  P5_4 = itemstr;
-  P5_4.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t5");
-  itemstr = cJSON_Print(item);
-  P5_5 = itemstr;
-  P5_5.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t6");
-  itemstr = cJSON_Print(item);
-  P5_6 = itemstr;
-  P5_6.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t7");
-  itemstr = cJSON_Print(item);
-  P5_7 = itemstr;
-  P5_7.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t8");
-  itemstr = cJSON_Print(item);
-  P5_8 = itemstr;
-  P5_8.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t9");
-  itemstr = cJSON_Print(item);
-  P5_9 = itemstr;
-  P5_9.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t10");
-  itemstr = cJSON_Print(item);
-  P5_10 = itemstr;
-  P5_10.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t11");
-  itemstr = cJSON_Print(item);
-  P5_11 = itemstr;
-  P5_11.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t12");
-  itemstr = cJSON_Print(item);
-  P5_12 = itemstr;
-  P5_12.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t13");
-  itemstr = cJSON_Print(item);
-  P5_13 = itemstr;
-  P5_13.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t14");
-  itemstr = cJSON_Print(item);
-  P5_14 = itemstr;
-  P5_14.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t15");
-  itemstr = cJSON_Print(item);
-  P5_15 = itemstr;
-  P5_15.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t16");
-  itemstr = cJSON_Print(item);
-  P5_16 = itemstr;
-  P5_16.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t17");
-  itemstr = cJSON_Print(item);
-  P5_17 = itemstr;
-  P5_17.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t18");
-  itemstr = cJSON_Print(item);
-  P5_18 = itemstr;
-  P5_18.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t19");
-  itemstr = cJSON_Print(item);
-  P5_19 = itemstr;
-  P5_19.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t20");
-  itemstr = cJSON_Print(item);
-  P5_20 = itemstr;
-  P5_20.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t21");
-  itemstr = cJSON_Print(item);
-  P5_21 = itemstr;
-  P5_21.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t22");
-  itemstr = cJSON_Print(item);
-  P5_22 = itemstr;
-  P5_22.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t23");
-  itemstr = cJSON_Print(item);
-  P5_23 = itemstr;
-  P5_23.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t24");
-  itemstr = cJSON_Print(item);
-  P5_24 = itemstr;
-  P5_24.replace("\"", "");
-
-  filestr = getFileString(SPIFFS, "/p6.ini");
-  const char *p6json = filestr.c_str();
-  root = cJSON_Parse(p6json);
-
-  item = cJSON_GetObjectItem(root, "t0");
-  itemstr = cJSON_Print(item);
-  P6_0 = itemstr;
-  P6_0.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t1");
-  itemstr = cJSON_Print(item);
-  P6_1 = itemstr;
-  P6_1.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t2");
-  itemstr = cJSON_Print(item);
-  P6_2 = itemstr;
-  P6_2.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t3");
-  itemstr = cJSON_Print(item);
-  P6_3 = itemstr;
-  P6_3.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t4");
-  itemstr = cJSON_Print(item);
-  P6_4 = itemstr;
-  P6_4.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t5");
-  itemstr = cJSON_Print(item);
-  P6_5 = itemstr;
-  P6_5.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t6");
-  itemstr = cJSON_Print(item);
-  P6_6 = itemstr;
-  P6_6.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t7");
-  itemstr = cJSON_Print(item);
-  P6_7 = itemstr;
-  P6_7.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t8");
-  itemstr = cJSON_Print(item);
-  P6_8 = itemstr;
-  P6_8.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t9");
-  itemstr = cJSON_Print(item);
-  P6_9 = itemstr;
-  P6_9.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t10");
-  itemstr = cJSON_Print(item);
-  P6_10 = itemstr;
-  P6_10.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t11");
-  itemstr = cJSON_Print(item);
-  P6_11 = itemstr;
-  P6_11.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t12");
-  itemstr = cJSON_Print(item);
-  P6_12 = itemstr;
-  P6_12.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t13");
-  itemstr = cJSON_Print(item);
-  P6_13 = itemstr;
-  P6_13.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t14");
-  itemstr = cJSON_Print(item);
-  P6_14 = itemstr;
-  P6_14.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t15");
-  itemstr = cJSON_Print(item);
-  P6_15 = itemstr;
-  P6_15.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t16");
-  itemstr = cJSON_Print(item);
-  P6_16 = itemstr;
-  P6_16.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t17");
-  itemstr = cJSON_Print(item);
-  P6_17 = itemstr;
-  P6_17.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t18");
-  itemstr = cJSON_Print(item);
-  P6_18 = itemstr;
-  P6_18.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t19");
-  itemstr = cJSON_Print(item);
-  P6_19 = itemstr;
-  P6_19.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t20");
-  itemstr = cJSON_Print(item);
-  P6_20 = itemstr;
-  P6_20.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t21");
-  itemstr = cJSON_Print(item);
-  P6_21 = itemstr;
-  P6_21.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t22");
-  itemstr = cJSON_Print(item);
-  P6_22 = itemstr;
-  P6_22.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t23");
-  itemstr = cJSON_Print(item);
-  P6_23 = itemstr;
-  P6_23.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t24");
-  itemstr = cJSON_Print(item);
-  P6_24 = itemstr;
-  P6_24.replace("\"", "");
-
-  filestr = getFileString(SPIFFS, "/p7.ini");
-  const char *p7json = filestr.c_str();
-  root = cJSON_Parse(p7json);
-
-  item = cJSON_GetObjectItem(root, "t0");
-  itemstr = cJSON_Print(item);
-  P7_0 = itemstr;
-  P7_0.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t1");
-  itemstr = cJSON_Print(item);
-  P7_1 = itemstr;
-  P7_1.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t2");
-  itemstr = cJSON_Print(item);
-  P7_2 = itemstr;
-  P7_2.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t3");
-  itemstr = cJSON_Print(item);
-  P7_3 = itemstr;
-  P7_3.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t4");
-  itemstr = cJSON_Print(item);
-  P7_4 = itemstr;
-  P7_4.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t5");
-  itemstr = cJSON_Print(item);
-  P7_5 = itemstr;
-  P7_5.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t6");
-  itemstr = cJSON_Print(item);
-  P7_6 = itemstr;
-  P7_6.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t7");
-  itemstr = cJSON_Print(item);
-  P7_7 = itemstr;
-  P7_7.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t8");
-  itemstr = cJSON_Print(item);
-  P7_8 = itemstr;
-  P7_8.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t9");
-  itemstr = cJSON_Print(item);
-  P7_9 = itemstr;
-  P7_9.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t10");
-  itemstr = cJSON_Print(item);
-  P7_10 = itemstr;
-  P7_10.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t11");
-  itemstr = cJSON_Print(item);
-  P7_11 = itemstr;
-  P7_11.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t12");
-  itemstr = cJSON_Print(item);
-  P7_12 = itemstr;
-  P7_12.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t13");
-  itemstr = cJSON_Print(item);
-  P7_13 = itemstr;
-  P7_13.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t14");
-  itemstr = cJSON_Print(item);
-  P7_14 = itemstr;
-  P7_14.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t15");
-  itemstr = cJSON_Print(item);
-  P7_15 = itemstr;
-  P7_15.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t16");
-  itemstr = cJSON_Print(item);
-  P7_16 = itemstr;
-  P7_16.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t17");
-  itemstr = cJSON_Print(item);
-  P7_17 = itemstr;
-  P7_17.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t18");
-  itemstr = cJSON_Print(item);
-  P7_18 = itemstr;
-  P7_18.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t19");
-  itemstr = cJSON_Print(item);
-  P7_19 = itemstr;
-  P7_19.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t20");
-  itemstr = cJSON_Print(item);
-  P7_20 = itemstr;
-  P7_20.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t21");
-  itemstr = cJSON_Print(item);
-  P7_21 = itemstr;
-  P7_21.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t22");
-  itemstr = cJSON_Print(item);
-  P7_22 = itemstr;
-  P7_22.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t23");
-  itemstr = cJSON_Print(item);
-  P7_23 = itemstr;
-  P7_23.replace("\"", "");
-  item = cJSON_GetObjectItem(root, "t24");
-  itemstr = cJSON_Print(item);
-  P7_24 = itemstr;
-  P7_24.replace("\"", "");
+  cJSON_Delete(root);
 }
 
 // esp32 init config
@@ -1834,17 +1159,6 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(RESET_BUTTON), handleRestButtonChanged, CHANGE);
   WiFi.mode(WIFI_AP_STA);
 
-  // struct timeval stime;
-  // stime.tv_sec = 1536725527 + 30316;
-  // settimeofday(&stime, NULL);
-  // time_t t = time(NULL);
-  // struct tm *t_st;
-  // t_st = localtime(&t);
-  // char nowtime[24];
-  // memset(nowtime, 0, sizeof(nowtime));
-  // strftime(nowtime, 24, "%Y-%m-%d %H:%M:%S", t_st);
-  // String strDate = nowtime;
-  // Serial.println(strDate);
   Serial.println("the AP name is : " + String(ssid) + " password is: " + String(password) + "\n the mac address is: " + WiFi.macAddress());
   Serial.print("the current version is: ");
   Serial.println(VERSION_NUM);
@@ -1917,6 +1231,8 @@ void setup()
         item = cJSON_GetObjectItem(root, "pwd");
         itemstr = cJSON_Print(item);
         String pwd = itemstr;
+
+        cJSON_Delete(root);
 
         ssid.replace("\"", "");
         pwd.replace("\"", "");
@@ -1997,7 +1313,8 @@ void setup()
         }
       }
       // online or offline light operation
-      lightopr();
+      String strlvs = getFileString(SPIFFS, "/p.ini");
+      lightopr(strlvs);
     }
   }
 
@@ -2035,6 +1352,8 @@ void setup()
     item = cJSON_GetObjectItem(root, "conmode");
     itemstr = cJSON_Print(item);
     String conmode = itemstr;
+
+    cJSON_Delete(root);
 
     //todo
     String version = VERSION_NUM;
@@ -2132,7 +1451,7 @@ void setup()
       String filestr;
       filestr = getFileString(SPIFFS, "/p.ini");
 
-      if(false)
+      if (false)
       {
         Serial.println("Error occured");
       }
@@ -2148,7 +1467,7 @@ void setup()
         String change_hidval = "<span id=\"lightvalues\"style=\"display:none;\">";
         change_hidval += filestr;
         change_hidval += "</span>";
-        rawhtml.replace(tpl_hidval,change_hidval);
+        rawhtml.replace(tpl_hidval, change_hidval);
 
         html = html + rawhtml;
         SPIFFS.end();
@@ -2163,45 +1482,23 @@ void setup()
 
   // light setting
   server.on("/setp", HTTP_GET, [](AsyncWebServerRequest *request) {
-    String tvalues;
-    String t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24;
-    String html;
-
-    if (true)
+    if (request->hasParam("t"))
     {
       if (!SPIFFS.begin())
       {
         Serial.println("SPIFFS Mount Failed");
         return;
       }
-      if(false)
-      {
-        Serial.println("Error occured");
-      }
-      else
-      {
-        tvalues = request->getParam("t")->value();
-        cJSON *root = NULL;
-        cJSON *item = NULL;
-        root = cJSON_Parse(tvalues.c_str());
-        String itemstr;
-        if(!root) {
-          Serial.println("Error occured");
-        } else {
-          item = cJSON_GetObjectItem(root,"t000");
-          itemstr = cJSON_Print(item);
-          Serial.println(itemstr);
-        }
-
-      }
+      String tvalues = request->getParam("t")->value();
+      lightopr(tvalues);
       writeFile(SPIFFS, "/p.ini", tvalues.c_str());
       SPIFFS.end();
+      request->redirect("/p");
     }
     else
     {
-      html = "params not found";
+      request->send(200, "text/html", "<p>param not found</p>");
     }
-    request->redirect("/p");
   });
 
   // basic page
@@ -2454,493 +1751,1296 @@ void loop()
 
       if (PWM_INFO_TESTMODE == "production")
       {
-        log_printf("product mode .... current hour is: %d \n", currenthour);
+        Serial.printf("product mode .... current hour is: %d \n",currenthour);
         if (currenthour == 0)
         {
-          led1.set(P1_0.toInt());
-          led2.set(P2_0.toInt());
-          led3.set(P3_0.toInt());
-          led4.set(P4_0.toInt());
-          led5.set(P5_0.toInt());
-          led6.set(P6_0.toInt());
-          led7.set(P7_0.toInt());
+          if(currentmin == 0) {
+            led1.set(P1[0]);
+            led2.set(P2[0]);
+            led3.set(P3[0]);
+            led4.set(P4[0]);
+            led5.set(P5[0]);
+            led6.set(P6[0]);
+            led7.set(P7[0]);
+          }
+          else if(currentmin == 10) {
+            led1.set(P1[1]);
+            led2.set(P2[1]);
+            led3.set(P3[1]);
+            led4.set(P4[1]);
+            led5.set(P5[1]);
+            led6.set(P6[1]);
+            led7.set(P7[1]);
+          } else if(currentmin == 20) {
+            led1.set(P1[2]);
+            led2.set(P2[2]);
+            led3.set(P3[2]);
+            led4.set(P4[2]);
+            led5.set(P5[2]);
+            led6.set(P6[2]);
+            led7.set(P7[2]);
+          } else if(currentmin == 30) {
+            led1.set(P1[3]);
+            led2.set(P2[3]);
+            led3.set(P3[3]);
+            led4.set(P4[3]);
+            led5.set(P5[3]);
+            led6.set(P6[3]);
+            led7.set(P7[3]);
+          } else if(currentmin == 40) {
+            led1.set(P1[4]);
+            led2.set(P2[4]);
+            led3.set(P3[4]);
+            led4.set(P4[4]);
+            led5.set(P5[4]);
+            led6.set(P6[4]);
+            led7.set(P7[4]);
+          } else if(currentmin == 50) {
+            led1.set(P1[5]);
+            led2.set(P2[5]);
+            led3.set(P3[5]);
+            led4.set(P4[5]);
+            led5.set(P5[5]);
+            led6.set(P6[5]);
+            led7.set(P7[5]);
+          }
         }
         else if (currenthour == 1)
         {
-          led1.set(P1_1.toInt());
-          led2.set(P2_1.toInt());
-          led3.set(P3_1.toInt());
-          led4.set(P4_1.toInt());
-          led5.set(P5_1.toInt());
-          led6.set(P6_1.toInt());
-          led7.set(P7_1.toInt());
+          if(currentmin == 0) {
+            led1.set(P1[6]);
+            led2.set(P2[6]);
+            led3.set(P3[6]);
+            led4.set(P4[6]);
+            led5.set(P5[6]);
+            led6.set(P6[6]);
+            led7.set(P7[6]);
+          }
+          else if(currentmin == 10) {
+            led1.set(P1[7]);
+            led2.set(P2[7]);
+            led3.set(P3[7]);
+            led4.set(P4[7]);
+            led5.set(P5[7]);
+            led6.set(P6[7]);
+            led7.set(P7[7]);
+          } else if(currentmin == 20) {
+            led1.set(P1[8]);
+            led2.set(P2[8]);
+            led3.set(P3[8]);
+            led4.set(P4[8]);
+            led5.set(P5[8]);
+            led6.set(P6[8]);
+            led7.set(P7[8]);
+          } else if(currentmin == 30) {
+            led1.set(P1[9]);
+            led2.set(P2[9]);
+            led3.set(P3[9]);
+            led4.set(P4[9]);
+            led5.set(P5[9]);
+            led6.set(P6[9]);
+            led7.set(P7[9]);
+          } else if(currentmin == 40) {
+            led1.set(P1[10]);
+            led2.set(P2[10]);
+            led3.set(P3[10]);
+            led4.set(P4[10]);
+            led5.set(P5[10]);
+            led6.set(P6[10]);
+            led7.set(P7[10]);
+          } else if(currentmin == 50) {
+            led1.set(P1[11]);
+            led2.set(P2[11]);
+            led3.set(P3[11]);
+            led4.set(P4[11]);
+            led5.set(P5[11]);
+            led6.set(P6[11]);
+            led7.set(P7[11]);
+          }
         }
         else if (currenthour == 2)
         {
-          led1.set(P1_2.toInt());
-          led2.set(P2_2.toInt());
-          led3.set(P3_2.toInt());
-          led4.set(P4_2.toInt());
-          led5.set(P5_2.toInt());
-          led6.set(P6_2.toInt());
-          led7.set(P7_2.toInt());
+          if(currentmin == 0) {
+            led1.set(P1[12]);
+            led2.set(P2[12]);
+            led3.set(P3[12]);
+            led4.set(P4[12]);
+            led5.set(P5[12]);
+            led6.set(P6[12]);
+            led7.set(P7[12]);
+          }
+          else if(currentmin == 10) {
+            led1.set(P1[13]);
+            led2.set(P2[13]);
+            led3.set(P3[13]);
+            led4.set(P4[13]);
+            led5.set(P5[13]);
+            led6.set(P6[13]);
+            led7.set(P7[13]);
+          } else if(currentmin == 20) {
+            led1.set(P1[14]);
+            led2.set(P2[14]);
+            led3.set(P3[14]);
+            led4.set(P4[14]);
+            led5.set(P5[14]);
+            led6.set(P6[14]);
+            led7.set(P7[14]);
+          } else if(currentmin == 30) {
+            led1.set(P1[15]);
+            led2.set(P2[15]);
+            led3.set(P3[15]);
+            led4.set(P4[15]);
+            led5.set(P5[15]);
+            led6.set(P6[15]);
+            led7.set(P7[15]);
+          } else if(currentmin == 40) {
+            led1.set(P1[16]);
+            led2.set(P2[16]);
+            led3.set(P3[16]);
+            led4.set(P4[16]);
+            led5.set(P5[16]);
+            led6.set(P6[16]);
+            led7.set(P7[16]);
+          } else if(currentmin == 50) {
+            led1.set(P1[17]);
+            led2.set(P2[17]);
+            led3.set(P3[17]);
+            led4.set(P4[17]);
+            led5.set(P5[17]);
+            led6.set(P6[17]);
+            led7.set(P7[17]);
+          }
         }
         else if (currenthour == 3)
         {
-          led1.set(P1_3.toInt());
-          led2.set(P2_3.toInt());
-          led3.set(P3_3.toInt());
-          led4.set(P4_3.toInt());
-          led5.set(P5_3.toInt());
-          led6.set(P6_3.toInt());
-          led7.set(P7_3.toInt());
+          if(currentmin == 0) {
+            led1.set(P1[18]);
+            led2.set(P2[18]);
+            led3.set(P3[18]);
+            led4.set(P4[18]);
+            led5.set(P5[18]);
+            led6.set(P6[18]);
+            led7.set(P7[18]);
+          }
+          else if(currentmin == 10) {
+            led1.set(P1[19]);
+            led2.set(P2[19]);
+            led3.set(P3[19]);
+            led4.set(P4[19]);
+            led5.set(P5[19]);
+            led6.set(P6[19]);
+            led7.set(P7[19]);
+          } else if(currentmin == 20) {
+            led1.set(P1[20]);
+            led2.set(P2[20]);
+            led3.set(P3[20]);
+            led4.set(P4[20]);
+            led5.set(P5[20]);
+            led6.set(P6[20]);
+            led7.set(P7[20]);
+          } else if(currentmin == 30) {
+            led1.set(P1[21]);
+            led2.set(P2[21]);
+            led3.set(P3[21]);
+            led4.set(P4[21]);
+            led5.set(P5[21]);
+            led6.set(P6[21]);
+            led7.set(P7[21]);
+          } else if(currentmin == 40) {
+            led1.set(P1[22]);
+            led2.set(P2[22]);
+            led3.set(P3[22]);
+            led4.set(P4[22]);
+            led5.set(P5[22]);
+            led6.set(P6[22]);
+            led7.set(P7[22]);
+          } else if(currentmin == 50) {
+            led1.set(P1[23]);
+            led2.set(P2[23]);
+            led3.set(P3[23]);
+            led4.set(P4[23]);
+            led5.set(P5[23]);
+            led6.set(P6[23]);
+            led7.set(P7[23]);
+          }
         }
         else if (currenthour == 4)
         {
-          led1.set(P1_4.toInt());
-          led2.set(P2_4.toInt());
-          led3.set(P3_4.toInt());
-          led4.set(P4_4.toInt());
-          led5.set(P5_4.toInt());
-          led6.set(P6_4.toInt());
-          led7.set(P7_4.toInt());
+          if(currentmin == 0) {
+            led1.set(P1[24]);
+            led2.set(P2[24]);
+            led3.set(P3[24]);
+            led4.set(P4[24]);
+            led5.set(P5[24]);
+            led6.set(P6[24]);
+            led7.set(P7[24]);
+          }
+          else if(currentmin == 10) {
+            led1.set(P1[25]);
+            led2.set(P2[25]);
+            led3.set(P3[25]);
+            led4.set(P4[25]);
+            led5.set(P5[25]);
+            led6.set(P6[25]);
+            led7.set(P7[25]);
+          } else if(currentmin == 20) {
+            led1.set(P1[26]);
+            led2.set(P2[26]);
+            led3.set(P3[26]);
+            led4.set(P4[26]);
+            led5.set(P5[26]);
+            led6.set(P6[26]);
+            led7.set(P7[26]);
+          } else if(currentmin == 30) {
+            led1.set(P1[27]);
+            led2.set(P2[27]);
+            led3.set(P3[27]);
+            led4.set(P4[27]);
+            led5.set(P5[27]);
+            led6.set(P6[27]);
+            led7.set(P7[27]);
+          } else if(currentmin == 40) {
+            led1.set(P1[28]);
+            led2.set(P2[28]);
+            led3.set(P3[28]);
+            led4.set(P4[28]);
+            led5.set(P5[28]);
+            led6.set(P6[28]);
+            led7.set(P7[28]);
+          } else if(currentmin == 50) {
+            led1.set(P1[29]);
+            led2.set(P2[29]);
+            led3.set(P3[29]);
+            led4.set(P4[29]);
+            led5.set(P5[29]);
+            led6.set(P6[29]);
+            led7.set(P7[29]);
+          }
         }
         else if (currenthour == 5)
         {
-          led1.set(P1_5.toInt());
-          led2.set(P2_5.toInt());
-          led3.set(P3_5.toInt());
-          led4.set(P4_5.toInt());
-          led5.set(P5_5.toInt());
-          led6.set(P6_5.toInt());
-          led7.set(P7_5.toInt());
+          if(currentmin == 0) {
+            led1.set(P1[30]);
+            led2.set(P2[30]);
+            led3.set(P3[30]);
+            led4.set(P4[30]);
+            led5.set(P5[30]);
+            led6.set(P6[30]);
+            led7.set(P7[30]);
+          }
+          else if(currentmin == 10) {
+            led1.set(P1[31]);
+            led2.set(P2[31]);
+            led3.set(P3[31]);
+            led4.set(P4[31]);
+            led5.set(P5[31]);
+            led6.set(P6[31]);
+            led7.set(P7[31]);
+          } else if(currentmin == 20) {
+            led1.set(P1[32]);
+            led2.set(P2[32]);
+            led3.set(P3[32]);
+            led4.set(P4[32]);
+            led5.set(P5[32]);
+            led6.set(P6[32]);
+            led7.set(P7[32]);
+          } else if(currentmin == 30) {
+            led1.set(P1[33]);
+            led2.set(P2[33]);
+            led3.set(P3[33]);
+            led4.set(P4[33]);
+            led5.set(P5[33]);
+            led6.set(P6[33]);
+            led7.set(P7[33]);
+          } else if(currentmin == 40) {
+            led1.set(P1[34]);
+            led2.set(P2[34]);
+            led3.set(P3[34]);
+            led4.set(P4[34]);
+            led5.set(P5[34]);
+            led6.set(P6[34]);
+            led7.set(P7[34]);
+          } else if(currentmin == 50) {
+            led1.set(P1[35]);
+            led2.set(P2[35]);
+            led3.set(P3[35]);
+            led4.set(P4[35]);
+            led5.set(P5[35]);
+            led6.set(P6[35]);
+            led7.set(P7[35]);
+          }
         }
         else if (currenthour == 6)
         {
-          led1.set(P1_6.toInt());
-          led2.set(P2_6.toInt());
-          led3.set(P3_6.toInt());
-          led4.set(P4_6.toInt());
-          led5.set(P5_6.toInt());
-          led6.set(P6_6.toInt());
-          led7.set(P7_6.toInt());
+          if(currentmin == 0) {
+            led1.set(P1[36]);
+            led2.set(P2[36]);
+            led3.set(P3[36]);
+            led4.set(P4[36]);
+            led5.set(P5[36]);
+            led6.set(P6[36]);
+            led7.set(P7[36]);
+          }
+          else if(currentmin == 10) {
+            led1.set(P1[37]);
+            led2.set(P2[37]);
+            led3.set(P3[37]);
+            led4.set(P4[37]);
+            led5.set(P5[37]);
+            led6.set(P6[37]);
+            led7.set(P7[37]);
+          } else if(currentmin == 20) {
+            led1.set(P1[38]);
+            led2.set(P2[38]);
+            led3.set(P3[38]);
+            led4.set(P4[38]);
+            led5.set(P5[38]);
+            led6.set(P6[38]);
+            led7.set(P7[38]);
+          } else if(currentmin == 30) {
+            led1.set(P1[39]);
+            led2.set(P2[39]);
+            led3.set(P3[39]);
+            led4.set(P4[39]);
+            led5.set(P5[39]);
+            led6.set(P6[39]);
+            led7.set(P7[39]);
+          } else if(currentmin == 40) {
+            led1.set(P1[40]);
+            led2.set(P2[40]);
+            led3.set(P3[40]);
+            led4.set(P4[40]);
+            led5.set(P5[40]);
+            led6.set(P6[40]);
+            led7.set(P7[40]);
+          } else if(currentmin == 50) {
+            led1.set(P1[41]);
+            led2.set(P2[41]);
+            led3.set(P3[41]);
+            led4.set(P4[41]);
+            led5.set(P5[41]);
+            led6.set(P6[41]);
+            led7.set(P7[41]);
+          }
         }
         else if (currenthour == 7)
         {
-          led1.set(P1_7.toInt());
-          led2.set(P2_7.toInt());
-          led3.set(P3_7.toInt());
-          led4.set(P4_7.toInt());
-          led5.set(P5_7.toInt());
-          led6.set(P6_7.toInt());
-          led7.set(P7_7.toInt());
+          if(currentmin == 0) {
+            led1.set(P1[42]);
+            led2.set(P2[42]);
+            led3.set(P3[42]);
+            led4.set(P4[42]);
+            led5.set(P5[42]);
+            led6.set(P6[42]);
+            led7.set(P7[42]);
+          }
+          else if(currentmin == 10) {
+            led1.set(P1[43]);
+            led2.set(P2[43]);
+            led3.set(P3[43]);
+            led4.set(P4[43]);
+            led5.set(P5[43]);
+            led6.set(P6[43]);
+            led7.set(P7[43]);
+          } else if(currentmin == 20) {
+            led1.set(P1[44]);
+            led2.set(P2[44]);
+            led3.set(P3[44]);
+            led4.set(P4[44]);
+            led5.set(P5[44]);
+            led6.set(P6[44]);
+            led7.set(P7[44]);
+          } else if(currentmin == 30) {
+            led1.set(P1[45]);
+            led2.set(P2[45]);
+            led3.set(P3[45]);
+            led4.set(P4[45]);
+            led5.set(P5[45]);
+            led6.set(P6[45]);
+            led7.set(P7[45]);
+          } else if(currentmin == 40) {
+            led1.set(P1[46]);
+            led2.set(P2[46]);
+            led3.set(P3[46]);
+            led4.set(P4[46]);
+            led5.set(P5[46]);
+            led6.set(P6[46]);
+            led7.set(P7[46]);
+          } else if(currentmin == 50) {
+            led1.set(P1[47]);
+            led2.set(P2[47]);
+            led3.set(P3[47]);
+            led4.set(P4[47]);
+            led5.set(P5[47]);
+            led6.set(P6[47]);
+            led7.set(P7[47]);
+          }
         }
         else if (currenthour == 8)
         {
-          led1.set(P1_8.toInt());
-          led2.set(P2_8.toInt());
-          led3.set(P3_8.toInt());
-          led4.set(P4_8.toInt());
-          led5.set(P5_8.toInt());
-          led6.set(P6_8.toInt());
-          led7.set(P7_8.toInt());
+          if(currentmin == 0) {
+            led1.set(P1[48]);
+            led2.set(P2[48]);
+            led3.set(P3[48]);
+            led4.set(P4[48]);
+            led5.set(P5[48]);
+            led6.set(P6[48]);
+            led7.set(P7[48]);
+          }
+          else if(currentmin == 10) {
+            led1.set(P1[49]);
+            led2.set(P2[49]);
+            led3.set(P3[49]);
+            led4.set(P4[49]);
+            led5.set(P5[49]);
+            led6.set(P6[49]);
+            led7.set(P7[49]);
+          } else if(currentmin == 20) {
+            led1.set(P1[50]);
+            led2.set(P2[50]);
+            led3.set(P3[50]);
+            led4.set(P4[50]);
+            led5.set(P5[50]);
+            led6.set(P6[50]);
+            led7.set(P7[50]);
+          } else if(currentmin == 30) {
+            led1.set(P1[51]);
+            led2.set(P2[51]);
+            led3.set(P3[51]);
+            led4.set(P4[51]);
+            led5.set(P5[51]);
+            led6.set(P6[51]);
+            led7.set(P7[51]);
+          } else if(currentmin == 40) {
+            led1.set(P1[52]);
+            led2.set(P2[52]);
+            led3.set(P3[52]);
+            led4.set(P4[52]);
+            led5.set(P5[52]);
+            led6.set(P6[52]);
+            led7.set(P7[52]);
+          } else if(currentmin == 50) {
+            led1.set(P1[53]);
+            led2.set(P2[53]);
+            led3.set(P3[53]);
+            led4.set(P4[53]);
+            led5.set(P5[53]);
+            led6.set(P6[53]);
+            led7.set(P7[53]);
+          }
         }
         else if (currenthour == 9)
         {
-          led1.set(P1_9.toInt());
-          led2.set(P2_9.toInt());
-          led3.set(P3_9.toInt());
-          led4.set(P4_9.toInt());
-          led5.set(P5_9.toInt());
-          led6.set(P6_9.toInt());
-          led7.set(P7_9.toInt());
+          if(currentmin == 0) {
+            led1.set(P1[54]);
+            led2.set(P2[54]);
+            led3.set(P3[54]);
+            led4.set(P4[54]);
+            led5.set(P5[54]);
+            led6.set(P6[54]);
+            led7.set(P7[54]);
+          }
+          else if(currentmin == 10) {
+            led1.set(P1[55]);
+            led2.set(P2[55]);
+            led3.set(P3[55]);
+            led4.set(P4[55]);
+            led5.set(P5[55]);
+            led6.set(P6[55]);
+            led7.set(P7[55]);
+          } else if(currentmin == 20) {
+            led1.set(P1[56]);
+            led2.set(P2[56]);
+            led3.set(P3[56]);
+            led4.set(P4[56]);
+            led5.set(P5[56]);
+            led6.set(P6[56]);
+            led7.set(P7[56]);
+          } else if(currentmin == 30) {
+            led1.set(P1[57]);
+            led2.set(P2[57]);
+            led3.set(P3[57]);
+            led4.set(P4[57]);
+            led5.set(P5[57]);
+            led6.set(P6[57]);
+            led7.set(P7[57]);
+          } else if(currentmin == 40) {
+            led1.set(P1[58]);
+            led2.set(P2[58]);
+            led3.set(P3[58]);
+            led4.set(P4[58]);
+            led5.set(P5[58]);
+            led6.set(P6[58]);
+            led7.set(P7[58]);
+          } else if(currentmin == 50) {
+            led1.set(P1[59]);
+            led2.set(P2[59]);
+            led3.set(P3[59]);
+            led4.set(P4[59]);
+            led5.set(P5[59]);
+            led6.set(P6[59]);
+            led7.set(P7[59]);
+          }
         }
         else if (currenthour == 10)
         {
-          led1.set(P1_10.toInt());
-          led2.set(P2_10.toInt());
-          led3.set(P3_10.toInt());
-          led4.set(P4_10.toInt());
-          led5.set(P5_10.toInt());
-          led6.set(P6_10.toInt());
-          led7.set(P7_10.toInt());
+          if(currentmin == 0) {
+            led1.set(P1[60]);
+            led2.set(P2[60]);
+            led3.set(P3[60]);
+            led4.set(P4[60]);
+            led5.set(P5[60]);
+            led6.set(P6[60]);
+            led7.set(P7[60]);
+          }
+          else if(currentmin == 10) {
+            led1.set(P1[61]);
+            led2.set(P2[61]);
+            led3.set(P3[61]);
+            led4.set(P4[61]);
+            led5.set(P5[61]);
+            led6.set(P6[61]);
+            led7.set(P7[61]);
+          } else if(currentmin == 20) {
+            led1.set(P1[62]);
+            led2.set(P2[62]);
+            led3.set(P3[62]);
+            led4.set(P4[62]);
+            led5.set(P5[62]);
+            led6.set(P6[62]);
+            led7.set(P7[62]);
+          } else if(currentmin == 30) {
+            led1.set(P1[63]);
+            led2.set(P2[63]);
+            led3.set(P3[63]);
+            led4.set(P4[63]);
+            led5.set(P5[63]);
+            led6.set(P6[63]);
+            led7.set(P7[63]);
+          } else if(currentmin == 40) {
+            led1.set(P1[64]);
+            led2.set(P2[64]);
+            led3.set(P3[64]);
+            led4.set(P4[64]);
+            led5.set(P5[64]);
+            led6.set(P6[64]);
+            led7.set(P7[64]);
+          } else if(currentmin == 50) {
+            led1.set(P1[65]);
+            led2.set(P2[65]);
+            led3.set(P3[65]);
+            led4.set(P4[65]);
+            led5.set(P5[65]);
+            led6.set(P6[65]);
+            led7.set(P7[65]);
+          }
         }
         else if (currenthour == 11)
         {
-          led1.set(P1_11.toInt());
-          led2.set(P2_11.toInt());
-          led3.set(P3_11.toInt());
-          led4.set(P4_11.toInt());
-          led5.set(P5_11.toInt());
-          led6.set(P6_11.toInt());
-          led7.set(P7_11.toInt());
+          if(currentmin == 0) {
+            led1.set(P1[66]);
+            led2.set(P2[66]);
+            led3.set(P3[66]);
+            led4.set(P4[66]);
+            led5.set(P5[66]);
+            led6.set(P6[66]);
+            led7.set(P7[66]);
+          }
+          else if(currentmin == 10) {
+            led1.set(P1[67]);
+            led2.set(P2[67]);
+            led3.set(P3[67]);
+            led4.set(P4[67]);
+            led5.set(P5[67]);
+            led6.set(P6[67]);
+            led7.set(P7[67]);
+          } else if(currentmin == 20) {
+            led1.set(P1[68]);
+            led2.set(P2[68]);
+            led3.set(P3[68]);
+            led4.set(P4[68]);
+            led5.set(P5[68]);
+            led6.set(P6[68]);
+            led7.set(P7[68]);
+          } else if(currentmin == 30) {
+            led1.set(P1[69]);
+            led2.set(P2[69]);
+            led3.set(P3[69]);
+            led4.set(P4[69]);
+            led5.set(P5[69]);
+            led6.set(P6[69]);
+            led7.set(P7[69]);
+          } else if(currentmin == 40) {
+            led1.set(P1[70]);
+            led2.set(P2[70]);
+            led3.set(P3[70]);
+            led4.set(P4[70]);
+            led5.set(P5[70]);
+            led6.set(P6[70]);
+            led7.set(P7[70]);
+          } else if(currentmin == 50) {
+            led1.set(P1[71]);
+            led2.set(P2[71]);
+            led3.set(P3[71]);
+            led4.set(P4[71]);
+            led5.set(P5[71]);
+            led6.set(P6[71]);
+            led7.set(P7[71]);
+          }
         }
         else if (currenthour == 12)
         {
-          led1.set(P1_12.toInt());
-          led2.set(P2_12.toInt());
-          led3.set(P3_12.toInt());
-          led4.set(P4_12.toInt());
-          led5.set(P5_12.toInt());
-          led6.set(P6_12.toInt());
-          led7.set(P7_12.toInt());
+          if(currentmin == 0) {
+            led1.set(P1[72]);
+            led2.set(P2[72]);
+            led3.set(P3[72]);
+            led4.set(P4[72]);
+            led5.set(P5[72]);
+            led6.set(P6[72]);
+            led7.set(P7[72]);
+          }
+          else if(currentmin == 10) {
+            led1.set(P1[73]);
+            led2.set(P2[73]);
+            led3.set(P3[73]);
+            led4.set(P4[73]);
+            led5.set(P5[73]);
+            led6.set(P6[73]);
+            led7.set(P7[73]);
+          } else if(currentmin == 20) {
+            led1.set(P1[74]);
+            led2.set(P2[74]);
+            led3.set(P3[74]);
+            led4.set(P4[74]);
+            led5.set(P5[74]);
+            led6.set(P6[74]);
+            led7.set(P7[74]);
+          } else if(currentmin == 30) {
+            led1.set(P1[75]);
+            led2.set(P2[75]);
+            led3.set(P3[75]);
+            led4.set(P4[75]);
+            led5.set(P5[75]);
+            led6.set(P6[75]);
+            led7.set(P7[75]);
+          } else if(currentmin == 40) {
+            led1.set(P1[76]);
+            led2.set(P2[76]);
+            led3.set(P3[76]);
+            led4.set(P4[76]);
+            led5.set(P5[76]);
+            led6.set(P6[76]);
+            led7.set(P7[76]);
+          } else if(currentmin == 50) {
+            led1.set(P1[77]);
+            led2.set(P2[77]);
+            led3.set(P3[77]);
+            led4.set(P4[77]);
+            led5.set(P5[77]);
+            led6.set(P6[77]);
+            led7.set(P7[77]);
+          }
         }
         else if (currenthour == 13)
         {
-          led1.set(P1_13.toInt());
-          led2.set(P2_13.toInt());
-          led3.set(P3_13.toInt());
-          led4.set(P4_13.toInt());
-          led5.set(P5_13.toInt());
-          led6.set(P6_13.toInt());
-          led7.set(P7_13.toInt());
+          if(currentmin == 0) {
+            led1.set(P1[78]);
+            led2.set(P2[78]);
+            led3.set(P3[78]);
+            led4.set(P4[78]);
+            led5.set(P5[78]);
+            led6.set(P6[78]);
+            led7.set(P7[78]);
+          }
+          else if(currentmin == 10) {
+            led1.set(P1[79]);
+            led2.set(P2[79]);
+            led3.set(P3[79]);
+            led4.set(P4[79]);
+            led5.set(P5[79]);
+            led6.set(P6[79]);
+            led7.set(P7[79]);
+          } else if(currentmin == 20) {
+            led1.set(P1[80]);
+            led2.set(P2[80]);
+            led3.set(P3[80]);
+            led4.set(P4[80]);
+            led5.set(P5[80]);
+            led6.set(P6[80]);
+            led7.set(P7[80]);
+          } else if(currentmin == 30) {
+            led1.set(P1[81]);
+            led2.set(P2[81]);
+            led3.set(P3[81]);
+            led4.set(P4[81]);
+            led5.set(P5[81]);
+            led6.set(P6[81]);
+            led7.set(P7[81]);
+          } else if(currentmin == 40) {
+            led1.set(P1[82]);
+            led2.set(P2[82]);
+            led3.set(P3[82]);
+            led4.set(P4[82]);
+            led5.set(P5[82]);
+            led6.set(P6[82]);
+            led7.set(P7[82]);
+          } else if(currentmin == 50) {
+            led1.set(P1[83]);
+            led2.set(P2[83]);
+            led3.set(P3[83]);
+            led4.set(P4[83]);
+            led5.set(P5[83]);
+            led6.set(P6[83]);
+            led7.set(P7[83]);
+          }
         }
         else if (currenthour == 14)
         {
-          led1.set(P1_14.toInt());
-          led2.set(P2_14.toInt());
-          led3.set(P3_14.toInt());
-          led4.set(P4_14.toInt());
-          led5.set(P5_14.toInt());
-          led6.set(P6_14.toInt());
-          led7.set(P7_14.toInt());
+          if(currentmin == 0) {
+            led1.set(P1[84]);
+            led2.set(P2[84]);
+            led3.set(P3[84]);
+            led4.set(P4[84]);
+            led5.set(P5[84]);
+            led6.set(P6[84]);
+            led7.set(P7[84]);
+          }
+          else if(currentmin == 10) {
+            led1.set(P1[85]);
+            led2.set(P2[85]);
+            led3.set(P3[85]);
+            led4.set(P4[85]);
+            led5.set(P5[85]);
+            led6.set(P6[85]);
+            led7.set(P7[85]);
+          } else if(currentmin == 20) {
+            led1.set(P1[86]);
+            led2.set(P2[86]);
+            led3.set(P3[86]);
+            led4.set(P4[86]);
+            led5.set(P5[86]);
+            led6.set(P6[86]);
+            led7.set(P7[86]);
+          } else if(currentmin == 30) {
+            led1.set(P1[87]);
+            led2.set(P2[87]);
+            led3.set(P3[87]);
+            led4.set(P4[87]);
+            led5.set(P5[87]);
+            led6.set(P6[87]);
+            led7.set(P7[87]);
+          } else if(currentmin == 40) {
+            led1.set(P1[88]);
+            led2.set(P2[88]);
+            led3.set(P3[88]);
+            led4.set(P4[88]);
+            led5.set(P5[88]);
+            led6.set(P6[88]);
+            led7.set(P7[88]);
+          } else if(currentmin == 50) {
+            led1.set(P1[89]);
+            led2.set(P2[89]);
+            led3.set(P3[89]);
+            led4.set(P4[89]);
+            led5.set(P5[89]);
+            led6.set(P6[89]);
+            led7.set(P7[89]);
+          }
         }
         else if (currenthour == 15)
         {
-          led1.set(P1_15.toInt());
-          led2.set(P2_15.toInt());
-          led3.set(P3_15.toInt());
-          led4.set(P4_15.toInt());
-          led5.set(P5_15.toInt());
-          led6.set(P6_15.toInt());
-          led7.set(P7_15.toInt());
+          if(currentmin == 0) {
+            led1.set(P1[90]);
+            led2.set(P2[90]);
+            led3.set(P3[90]);
+            led4.set(P4[90]);
+            led5.set(P5[90]);
+            led6.set(P6[90]);
+            led7.set(P7[90]);
+          }
+          else if(currentmin == 10) {
+            led1.set(P1[91]);
+            led2.set(P2[91]);
+            led3.set(P3[91]);
+            led4.set(P4[91]);
+            led5.set(P5[91]);
+            led6.set(P6[91]);
+            led7.set(P7[91]);
+          } else if(currentmin == 20) {
+            led1.set(P1[92]);
+            led2.set(P2[92]);
+            led3.set(P3[92]);
+            led4.set(P4[92]);
+            led5.set(P5[92]);
+            led6.set(P6[92]);
+            led7.set(P7[92]);
+          } else if(currentmin == 30) {
+            led1.set(P1[93]);
+            led2.set(P2[93]);
+            led3.set(P3[93]);
+            led4.set(P4[93]);
+            led5.set(P5[93]);
+            led6.set(P6[93]);
+            led7.set(P7[93]);
+          } else if(currentmin == 40) {
+            led1.set(P1[94]);
+            led2.set(P2[94]);
+            led3.set(P3[94]);
+            led4.set(P4[94]);
+            led5.set(P5[94]);
+            led6.set(P6[94]);
+            led7.set(P7[94]);
+          } else if(currentmin == 50) {
+            led1.set(P1[95]);
+            led2.set(P2[95]);
+            led3.set(P3[95]);
+            led4.set(P4[95]);
+            led5.set(P5[95]);
+            led6.set(P6[95]);
+            led7.set(P7[95]);
+          }
         }
         else if (currenthour == 16)
         {
-          led1.set(P1_16.toInt());
-          led2.set(P2_16.toInt());
-          led3.set(P3_16.toInt());
-          led4.set(P4_16.toInt());
-          led5.set(P5_16.toInt());
-          led6.set(P6_16.toInt());
-          led7.set(P7_16.toInt());
+          if(currentmin == 0) {
+            led1.set(P1[96]);
+            led2.set(P2[96]);
+            led3.set(P3[96]);
+            led4.set(P4[96]);
+            led5.set(P5[96]);
+            led6.set(P6[96]);
+            led7.set(P7[96]);
+          }
+          else if(currentmin == 10) {
+            led1.set(P1[97]);
+            led2.set(P2[97]);
+            led3.set(P3[97]);
+            led4.set(P4[97]);
+            led5.set(P5[97]);
+            led6.set(P6[97]);
+            led7.set(P7[97]);
+          } else if(currentmin == 20) {
+            led1.set(P1[98]);
+            led2.set(P2[98]);
+            led3.set(P3[98]);
+            led4.set(P4[98]);
+            led5.set(P5[98]);
+            led6.set(P6[98]);
+            led7.set(P7[98]);
+          } else if(currentmin == 30) {
+            led1.set(P1[99]);
+            led2.set(P2[99]);
+            led3.set(P3[99]);
+            led4.set(P4[99]);
+            led5.set(P5[99]);
+            led6.set(P6[99]);
+            led7.set(P7[99]);
+          } else if(currentmin == 40) {
+            led1.set(P1[100]);
+            led2.set(P2[100]);
+            led3.set(P3[100]);
+            led4.set(P4[100]);
+            led5.set(P5[100]);
+            led6.set(P6[100]);
+            led7.set(P7[100]);
+          } else if(currentmin == 50) {
+            led1.set(P1[101]);
+            led2.set(P2[101]);
+            led3.set(P3[101]);
+            led4.set(P4[101]);
+            led5.set(P5[101]);
+            led6.set(P6[101]);
+            led7.set(P7[101]);
+          }
         }
         else if (currenthour == 17)
         {
-          led1.set(P1_17.toInt());
-          led2.set(P2_17.toInt());
-          led3.set(P3_17.toInt());
-          led4.set(P4_17.toInt());
-          led5.set(P5_17.toInt());
-          led6.set(P6_17.toInt());
-          led7.set(P7_17.toInt());
+         if(currentmin == 0) {
+            led1.set(P1[102]);
+            led2.set(P2[102]);
+            led3.set(P3[102]);
+            led4.set(P4[102]);
+            led5.set(P5[102]);
+            led6.set(P6[102]);
+            led7.set(P7[102]);
+          }
+          else if(currentmin == 10) {
+            led1.set(P1[103]);
+            led2.set(P2[103]);
+            led3.set(P3[103]);
+            led4.set(P4[103]);
+            led5.set(P5[103]);
+            led6.set(P6[103]);
+            led7.set(P7[103]);
+          } else if(currentmin == 20) {
+            led1.set(P1[104]);
+            led2.set(P2[104]);
+            led3.set(P3[104]);
+            led4.set(P4[104]);
+            led5.set(P5[104]);
+            led6.set(P6[104]);
+            led7.set(P7[104]);
+          } else if(currentmin == 30) {
+            led1.set(P1[105]);
+            led2.set(P2[105]);
+            led3.set(P3[105]);
+            led4.set(P4[105]);
+            led5.set(P5[105]);
+            led6.set(P6[105]);
+            led7.set(P7[105]);
+          } else if(currentmin == 40) {
+            led1.set(P1[106]);
+            led2.set(P2[106]);
+            led3.set(P3[106]);
+            led4.set(P4[106]);
+            led5.set(P5[106]);
+            led6.set(P6[106]);
+            led7.set(P7[106]);
+          } else if(currentmin == 50) {
+            led1.set(P1[107]);
+            led2.set(P2[107]);
+            led3.set(P3[107]);
+            led4.set(P4[107]);
+            led5.set(P5[107]);
+            led6.set(P6[107]);
+            led7.set(P7[107]);
+          }
         }
         else if (currenthour == 18)
         {
-          led1.set(P1_18.toInt());
-          led2.set(P2_18.toInt());
-          led3.set(P3_18.toInt());
-          led4.set(P4_18.toInt());
-          led5.set(P5_18.toInt());
-          led6.set(P6_18.toInt());
-          led7.set(P7_18.toInt());
+         if(currentmin == 0) {
+            led1.set(P1[108]);
+            led2.set(P2[108]);
+            led3.set(P3[108]);
+            led4.set(P4[108]);
+            led5.set(P5[108]);
+            led6.set(P6[108]);
+            led7.set(P7[108]);
+          }
+          else if(currentmin == 10) {
+            led1.set(P1[109]);
+            led2.set(P2[109]);
+            led3.set(P3[109]);
+            led4.set(P4[109]);
+            led5.set(P5[109]);
+            led6.set(P6[109]);
+            led7.set(P7[109]);
+          } else if(currentmin == 20) {
+            led1.set(P1[110]);
+            led2.set(P2[110]);
+            led3.set(P3[110]);
+            led4.set(P4[110]);
+            led5.set(P5[110]);
+            led6.set(P6[110]);
+            led7.set(P7[110]);
+          } else if(currentmin == 30) {
+            led1.set(P1[111]);
+            led2.set(P2[111]);
+            led3.set(P3[111]);
+            led4.set(P4[111]);
+            led5.set(P5[111]);
+            led6.set(P6[111]);
+            led7.set(P7[111]);
+          } else if(currentmin == 40) {
+            led1.set(P1[112]);
+            led2.set(P2[112]);
+            led3.set(P3[112]);
+            led4.set(P4[112]);
+            led5.set(P5[112]);
+            led6.set(P6[112]);
+            led7.set(P7[112]);
+          } else if(currentmin == 50) {
+            led1.set(P1[113]);
+            led2.set(P2[113]);
+            led3.set(P3[113]);
+            led4.set(P4[113]);
+            led5.set(P5[113]);
+            led6.set(P6[113]);
+            led7.set(P7[113]);
+          }
         }
         else if (currenthour == 19)
         {
-          led1.set(P1_19.toInt());
-          led2.set(P2_19.toInt());
-          led3.set(P3_19.toInt());
-          led4.set(P4_19.toInt());
-          led5.set(P5_19.toInt());
-          led6.set(P6_19.toInt());
-          led7.set(P7_19.toInt());
+         if(currentmin == 0) {
+            led1.set(P1[114]);
+            led2.set(P2[114]);
+            led3.set(P3[114]);
+            led4.set(P4[114]);
+            led5.set(P5[114]);
+            led6.set(P6[114]);
+            led7.set(P7[114]);
+          }
+          else if(currentmin == 10) {
+            led1.set(P1[115]);
+            led2.set(P2[115]);
+            led3.set(P3[115]);
+            led4.set(P4[115]);
+            led5.set(P5[115]);
+            led6.set(P6[115]);
+            led7.set(P7[115]);
+          } else if(currentmin == 20) {
+            led1.set(P1[116]);
+            led2.set(P2[116]);
+            led3.set(P3[116]);
+            led4.set(P4[116]);
+            led5.set(P5[116]);
+            led6.set(P6[116]);
+            led7.set(P7[116]);
+          } else if(currentmin == 30) {
+            led1.set(P1[117]);
+            led2.set(P2[117]);
+            led3.set(P3[117]);
+            led4.set(P4[117]);
+            led5.set(P5[117]);
+            led6.set(P6[117]);
+            led7.set(P7[117]);
+          } else if(currentmin == 40) {
+            led1.set(P1[118]);
+            led2.set(P2[118]);
+            led3.set(P3[118]);
+            led4.set(P4[118]);
+            led5.set(P5[118]);
+            led6.set(P6[118]);
+            led7.set(P7[118]);
+          } else if(currentmin == 50) {
+            led1.set(P1[119]);
+            led2.set(P2[119]);
+            led3.set(P3[119]);
+            led4.set(P4[119]);
+            led5.set(P5[119]);
+            led6.set(P6[119]);
+            led7.set(P7[119]);
+          }
         }
         else if (currenthour == 20)
         {
-          led1.set(P1_20.toInt());
-          led2.set(P2_20.toInt());
-          led3.set(P3_20.toInt());
-          led4.set(P4_20.toInt());
-          led5.set(P5_20.toInt());
-          led6.set(P6_20.toInt());
-          led7.set(P7_20.toInt());
+          if(currentmin == 0) {
+            led1.set(P1[120]);
+            led2.set(P2[120]);
+            led3.set(P3[120]);
+            led4.set(P4[120]);
+            led5.set(P5[120]);
+            led6.set(P6[120]);
+            led7.set(P7[120]);
+          }
+          else if(currentmin == 10) {
+            led1.set(P1[121]);
+            led2.set(P2[121]);
+            led3.set(P3[121]);
+            led4.set(P4[121]);
+            led5.set(P5[121]);
+            led6.set(P6[121]);
+            led7.set(P7[121]);
+          } else if(currentmin == 20) {
+            led1.set(P1[122]);
+            led2.set(P2[122]);
+            led3.set(P3[122]);
+            led4.set(P4[122]);
+            led5.set(P5[122]);
+            led6.set(P6[122]);
+            led7.set(P7[122]);
+          } else if(currentmin == 30) {
+            led1.set(P1[123]);
+            led2.set(P2[123]);
+            led3.set(P3[123]);
+            led4.set(P4[123]);
+            led5.set(P5[123]);
+            led6.set(P6[123]);
+            led7.set(P7[123]);
+          } else if(currentmin == 40) {
+            led1.set(P1[124]);
+            led2.set(P2[124]);
+            led3.set(P3[124]);
+            led4.set(P4[124]);
+            led5.set(P5[124]);
+            led6.set(P6[124]);
+            led7.set(P7[124]);
+          } else if(currentmin == 50) {
+            led1.set(P1[125]);
+            led2.set(P2[125]);
+            led3.set(P3[125]);
+            led4.set(P4[125]);
+            led5.set(P5[125]);
+            led6.set(P6[125]);
+            led7.set(P7[125]);
+          }
         }
         else if (currenthour == 21)
         {
-          led1.set(P1_21.toInt());
-          led2.set(P2_21.toInt());
-          led3.set(P3_21.toInt());
-          led4.set(P4_21.toInt());
-          led5.set(P5_21.toInt());
-          led6.set(P6_21.toInt());
-          led7.set(P7_21.toInt());
+          if(currentmin == 0) {
+            led1.set(P1[126]);
+            led2.set(P2[126]);
+            led3.set(P3[126]);
+            led4.set(P4[126]);
+            led5.set(P5[126]);
+            led6.set(P6[126]);
+            led7.set(P7[126]);
+          }
+          else if(currentmin == 10) {
+            led1.set(P1[127]);
+            led2.set(P2[127]);
+            led3.set(P3[127]);
+            led4.set(P4[127]);
+            led5.set(P5[127]);
+            led6.set(P6[127]);
+            led7.set(P7[127]);
+          } else if(currentmin == 20) {
+            led1.set(P1[128]);
+            led2.set(P2[128]);
+            led3.set(P3[128]);
+            led4.set(P4[128]);
+            led5.set(P5[128]);
+            led6.set(P6[128]);
+            led7.set(P7[128]);
+          } else if(currentmin == 30) {
+            led1.set(P1[129]);
+            led2.set(P2[129]);
+            led3.set(P3[129]);
+            led4.set(P4[129]);
+            led5.set(P5[129]);
+            led6.set(P6[129]);
+            led7.set(P7[129]);
+          } else if(currentmin == 40) {
+            led1.set(P1[130]);
+            led2.set(P2[130]);
+            led3.set(P3[130]);
+            led4.set(P4[130]);
+            led5.set(P5[130]);
+            led6.set(P6[130]);
+            led7.set(P7[130]);
+          } else if(currentmin == 50) {
+            led1.set(P1[131]);
+            led2.set(P2[131]);
+            led3.set(P3[131]);
+            led4.set(P4[131]);
+            led5.set(P5[131]);
+            led6.set(P6[131]);
+            led7.set(P7[131]);
+          }
         }
         else if (currenthour == 22)
         {
-          led1.set(P1_22.toInt());
-          led2.set(P2_22.toInt());
-          led3.set(P3_22.toInt());
-          led4.set(P4_22.toInt());
-          led5.set(P5_22.toInt());
-          led6.set(P6_22.toInt());
-          led7.set(P7_22.toInt());
+          if(currentmin == 0) {
+            led1.set(P1[132]);
+            led2.set(P2[132]);
+            led3.set(P3[132]);
+            led4.set(P4[132]);
+            led5.set(P5[132]);
+            led6.set(P6[132]);
+            led7.set(P7[132]);
+          }
+          else if(currentmin == 10) {
+            led1.set(P1[133]);
+            led2.set(P2[133]);
+            led3.set(P3[133]);
+            led4.set(P4[133]);
+            led5.set(P5[133]);
+            led6.set(P6[133]);
+            led7.set(P7[133]);
+          } else if(currentmin == 20) {
+            led1.set(P1[134]);
+            led2.set(P2[134]);
+            led3.set(P3[134]);
+            led4.set(P4[134]);
+            led5.set(P5[134]);
+            led6.set(P6[134]);
+            led7.set(P7[134]);
+          } else if(currentmin == 30) {
+            led1.set(P1[135]);
+            led2.set(P2[135]);
+            led3.set(P3[135]);
+            led4.set(P4[135]);
+            led5.set(P5[135]);
+            led6.set(P6[135]);
+            led7.set(P7[135]);
+          } else if(currentmin == 40) {
+            led1.set(P1[136]);
+            led2.set(P2[136]);
+            led3.set(P3[136]);
+            led4.set(P4[136]);
+            led5.set(P5[136]);
+            led6.set(P6[136]);
+            led7.set(P7[136]);
+          } else if(currentmin == 50) {
+            led1.set(P1[137]);
+            led2.set(P2[137]);
+            led3.set(P3[137]);
+            led4.set(P4[137]);
+            led5.set(P5[137]);
+            led6.set(P6[137]);
+            led7.set(P7[137]);
+          }
         }
         else if (currenthour == 23)
         {
-          led1.set(P1_23.toInt());
-          led2.set(P2_23.toInt());
-          led3.set(P3_23.toInt());
-          led4.set(P4_23.toInt());
-          led5.set(P5_23.toInt());
-          led6.set(P6_23.toInt());
-          led7.set(P7_23.toInt());
+          if(currentmin == 0) {
+            led1.set(P1[138]);
+            led2.set(P2[138]);
+            led3.set(P3[138]);
+            led4.set(P4[138]);
+            led5.set(P5[138]);
+            led6.set(P6[138]);
+            led7.set(P7[138]);
+          }
+          else if(currentmin == 10) {
+            led1.set(P1[139]);
+            led2.set(P2[139]);
+            led3.set(P3[139]);
+            led4.set(P4[139]);
+            led5.set(P5[139]);
+            led6.set(P6[139]);
+            led7.set(P7[139]);
+          } else if(currentmin == 20) {
+            led1.set(P1[140]);
+            led2.set(P2[140]);
+            led3.set(P3[140]);
+            led4.set(P4[140]);
+            led5.set(P5[140]);
+            led6.set(P6[140]);
+            led7.set(P7[140]);
+          } else if(currentmin == 30) {
+            led1.set(P1[141]);
+            led2.set(P2[141]);
+            led3.set(P3[141]);
+            led4.set(P4[141]);
+            led5.set(P5[141]);
+            led6.set(P6[141]);
+            led7.set(P7[141]);
+          } else if(currentmin == 40) {
+            led1.set(P1[142]);
+            led2.set(P2[142]);
+            led3.set(P3[142]);
+            led4.set(P4[142]);
+            led5.set(P5[142]);
+            led6.set(P6[142]);
+            led7.set(P7[142]);
+          } else if(currentmin == 50) {
+            led1.set(P1[143]);
+            led2.set(P2[143]);
+            led3.set(P3[143]);
+            led4.set(P4[143]);
+            led5.set(P5[143]);
+            led6.set(P6[143]);
+            led7.set(P7[143]);
+          }
         }
       }
       else if (PWM_INFO_TESTMODE == "test")
       {
+        Serial.printf("test mode .... current sec is: %d the led1's volume is: %d \n",currentsec,P1[TESTMODE_COUNT]);
+        if(TESTMODE_COUNT >143) {
+          TESTMODE_COUNT = 0;
+        }
 
-        log_printf("test mode .... current sec is: %d \n", currentsec);
-
-        if (currentsec == 0 || currentsec == 30)
-        {
-          led1.set(P1_0.toInt());
-          led2.set(P2_0.toInt());
-          led3.set(P3_0.toInt());
-          led4.set(P4_0.toInt());
-          led5.set(P5_0.toInt());
-          led6.set(P6_0.toInt());
-          led7.set(P7_0.toInt());
-        }
-        else if (currentsec == 1 || currentsec == 31)
-        {
-          led1.set(P1_1.toInt());
-          led2.set(P2_1.toInt());
-          led3.set(P3_1.toInt());
-          led4.set(P4_1.toInt());
-          led5.set(P5_1.toInt());
-          led6.set(P6_1.toInt());
-          led7.set(P7_1.toInt());
-        }
-        else if (currentsec == 2 || currentsec == 32)
-        {
-          led1.set(P1_2.toInt());
-          led2.set(P2_2.toInt());
-          led3.set(P3_2.toInt());
-          led4.set(P4_2.toInt());
-          led5.set(P5_2.toInt());
-          led6.set(P6_2.toInt());
-          led7.set(P7_2.toInt());
-        }
-        else if (currentsec == 3 || currentsec == 33)
-        {
-          led1.set(P1_3.toInt());
-          led2.set(P2_3.toInt());
-          led3.set(P3_3.toInt());
-          led4.set(P4_3.toInt());
-          led5.set(P5_3.toInt());
-          led6.set(P6_3.toInt());
-          led7.set(P7_3.toInt());
-        }
-        else if (currentsec == 4 || currentsec == 34)
-        {
-          led1.set(P1_4.toInt());
-          led2.set(P2_4.toInt());
-          led3.set(P3_4.toInt());
-          led4.set(P4_4.toInt());
-          led5.set(P5_4.toInt());
-          led6.set(P6_4.toInt());
-          led7.set(P7_4.toInt());
-        }
-        else if (currentsec == 5 || currentsec == 35)
-        {
-          led1.set(P1_5.toInt());
-          led2.set(P2_5.toInt());
-          led3.set(P3_5.toInt());
-          led4.set(P4_5.toInt());
-          led5.set(P5_5.toInt());
-          led6.set(P6_5.toInt());
-          led7.set(P7_5.toInt());
-        }
-        else if (currentsec == 6 || currentsec == 36)
-        {
-          led1.set(P1_6.toInt());
-          led2.set(P2_6.toInt());
-          led3.set(P3_6.toInt());
-          led4.set(P4_6.toInt());
-          led5.set(P5_6.toInt());
-          led6.set(P6_6.toInt());
-          led7.set(P7_6.toInt());
-        }
-        else if (currentsec == 7 || currentsec == 37)
-        {
-          led1.set(P1_7.toInt());
-          led2.set(P2_7.toInt());
-          led3.set(P3_7.toInt());
-          led4.set(P4_7.toInt());
-          led5.set(P5_7.toInt());
-          led6.set(P6_7.toInt());
-          led7.set(P7_7.toInt());
-        }
-        else if (currentsec == 8 || currentsec == 38)
-        {
-          led1.set(P1_8.toInt());
-          led2.set(P2_8.toInt());
-          led3.set(P3_8.toInt());
-          led4.set(P4_8.toInt());
-          led5.set(P5_8.toInt());
-          led6.set(P6_8.toInt());
-          led7.set(P7_8.toInt());
-        }
-        else if (currentsec == 9 || currentsec == 39)
-        {
-          led1.set(P1_9.toInt());
-          led2.set(P2_9.toInt());
-          led3.set(P3_9.toInt());
-          led4.set(P4_9.toInt());
-          led5.set(P5_9.toInt());
-          led6.set(P6_9.toInt());
-          led7.set(P7_9.toInt());
-        }
-        else if (currentsec == 10 || currentsec == 40)
-        {
-          led1.set(P1_10.toInt());
-          led2.set(P2_10.toInt());
-          led3.set(P3_10.toInt());
-          led4.set(P4_10.toInt());
-          led5.set(P5_10.toInt());
-          led6.set(P6_10.toInt());
-          led7.set(P7_10.toInt());
-        }
-        else if (currentsec == 11 || currentsec == 41)
-        {
-          led1.set(P1_11.toInt());
-          led2.set(P2_11.toInt());
-          led3.set(P3_11.toInt());
-          led4.set(P4_11.toInt());
-          led5.set(P5_11.toInt());
-          led6.set(P6_11.toInt());
-          led7.set(P7_11.toInt());
-        }
-        else if (currentsec == 12 || currentsec == 42)
-        {
-          led1.set(P1_12.toInt());
-          led2.set(P2_12.toInt());
-          led3.set(P3_12.toInt());
-          led4.set(P4_12.toInt());
-          led5.set(P5_12.toInt());
-          led6.set(P6_12.toInt());
-          led7.set(P7_12.toInt());
-        }
-        else if (currentsec == 13 || currentsec == 43)
-        {
-          led1.set(P1_13.toInt());
-          led2.set(P2_13.toInt());
-          led3.set(P3_13.toInt());
-          led4.set(P4_13.toInt());
-          led5.set(P5_13.toInt());
-          led6.set(P6_13.toInt());
-          led7.set(P7_13.toInt());
-        }
-        else if (currentsec == 14 || currentsec == 44)
-        {
-          led1.set(P1_14.toInt());
-          led2.set(P2_14.toInt());
-          led3.set(P3_14.toInt());
-          led4.set(P4_14.toInt());
-          led5.set(P5_14.toInt());
-          led6.set(P6_14.toInt());
-          led7.set(P7_14.toInt());
-        }
-        else if (currentsec == 15 || currentsec == 45)
-        {
-          led1.set(P1_15.toInt());
-          led2.set(P2_15.toInt());
-          led3.set(P3_15.toInt());
-          led4.set(P4_15.toInt());
-          led5.set(P5_15.toInt());
-          led6.set(P6_15.toInt());
-          led7.set(P7_15.toInt());
-        }
-        else if (currentsec == 16 || currentsec == 46)
-        {
-          led1.set(P1_16.toInt());
-          led2.set(P2_16.toInt());
-          led3.set(P3_16.toInt());
-          led4.set(P4_16.toInt());
-          led5.set(P5_16.toInt());
-          led6.set(P6_16.toInt());
-          led7.set(P7_16.toInt());
-        }
-        else if (currentsec == 17 || currentsec == 47)
-        {
-          led1.set(P1_17.toInt());
-          led2.set(P2_17.toInt());
-          led3.set(P3_17.toInt());
-          led4.set(P4_17.toInt());
-          led5.set(P5_17.toInt());
-          led6.set(P6_17.toInt());
-          led7.set(P7_17.toInt());
-        }
-        else if (currentsec == 18 || currentsec == 48)
-        {
-          led1.set(P1_18.toInt());
-          led2.set(P2_18.toInt());
-          led3.set(P3_18.toInt());
-          led4.set(P4_18.toInt());
-          led5.set(P5_18.toInt());
-          led6.set(P6_18.toInt());
-          led7.set(P7_18.toInt());
-        }
-        else if (currentsec == 19 || currentsec == 49)
-        {
-          led1.set(P1_19.toInt());
-          led2.set(P2_19.toInt());
-          led3.set(P3_19.toInt());
-          led4.set(P4_19.toInt());
-          led5.set(P5_19.toInt());
-          led6.set(P6_19.toInt());
-          led7.set(P7_19.toInt());
-        }
-        else if (currentsec == 20 || currentsec == 50)
-        {
-          led1.set(P1_20.toInt());
-          led2.set(P2_20.toInt());
-          led3.set(P3_20.toInt());
-          led4.set(P4_20.toInt());
-          led5.set(P5_20.toInt());
-          led6.set(P6_20.toInt());
-          led7.set(P7_20.toInt());
-        }
-        else if (currentsec == 21 || currentsec == 51)
-        {
-          led1.set(P1_21.toInt());
-          led2.set(P2_21.toInt());
-          led3.set(P3_21.toInt());
-          led4.set(P4_21.toInt());
-          led5.set(P5_21.toInt());
-          led6.set(P6_21.toInt());
-          led7.set(P7_21.toInt());
-        }
-        else if (currentsec == 22 || currentsec == 52)
-        {
-          led1.set(P1_22.toInt());
-          led2.set(P2_22.toInt());
-          led3.set(P3_22.toInt());
-          led4.set(P4_22.toInt());
-          led5.set(P5_22.toInt());
-          led6.set(P6_22.toInt());
-          led7.set(P7_22.toInt());
-        }
-        else if (currentsec == 23 || currentsec == 53)
-        {
-          led1.set(P1_23.toInt());
-          led2.set(P2_23.toInt());
-          led3.set(P3_23.toInt());
-          led4.set(P4_23.toInt());
-          led5.set(P5_23.toInt());
-          led6.set(P6_23.toInt());
-          led7.set(P7_23.toInt());
-        }
+        led1.set(P1[TESTMODE_COUNT]);
+        led2.set(P2[TESTMODE_COUNT]);
+        led3.set(P3[TESTMODE_COUNT]);
+        led4.set(P4[TESTMODE_COUNT]);
+        led5.set(P5[TESTMODE_COUNT]);
+        led6.set(P6[TESTMODE_COUNT]);
+        led7.set(P7[TESTMODE_COUNT]);
+        
+        TESTMODE_COUNT = TESTMODE_COUNT +1;
       }
 
       if (IS_SMART)
@@ -2961,14 +3061,14 @@ void loop()
     }
     else if (PWM_INFO_SHOWTYPE == "fix")
     {
-      //Serial.println(" this is the fix mode");
-      led1.set(P1_24.toInt());
-      led2.set(P2_24.toInt());
-      led3.set(P3_24.toInt());
-      led4.set(P4_24.toInt());
-      led5.set(P5_24.toInt());
-      led6.set(P6_24.toInt());
-      led7.set(P7_24.toInt());
+      Serial.printf("fix mode ... the led1's volume is: %d \n", P1[144]);
+      led1.set(P1[144]);
+      led2.set(P2[144]);
+      led3.set(P3[144]);
+      led4.set(P4[144]);
+      led5.set(P5[144]);
+      led6.set(P6[144]);
+      led7.set(P7[144]);
       //String topiccontent = ESP_HOST_NAME;
       //Serial.printf("the connect status is: %d, the smart status is: %d, the mqtt is: %d, the ssid is: %s \n", WiFi.status(), WiFi.smartConfigDone(), client.connected(), SSID.c_str());
       if (IS_SMART)
