@@ -37,7 +37,7 @@
  void LED_ESP32::updateBaseFreq(uint32_t freq){
       _BASE_FREQ = freq;
       _DUTY_MAX  = _BASE_FREQ / _MAX_VALUE;
-      if(_isWorking) set(currentValue);
+      if(_isWorking) set(currentValue);   
     }
  void LED_ESP32::updateMaxValue(uint32_t valueMax){
       _MAX_VALUE = valueMax;

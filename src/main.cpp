@@ -11,18 +11,11 @@
 #include <PubSubClient.h>
 
 #define RESET_BUTTON 16
-#define VERSION_NUM "0.20"
+#define VERSION_NUM "0.41"
 #define ESP_HOST_NAME "esp1005"
 #define ESP_RTC_TICK 1542012457
 
 String PWM_INFO_SHOWTYPE, PWM_INFO_TESTMODE, PWM_INFO_CONMODE, PWM_INFO_RTC, PWM_INFO_VERSION;
-String P1_0, P1_1, P1_2, P1_3, P1_4, P1_5, P1_6, P1_7, P1_8, P1_9, P1_10, P1_11, P1_12, P1_13, P1_14, P1_15, P1_16, P1_17, P1_18, P1_19, P1_20, P1_21, P1_22, P1_23, P1_24;
-String P2_0, P2_1, P2_2, P2_3, P2_4, P2_5, P2_6, P2_7, P2_8, P2_9, P2_10, P2_11, P2_12, P2_13, P2_14, P2_15, P2_16, P2_17, P2_18, P2_19, P2_20, P2_21, P2_22, P2_23, P2_24;
-String P3_0, P3_1, P3_2, P3_3, P3_4, P3_5, P3_6, P3_7, P3_8, P3_9, P3_10, P3_11, P3_12, P3_13, P3_14, P3_15, P3_16, P3_17, P3_18, P3_19, P3_20, P3_21, P3_22, P3_23, P3_24;
-String P4_0, P4_1, P4_2, P4_3, P4_4, P4_5, P4_6, P4_7, P4_8, P4_9, P4_10, P4_11, P4_12, P4_13, P4_14, P4_15, P4_16, P4_17, P4_18, P4_19, P4_20, P4_21, P4_22, P4_23, P4_24;
-String P5_0, P5_1, P5_2, P5_3, P5_4, P5_5, P5_6, P5_7, P5_8, P5_9, P5_10, P5_11, P5_12, P5_13, P5_14, P5_15, P5_16, P5_17, P5_18, P5_19, P5_20, P5_21, P5_22, P5_23, P5_24;
-String P6_0, P6_1, P6_2, P6_3, P6_4, P6_5, P6_6, P6_7, P6_8, P6_9, P6_10, P6_11, P6_12, P6_13, P6_14, P6_15, P6_16, P6_17, P6_18, P6_19, P6_20, P6_21, P6_22, P6_23, P6_24;
-String P7_0, P7_1, P7_2, P7_3, P7_4, P7_5, P7_6, P7_7, P7_8, P7_9, P7_10, P7_11, P7_12, P7_13, P7_14, P7_15, P7_16, P7_17, P7_18, P7_19, P7_20, P7_21, P7_22, P7_23, P7_24;
 
 int P1[145] = {};
 int P2[145] = {};
@@ -35,7 +28,6 @@ int P7[145] = {};
 int TESTMODE_COUNT = 0;
 
 String SSID, SSID_PWD;
-//char LIGHTDEF[] = "000,001,002,003,004,005,010,011,012,013,014,015,020,021,022,023,024,025,030,031,032,033,034,035,040,041,042,043,044,045,050,051,052,053,054,055,060,061,062,063,064,065,070,071,072,073,074,075,080,081,082,083,084,085,090,091,092,093,094,095,100,101,102,103,104,105,110,111,112,113,114,115,120,121,122,123,124,125,130,131,132,133,134,135,140,141,142,143,144,145,150,151,152,153,154,155,160,161,162,163,164,165,170,171,172,173,174,175,180,181,182,183,184,185,190,191,192,193,194,195,200,201,202,203,204,205,210,211,212,213,214,215,220,221,222,223,224,225,230,231,232,233,234,235,fix";
 
 bool IS_SMART = false;
 bool RESET_FLAG = false;
@@ -52,14 +44,24 @@ const int mqttPort = 16610;
 const char *mqttuser = "cqyjmitd";
 const char *mqttpwd = "SXLMuaorn881";
 
-LED_ESP32 led1(4, 0, 100);
+LED_ESP32 led1(4, 7, 100);
 LED_ESP32 led2(12, 1, 100);
 LED_ESP32 led3(13, 2, 100);
 LED_ESP32 led4(15, 3, 100);
 LED_ESP32 led5(21, 4, 100);
 LED_ESP32 led6(22, 5, 100);
 LED_ESP32 led7(27, 6, 100);
-LED_ESP32 led8(25, 7, 100);
+LED_ESP32 led8(25, 0, 100);
+
+// LED_ESP32 led8(2, 7, 100);
+// LED_ESP32 led1(4, 0, 100);
+// LED_ESP32 led2(12, 1, 100);
+// LED_ESP32 led3(13, 2, 100);
+// LED_ESP32 led4(15, 3, 100);
+// LED_ESP32 led5(22, 4, 100);
+// LED_ESP32 led6(23, 5, 100);
+// LED_ESP32 led7(25, 6, 100);
+
 
 AsyncWebServer server(80);
 WiFiClient espClient;
@@ -161,921 +163,11 @@ void initFileSystem()
   pwminfocontent.replace("{version_num}", VERSION_NUM);
   pwminfocontent.replace("{unixtick}", String(ESP_RTC_TICK));
   writeFile(SPIFFS, "/pwminfo.ini", pwminfocontent.c_str());
-
   writeFile(SPIFFS, "/p.ini", "{\"t000\":\"00000000000000\",\"t001\":\"00000000000000\",\"t002\":\"00000000000000\",\"t003\":\"00000000000000\",\"t004\":\"00000000000000\",\"t005\":\"00000000000000\",\"t010\":\"00000000000000\",\"t011\":\"00000000000000\",\"t012\":\"00000000000000\",\"t013\":\"00000000000000\",\"t014\":\"00000000000000\",\"t015\":\"00000000000000\",\"t020\":\"00000000000000\",\"t021\":\"00000000000000\",\"t022\":\"00000000000000\",\"t023\":\"00000000000000\",\"t024\":\"00000000000000\",\"t025\":\"00000000000000\",\"t030\":\"00000000000000\",\"t031\":\"00000000000000\",\"t032\":\"00000000000000\",\"t033\":\"00000000000000\",\"t034\":\"00000000000000\",\"t035\":\"00000000000000\",\"t040\":\"00000000000000\",\"t041\":\"00000000000000\",\"t042\":\"00000000000000\",\"t043\":\"00000000000000\",\"t044\":\"00000000000000\",\"t045\":\"00000000000000\",\"t050\":\"00000000000000\",\"t051\":\"00000000000000\",\"t052\":\"00000000000000\",\"t053\":\"00000000000000\",\"t054\":\"00000000000000\",\"t055\":\"00000000000000\",\"t060\":\"00000000000000\",\"t061\":\"00000000000000\",\"t062\":\"00000000000000\",\"t063\":\"00000000000000\",\"t064\":\"00000000000000\",\"t065\":\"00000000000000\",\"t070\":\"00000000000000\",\"t071\":\"00000000000000\",\"t072\":\"00000000000000\",\"t073\":\"00000000000000\",\"t074\":\"00000000000000\",\"t075\":\"00000000000000\",\"t080\":\"00000000000000\",\"t081\":\"00000000000000\",\"t082\":\"00000000000000\",\"t083\":\"00000000000000\",\"t084\":\"00000000000000\",\"t085\":\"00000000000000\",\"t090\":\"00000000000000\",\"t091\":\"00000000000000\",\"t092\":\"00000000000000\",\"t093\":\"00000000000000\",\"t094\":\"00000000000000\",\"t095\":\"00000000000000\",\"t100\":\"00000000000000\",\"t101\":\"00000000000000\",\"t102\":\"00000000000000\",\"t103\":\"00000000000000\",\"t104\":\"00000000000000\",\"t105\":\"00000000000000\",\"t110\":\"00000000000000\",\"t111\":\"00000000000000\",\"t112\":\"00000000000000\",\"t113\":\"00000000000000\",\"t114\":\"00000000000000\",\"t115\":\"00000000000000\",\"t120\":\"00000000000000\",\"t121\":\"00000000000000\",\"t122\":\"00000000000000\",\"t123\":\"00000000000000\",\"t124\":\"00000000000000\",\"t125\":\"00000000000000\",\"t130\":\"00000000000000\",\"t131\":\"00000000000000\",\"t132\":\"00000000000000\",\"t133\":\"00000000000000\",\"t134\":\"00000000000000\",\"t135\":\"00000000000000\",\"t140\":\"00000000000000\",\"t141\":\"00000000000000\",\"t142\":\"00000000000000\",\"t143\":\"00000000000000\",\"t144\":\"00000000000000\",\"t145\":\"00000000000000\",\"t150\":\"00000000000000\",\"t151\":\"00000000000000\",\"t152\":\"00000000000000\",\"t153\":\"00000000000000\",\"t154\":\"00000000000000\",\"t155\":\"00000000000000\",\"t160\":\"00000000000000\",\"t161\":\"00000000000000\",\"t162\":\"00000000000000\",\"t163\":\"00000000000000\",\"t164\":\"00000000000000\",\"t165\":\"00000000000000\",\"t170\":\"00000000000000\",\"t171\":\"00000000000000\",\"t172\":\"00000000000000\",\"t173\":\"00000000000000\",\"t174\":\"00000000000000\",\"t175\":\"00000000000000\",\"t180\":\"00000000000000\",\"t181\":\"00000000000000\",\"t182\":\"00000000000000\",\"t183\":\"00000000000000\",\"t184\":\"00000000000000\",\"t185\":\"00000000000000\",\"t190\":\"00000000000000\",\"t191\":\"00000000000000\",\"t192\":\"00000000000000\",\"t193\":\"00000000000000\",\"t194\":\"00000000000000\",\"t195\":\"00000000000000\",\"t200\":\"00000000000000\",\"t201\":\"00000000000000\",\"t202\":\"00000000000000\",\"t203\":\"00000000000000\",\"t204\":\"00000000000000\",\"t205\":\"00000000000000\",\"t210\":\"00000000000000\",\"t211\":\"00000000000000\",\"t212\":\"00000000000000\",\"t213\":\"00000000000000\",\"t214\":\"00000000000000\",\"t215\":\"00000000000000\",\"t220\":\"00000000000000\",\"t221\":\"00000000000000\",\"t222\":\"00000000000000\",\"t223\":\"00000000000000\",\"t224\":\"00000000000000\",\"t225\":\"00000000000000\",\"t230\":\"00000000000000\",\"t231\":\"00000000000000\",\"t232\":\"00000000000000\",\"t233\":\"00000000000000\",\"t234\":\"00000000000000\",\"t235\":\"00000000000000\",\"tfix\":\"00000000000000\"}");
-  writeFile(SPIFFS, "/p1.ini", "{\"t0\":0,\"t1\":0,\"t2\":0,\"t3\":0,\"t4\":0,\"t5\":0,\"t6\":0,\"t7\":0,\"t8\":0,\"t9\":0,\"t10\":0,\"t11\":0,\"t12\":0,\"t13\":0,\"t14\":0,\"t15\":0,\"t16\":0,\"t17\":0,\"t18\":0,\"t19\":0,\"t20\":0,\"t21\":0,\"t22\":0,\"t23\":0,\"t24\":0}");
-  writeFile(SPIFFS, "/p2.ini", "{\"t0\":0,\"t1\":0,\"t2\":0,\"t3\":0,\"t4\":0,\"t5\":0,\"t6\":0,\"t7\":0,\"t8\":0,\"t9\":0,\"t10\":0,\"t11\":0,\"t12\":0,\"t13\":0,\"t14\":0,\"t15\":0,\"t16\":0,\"t17\":0,\"t18\":0,\"t19\":0,\"t20\":0,\"t21\":0,\"t22\":0,\"t23\":0,\"t24\":0}");
-  writeFile(SPIFFS, "/p3.ini", "{\"t0\":0,\"t1\":0,\"t2\":0,\"t3\":0,\"t4\":0,\"t5\":0,\"t6\":0,\"t7\":0,\"t8\":0,\"t9\":0,\"t10\":0,\"t11\":0,\"t12\":0,\"t13\":0,\"t14\":0,\"t15\":0,\"t16\":0,\"t17\":0,\"t18\":0,\"t19\":0,\"t20\":0,\"t21\":0,\"t22\":0,\"t23\":0,\"t24\":0}");
-  writeFile(SPIFFS, "/p4.ini", "{\"t0\":0,\"t1\":0,\"t2\":0,\"t3\":0,\"t4\":0,\"t5\":0,\"t6\":0,\"t7\":0,\"t8\":0,\"t9\":0,\"t10\":0,\"t11\":0,\"t12\":0,\"t13\":0,\"t14\":0,\"t15\":0,\"t16\":0,\"t17\":0,\"t18\":0,\"t19\":0,\"t20\":0,\"t21\":0,\"t22\":0,\"t23\":0,\"t24\":0}");
-  writeFile(SPIFFS, "/p5.ini", "{\"t0\":0,\"t1\":0,\"t2\":0,\"t3\":0,\"t4\":0,\"t5\":0,\"t6\":0,\"t7\":0,\"t8\":0,\"t9\":0,\"t10\":0,\"t11\":0,\"t12\":0,\"t13\":0,\"t14\":0,\"t15\":0,\"t16\":0,\"t17\":0,\"t18\":0,\"t19\":0,\"t20\":0,\"t21\":0,\"t22\":0,\"t23\":0,\"t24\":0}");
-  writeFile(SPIFFS, "/p6.ini", "{\"t0\":0,\"t1\":0,\"t2\":0,\"t3\":0,\"t4\":0,\"t5\":0,\"t6\":0,\"t7\":0,\"t8\":0,\"t9\":0,\"t10\":0,\"t11\":0,\"t12\":0,\"t13\":0,\"t14\":0,\"t15\":0,\"t16\":0,\"t17\":0,\"t18\":0,\"t19\":0,\"t20\":0,\"t21\":0,\"t22\":0,\"t23\":0,\"t24\":0}");
-  writeFile(SPIFFS, "/p7.ini", "{\"t0\":0,\"t1\":0,\"t2\":0,\"t3\":0,\"t4\":0,\"t5\":0,\"t6\":0,\"t7\":0,\"t8\":0,\"t9\":0,\"t10\":0,\"t11\":0,\"t12\":0,\"t13\":0,\"t14\":0,\"t15\":0,\"t16\":0,\"t17\":0,\"t18\":0,\"t19\":0,\"t20\":0,\"t21\":0,\"t22\":0,\"t23\":0,\"t24\":0}");
-}
-
-void onFileUpload(AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final)
-{
-  if (index == 0)
-  {
-    Serial.printf("Update: %s\n", filename.c_str());
-    if (!Update.begin(UPDATE_SIZE_UNKNOWN))
-    {
-      Update.printError(Serial);
-    }
-  }
-  Update.write(data, len);
-  if (final)
-  {
-    if (Update.end(true))
-    {
-      Serial.printf("Update Success: %u\nRebooting....\n", index + len);
-    }
-    else
-    {
-      Update.printError(Serial);
-    }
-  }
-}
-// file operation end
-
-// reset button handle event
-void handleRestButtonChanged()
-{
-  Serial.println("");
-  Serial.println("Rest begin.....");
-  RESET_FLAG = true;
-  Serial.println("rest end.....");
-  detachInterrupt(RESET_BUTTON);
-}
-
-// 404 not found hook
-void notFound(AsyncWebServerRequest *request)
-{
-  request->send(404, "text/plain", "Not found");
-}
-
-// common function begin
-int split(char dst[][80], char *str, const char *spl)
-{
-  int n = 0;
-  char *result = NULL;
-  result = strtok(str, spl);
-  while (result != NULL)
-  {
-    strcpy(dst[n++], result);
-    result = strtok(NULL, spl);
-  }
-  return n;
-}
-// common fucntion end
-
-// mqtt callback function
-void callback(char *topic, byte *payload, unsigned int length)
-{
-  Serial.println("the topic is: " + String(topic));
-
-  if (!SPIFFS.begin())
-  {
-    Serial.println("SPIFFS Mount Failed");
-    return;
-  }
-
-  String topic_name_p = ESP_HOST_NAME;
-  topic_name_p = topic_name_p + "/p";
-  String topic_name_p1 = ESP_HOST_NAME;
-  topic_name_p1 = topic_name_p1 + "/p1";
-  String topic_name_p2 = ESP_HOST_NAME;
-  topic_name_p2 = topic_name_p2 + "/p2";
-  String topic_name_p3 = ESP_HOST_NAME;
-  topic_name_p3 = topic_name_p3 + "/p3";
-  String topic_name_p4 = ESP_HOST_NAME;
-  topic_name_p4 = topic_name_p4 + "/p4";
-  String topic_name_p5 = ESP_HOST_NAME;
-  topic_name_p5 = topic_name_p5 + "/p5";
-  String topic_name_p6 = ESP_HOST_NAME;
-  topic_name_p6 = topic_name_p6 + "/p6";
-  String topic_name_p7 = ESP_HOST_NAME;
-  topic_name_p7 = topic_name_p7 + "/p7";
-  String topic_name_pt = ESP_HOST_NAME;
-  topic_name_pt = topic_name_pt + "/pt";
-
-  String checkonine = ESP_HOST_NAME;
-  checkonine = checkonine + "/check";
-
-  String filecontent;
-  for (int i = 0; i < length; i++)
-  {
-    filecontent = filecontent + (char)payload[i];
-  }
-
-  //Serial.println("the content is: " + filecontent);
-
-  String tpl_content = "{\"t0\":{t0},\"t1\":{t1},\"t2\":{t2},\"t3\":{t3},\"t4\":{t4},\"t5\":{t5},\"t6\":{t6},\"t7\":{t7},\"t8\":{t8},\"t9\":{t9},\"t10\":{t10},\"t11\":{t11},\"t12\":{t12},\"t13\":{t13},\"t14\":{t14},\"t15\":{t15},\"t16\":{t16},\"t17\":{t17},\"t18\":{t18},\"t19\":{t19},\"t20\":{t20},\"t21\":{t21},\"t22\":{t22},\"t23\":{t23},\"t24\":{t24}}";
-  char *p_content;
-  char dst[30][80];
-  int cnt;
-  cJSON *root = NULL;
-  cJSON *item = NULL;
-  const char *jsonstr = filecontent.c_str();
-  root = cJSON_Parse(jsonstr);
-  String itemstr;
-  String checktimetopic = "esp32/checktime";
-
-  if (String(topic) != topic_name_p && String(topic) != checktimetopic)
-  {
-    p_content = new char[200];
-    strcpy(p_content, filecontent.c_str());
-    cnt = split(dst, p_content, ",");
-  }
-
-  if (String(topic) == topic_name_p)
-  {
-    item = cJSON_GetObjectItem(root, "showtype");
-    itemstr = cJSON_Print(item);
-    PWM_INFO_SHOWTYPE = itemstr;
-    PWM_INFO_SHOWTYPE.replace("\"", "");
-    item = cJSON_GetObjectItem(root, "testmode");
-    itemstr = cJSON_Print(item);
-    PWM_INFO_TESTMODE = itemstr;
-    PWM_INFO_TESTMODE.replace("\"", "");
-    item = cJSON_GetObjectItem(root, "sysdate");
-    itemstr = cJSON_Print(item);
-    PWM_INFO_RTC = itemstr;
-    PWM_INFO_RTC.replace("\"", "");
-    struct timeval stime;
-    stime.tv_sec = PWM_INFO_RTC.toInt() + 28816;
-    settimeofday(&stime, NULL);
-    item = cJSON_GetObjectItem(root, "conmode");
-    itemstr = cJSON_Print(item);
-    PWM_INFO_CONMODE = itemstr;
-    PWM_INFO_CONMODE.replace("\"", "");
-    item = cJSON_GetObjectItem(root, "version");
-    itemstr = cJSON_Print(item);
-    PWM_INFO_VERSION = itemstr;
-    PWM_INFO_VERSION.replace("\"", "");
-    writeFile(SPIFFS, "/pwminfo.ini", filecontent.c_str());
-  }
-  else if (String(topic) == checktimetopic)
-  {
-    PWM_INFO_RTC = filecontent;
-    String pwmifnocontent = getFileString(SPIFFS, "/pwminfo.ini");
-    Serial.println(pwmifnocontent);
-    p_content = new char[200];
-    strcpy(p_content, pwmifnocontent.c_str());
-    cnt = split(dst, p_content, ",");
-    String tpl_sysdate;
-    String change_sysdate = "\"sysdate\":\"";
-    change_sysdate = change_sysdate + PWM_INFO_RTC;
-    change_sysdate = change_sysdate + "\"";
-    for (int i = 0; i < cnt; i++)
-    {
-      if (i == 2)
-      {
-        tpl_sysdate = dst[i];
-        break;
-      }
-    }
-    pwmifnocontent.replace(tpl_sysdate, change_sysdate);
-
-    writeFile(SPIFFS, "/pwminfo.ini", pwmifnocontent.c_str());
-    struct timeval stime;
-    stime.tv_sec = PWM_INFO_RTC.toInt() + 28816;
-    settimeofday(&stime, NULL);
-  }
-  else if (String(topic) == topic_name_pt)
-  {
-    for (int i = 0; i < cnt; i++)
-    {
-      Serial.println(dst[i]);
-      Serial.println(strlen(dst[i]));
-    }
-  }
-  else if (String(topic) == topic_name_p1)
-  {
-    for (int i = 0; i < cnt; i++)
-    {
-      String tpl_t = "{t";
-      tpl_t = tpl_t + i;
-      tpl_t = tpl_t + "}";
-      tpl_content.replace(tpl_t, dst[i]);
-      switch (i)
-      {
-      case 0:
-        P1_0 = dst[i];
-        break;
-      case 1:
-        P1_1 = dst[i];
-        break;
-      case 2:
-        P1_2 = dst[i];
-        break;
-      case 3:
-        P1_3 = dst[i];
-        break;
-      case 4:
-        P1_4 = dst[i];
-        break;
-      case 5:
-        P1_5 = dst[i];
-        break;
-      case 6:
-        P1_6 = dst[i];
-        break;
-      case 7:
-        P1_7 = dst[i];
-        break;
-      case 8:
-        P1_8 = dst[i];
-        break;
-      case 9:
-        P1_9 = dst[i];
-        break;
-      case 10:
-        P1_10 = dst[i];
-        break;
-      case 11:
-        P1_11 = dst[i];
-        break;
-      case 12:
-        P1_12 = dst[i];
-        break;
-      case 13:
-        P1_13 = dst[i];
-        break;
-      case 14:
-        P1_14 = dst[i];
-        break;
-      case 15:
-        P1_15 = dst[i];
-        break;
-      case 16:
-        P1_16 = dst[i];
-        break;
-      case 17:
-        P1_17 = dst[i];
-        break;
-      case 18:
-        P1_18 = dst[i];
-        break;
-      case 19:
-        P1_19 = dst[i];
-        break;
-      case 20:
-        P1_20 = dst[i];
-        break;
-      case 21:
-        P1_21 = dst[i];
-        break;
-      case 22:
-        P1_22 = dst[i];
-        break;
-      case 23:
-        P1_23 = dst[i];
-        break;
-      case 24:
-        P1_24 = dst[i];
-        break;
-      }
-    }
-    filecontent = tpl_content;
-    writeFile(SPIFFS, "/p1.ini", filecontent.c_str());
-  }
-  else if (String(topic) == topic_name_p2)
-  {
-    for (int i = 0; i < cnt; i++)
-    {
-      String tpl_t = "{t";
-      tpl_t = tpl_t + i;
-      tpl_t = tpl_t + "}";
-      tpl_content.replace(tpl_t, dst[i]);
-      switch (i)
-      {
-      case 0:
-        P2_0 = dst[i];
-        break;
-      case 1:
-        P2_1 = dst[i];
-        break;
-      case 2:
-        P2_2 = dst[i];
-        break;
-      case 3:
-        P2_3 = dst[i];
-        break;
-      case 4:
-        P2_4 = dst[i];
-        break;
-      case 5:
-        P2_5 = dst[i];
-        break;
-      case 6:
-        P2_6 = dst[i];
-        break;
-      case 7:
-        P2_7 = dst[i];
-        break;
-      case 8:
-        P2_8 = dst[i];
-        break;
-      case 9:
-        P2_9 = dst[i];
-        break;
-      case 10:
-        P2_10 = dst[i];
-        break;
-      case 11:
-        P2_11 = dst[i];
-        break;
-      case 12:
-        P2_12 = dst[i];
-        break;
-      case 13:
-        P2_13 = dst[i];
-        break;
-      case 14:
-        P2_14 = dst[i];
-        break;
-      case 15:
-        P2_15 = dst[i];
-        break;
-      case 16:
-        P2_16 = dst[i];
-        break;
-      case 17:
-        P2_17 = dst[i];
-        break;
-      case 18:
-        P2_18 = dst[i];
-        break;
-      case 19:
-        P2_19 = dst[i];
-        break;
-      case 20:
-        P2_20 = dst[i];
-        break;
-      case 21:
-        P2_21 = dst[i];
-        break;
-      case 22:
-        P2_22 = dst[i];
-        break;
-      case 23:
-        P2_23 = dst[i];
-        break;
-      case 24:
-        P2_24 = dst[i];
-        break;
-      }
-    }
-    filecontent = tpl_content;
-    writeFile(SPIFFS, "/p2.ini", filecontent.c_str());
-  }
-  else if (String(topic) == topic_name_p3)
-  {
-    for (int i = 0; i < cnt; i++)
-    {
-      String tpl_t = "{t";
-      tpl_t = tpl_t + i;
-      tpl_t = tpl_t + "}";
-      tpl_content.replace(tpl_t, dst[i]);
-      switch (i)
-      {
-      case 0:
-        P3_0 = dst[i];
-        break;
-      case 1:
-        P3_1 = dst[i];
-        break;
-      case 2:
-        P3_2 = dst[i];
-        break;
-      case 3:
-        P3_3 = dst[i];
-        break;
-      case 4:
-        P3_4 = dst[i];
-        break;
-      case 5:
-        P3_5 = dst[i];
-        break;
-      case 6:
-        P3_6 = dst[i];
-        break;
-      case 7:
-        P3_7 = dst[i];
-        break;
-      case 8:
-        P3_8 = dst[i];
-        break;
-      case 9:
-        P3_9 = dst[i];
-        break;
-      case 10:
-        P3_10 = dst[i];
-        break;
-      case 11:
-        P3_11 = dst[i];
-        break;
-      case 12:
-        P3_12 = dst[i];
-        break;
-      case 13:
-        P3_13 = dst[i];
-        break;
-      case 14:
-        P3_14 = dst[i];
-        break;
-      case 15:
-        P3_15 = dst[i];
-        break;
-      case 16:
-        P3_16 = dst[i];
-        break;
-      case 17:
-        P3_17 = dst[i];
-        break;
-      case 18:
-        P3_18 = dst[i];
-        break;
-      case 19:
-        P3_19 = dst[i];
-        break;
-      case 20:
-        P3_20 = dst[i];
-        break;
-      case 21:
-        P3_21 = dst[i];
-        break;
-      case 22:
-        P3_22 = dst[i];
-        break;
-      case 23:
-        P3_23 = dst[i];
-        break;
-      case 24:
-        P3_24 = dst[i];
-        break;
-      }
-    }
-    filecontent = tpl_content;
-    writeFile(SPIFFS, "/p3.ini", filecontent.c_str());
-  }
-  else if (String(topic) == topic_name_p4)
-  {
-    for (int i = 0; i < cnt; i++)
-    {
-      String tpl_t = "{t";
-      tpl_t = tpl_t + i;
-      tpl_t = tpl_t + "}";
-      tpl_content.replace(tpl_t, dst[i]);
-      switch (i)
-      {
-      case 0:
-        P4_0 = dst[i];
-        break;
-      case 1:
-        P4_1 = dst[i];
-        break;
-      case 2:
-        P4_2 = dst[i];
-        break;
-      case 3:
-        P4_3 = dst[i];
-        break;
-      case 4:
-        P4_4 = dst[i];
-        break;
-      case 5:
-        P4_5 = dst[i];
-        break;
-      case 6:
-        P4_6 = dst[i];
-        break;
-      case 7:
-        P4_7 = dst[i];
-        break;
-      case 8:
-        P4_8 = dst[i];
-        break;
-      case 9:
-        P4_9 = dst[i];
-        break;
-      case 10:
-        P4_10 = dst[i];
-        break;
-      case 11:
-        P4_11 = dst[i];
-        break;
-      case 12:
-        P4_12 = dst[i];
-        break;
-      case 13:
-        P4_13 = dst[i];
-        break;
-      case 14:
-        P4_14 = dst[i];
-        break;
-      case 15:
-        P4_15 = dst[i];
-        break;
-      case 16:
-        P4_16 = dst[i];
-        break;
-      case 17:
-        P4_17 = dst[i];
-        break;
-      case 18:
-        P4_18 = dst[i];
-        break;
-      case 19:
-        P4_19 = dst[i];
-        break;
-      case 20:
-        P4_20 = dst[i];
-        break;
-      case 21:
-        P4_21 = dst[i];
-        break;
-      case 22:
-        P4_22 = dst[i];
-        break;
-      case 23:
-        P4_23 = dst[i];
-        break;
-      case 24:
-        P4_24 = dst[i];
-        break;
-      }
-    }
-    filecontent = tpl_content;
-    writeFile(SPIFFS, "/p4.ini", filecontent.c_str());
-  }
-  else if (String(topic) == topic_name_p5)
-  {
-    for (int i = 0; i < cnt; i++)
-    {
-      String tpl_t = "{t";
-      tpl_t = tpl_t + i;
-      tpl_t = tpl_t + "}";
-      tpl_content.replace(tpl_t, dst[i]);
-      switch (i)
-      {
-      case 0:
-        P5_0 = dst[i];
-        break;
-      case 1:
-        P5_1 = dst[i];
-        break;
-      case 2:
-        P5_2 = dst[i];
-        break;
-      case 3:
-        P5_3 = dst[i];
-        break;
-      case 4:
-        P5_4 = dst[i];
-        break;
-      case 5:
-        P5_5 = dst[i];
-        break;
-      case 6:
-        P5_6 = dst[i];
-        break;
-      case 7:
-        P5_7 = dst[i];
-        break;
-      case 8:
-        P5_8 = dst[i];
-        break;
-      case 9:
-        P5_9 = dst[i];
-        break;
-      case 10:
-        P5_10 = dst[i];
-        break;
-      case 11:
-        P5_11 = dst[i];
-        break;
-      case 12:
-        P5_12 = dst[i];
-        break;
-      case 13:
-        P5_13 = dst[i];
-        break;
-      case 14:
-        P5_14 = dst[i];
-        break;
-      case 15:
-        P5_15 = dst[i];
-        break;
-      case 16:
-        P5_16 = dst[i];
-        break;
-      case 17:
-        P5_17 = dst[i];
-        break;
-      case 18:
-        P5_18 = dst[i];
-        break;
-      case 19:
-        P5_19 = dst[i];
-        break;
-      case 20:
-        P5_20 = dst[i];
-        break;
-      case 21:
-        P5_21 = dst[i];
-        break;
-      case 22:
-        P5_22 = dst[i];
-        break;
-      case 23:
-        P5_23 = dst[i];
-        break;
-      case 24:
-        P5_24 = dst[i];
-        break;
-      }
-    }
-    filecontent = tpl_content;
-    writeFile(SPIFFS, "/p5.ini", filecontent.c_str());
-  }
-  else if (String(topic) == topic_name_p6)
-  {
-    for (int i = 0; i < cnt; i++)
-    {
-      String tpl_t = "{t";
-      tpl_t = tpl_t + i;
-      tpl_t = tpl_t + "}";
-      tpl_content.replace(tpl_t, dst[i]);
-      switch (i)
-      {
-      case 0:
-        P6_0 = dst[i];
-        break;
-      case 1:
-        P6_1 = dst[i];
-        break;
-      case 2:
-        P6_2 = dst[i];
-        break;
-      case 3:
-        P6_3 = dst[i];
-        break;
-      case 4:
-        P6_4 = dst[i];
-        break;
-      case 5:
-        P6_5 = dst[i];
-        break;
-      case 6:
-        P6_6 = dst[i];
-        break;
-      case 7:
-        P6_7 = dst[i];
-        break;
-      case 8:
-        P6_8 = dst[i];
-        break;
-      case 9:
-        P6_9 = dst[i];
-        break;
-      case 10:
-        P6_10 = dst[i];
-        break;
-      case 11:
-        P6_11 = dst[i];
-        break;
-      case 12:
-        P6_12 = dst[i];
-        break;
-      case 13:
-        P6_13 = dst[i];
-        break;
-      case 14:
-        P6_14 = dst[i];
-        break;
-      case 15:
-        P6_15 = dst[i];
-        break;
-      case 16:
-        P6_16 = dst[i];
-        break;
-      case 17:
-        P6_17 = dst[i];
-        break;
-      case 18:
-        P6_18 = dst[i];
-        break;
-      case 19:
-        P6_19 = dst[i];
-        break;
-      case 20:
-        P6_20 = dst[i];
-        break;
-      case 21:
-        P6_21 = dst[i];
-        break;
-      case 22:
-        P6_22 = dst[i];
-        break;
-      case 23:
-        P6_23 = dst[i];
-        break;
-      case 24:
-        P6_24 = dst[i];
-        break;
-      }
-    }
-    filecontent = tpl_content;
-    writeFile(SPIFFS, "/p6.ini", filecontent.c_str());
-  }
-  else if (String(topic) == topic_name_p7)
-  {
-    for (int i = 0; i < cnt; i++)
-    {
-      String tpl_t = "{t";
-      tpl_t = tpl_t + i;
-      tpl_t = tpl_t + "}";
-      tpl_content.replace(tpl_t, dst[i]);
-      switch (i)
-      {
-      case 0:
-        P7_0 = dst[i];
-        break;
-      case 1:
-        P7_1 = dst[i];
-        break;
-      case 2:
-        P7_2 = dst[i];
-        break;
-      case 3:
-        P7_3 = dst[i];
-        break;
-      case 4:
-        P7_4 = dst[i];
-        break;
-      case 5:
-        P7_5 = dst[i];
-        break;
-      case 6:
-        P7_6 = dst[i];
-        break;
-      case 7:
-        P7_7 = dst[i];
-        break;
-      case 8:
-        P7_8 = dst[i];
-        break;
-      case 9:
-        P7_9 = dst[i];
-        break;
-      case 10:
-        P7_10 = dst[i];
-        break;
-      case 11:
-        P7_11 = dst[i];
-        break;
-      case 12:
-        P7_12 = dst[i];
-        break;
-      case 13:
-        P7_13 = dst[i];
-        break;
-      case 14:
-        P7_14 = dst[i];
-        break;
-      case 15:
-        P7_15 = dst[i];
-        break;
-      case 16:
-        P7_16 = dst[i];
-        break;
-      case 17:
-        P7_17 = dst[i];
-        break;
-      case 18:
-        P7_18 = dst[i];
-        break;
-      case 19:
-        P7_19 = dst[i];
-        break;
-      case 20:
-        P7_20 = dst[i];
-        break;
-      case 21:
-        P7_21 = dst[i];
-        break;
-      case 22:
-        P7_22 = dst[i];
-        break;
-      case 23:
-        P7_23 = dst[i];
-        break;
-      case 24:
-        P7_24 = dst[i];
-        break;
-      }
-    }
-    filecontent = tpl_content;
-    writeFile(SPIFFS, "/p7.ini", filecontent.c_str());
-  }
-  else
-  {
-    Serial.println("mqtt action not found!");
-  }
+  
 
   SPIFFS.end();
 }
-
-// mqtt service
-void mqttconn()
-{
-  while (!client.connected())
-  {
-    Serial.println("MQTT is connecting...");
-    if (client.connect(ESP_HOST_NAME, mqttuser, mqttpwd))
-    {
-      led8.set(100);
-      Serial.println("MQTT has connected...");
-      // subscribe the checktime service
-      client.subscribe("esp32/checktime");
-
-      // subscribe the checkonine servcie
-      String checkonine = ESP_HOST_NAME;
-      checkonine = checkonine + "/check";
-      client.subscribe(checkonine.c_str());
-
-      // subscribe the light basic service
-      String recv_topic_p = ESP_HOST_NAME;
-      recv_topic_p = recv_topic_p + "/p";
-      client.subscribe(recv_topic_p.c_str());
-
-      // subscribe the all light service
-      String recv_topic_pt = ESP_HOST_NAME;
-      recv_topic_pt = recv_topic_pt + "/pt";
-      client.subscribe(recv_topic_pt.c_str());
-
-      // subscibe the p1 light service
-      String recv_topic_p1 = ESP_HOST_NAME;
-      recv_topic_p1 = recv_topic_p1 + "/p1";
-      client.subscribe(recv_topic_p1.c_str());
-      // subscibe the p2 light service
-      String recv_topic_p2 = ESP_HOST_NAME;
-      recv_topic_p2 = recv_topic_p2 + "/p2";
-      client.subscribe(recv_topic_p2.c_str());
-      // subscibe the p3 light service
-      String recv_topic_p3 = ESP_HOST_NAME;
-      recv_topic_p3 = recv_topic_p3 + "/p3";
-      client.subscribe(recv_topic_p3.c_str());
-      // subscibe the p4 light service
-      String recv_topic_p4 = ESP_HOST_NAME;
-      recv_topic_p4 = recv_topic_p4 + "/p4";
-      client.subscribe(recv_topic_p4.c_str());
-      // subscibe the p5 light service
-      String recv_topic_p5 = ESP_HOST_NAME;
-      recv_topic_p5 = recv_topic_p5 + "/p5";
-      client.subscribe(recv_topic_p5.c_str());
-      // subscibe the p6 light service
-      String recv_topic_p6 = ESP_HOST_NAME;
-      recv_topic_p6 = recv_topic_p6 + "/p6";
-      client.subscribe(recv_topic_p6.c_str());
-      // subscibe the p7 light service
-      String recv_topic_p7 = ESP_HOST_NAME;
-      recv_topic_p7 = recv_topic_p7 + "/p7";
-      client.subscribe(recv_topic_p7.c_str());
-
-      // publish the oline notification
-      String online_message = "{mid:";
-      online_message = online_message + ESP_HOST_NAME;
-      online_message = online_message + ",mac:";
-      online_message = online_message + WiFi.macAddress();
-      online_message = online_message + ",ip:";
-      online_message = online_message + String(WiFi.localIP());
-      online_message = online_message + "}";
-      client.publish("esp32/online", online_message.c_str());
-    }
-    else
-    {
-      Serial.printf("MQTT connect failed, the rc=%d; try again in 2 second", client.state());
-      delay(2000);
-    }
-  }
-}
-
-// void printJson(cJSON *root)
-// {
-//   for (int i = 0; i < cJSON_GetArraySize(root); i++)
-//   {
-//     cJSON *item = cJSON_GetArrayItem(root, i);
-//     if (cJSON_Object == item->type)
-//       printJson(item);
-//     else
-//     {
-//       Serial.printf("%s->", item->string);
-//       printf("%s\n", cJSON_Print(item));
-//     }
-//   }
-// }
 
 // light operation
 void lightopr(String content)
@@ -1149,6 +241,273 @@ void lightopr(String content)
   cJSON_Delete(root);
 }
 
+void onFileUpload(AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final)
+{
+  if (index == 0)
+  {
+    Serial.printf("Update: %s\n", filename.c_str());
+    if (!Update.begin(UPDATE_SIZE_UNKNOWN))
+    {
+      Update.printError(Serial);
+    }
+  }
+  Update.write(data, len);
+  if (final)
+  {
+    if (Update.end(true))
+    {
+      Serial.printf("Update Success: %u\nRebooting....\n", index + len);
+    }
+    else
+    {
+      Update.printError(Serial);
+    }
+  }
+}
+// file operation end
+
+// reset button handle event
+void handleRestButtonChanged()
+{
+  Serial.println("");
+  Serial.println("Rest begin.....");
+  RESET_FLAG = true;
+  Serial.println("rest end.....");
+  detachInterrupt(RESET_BUTTON);
+}
+
+// 404 not found hook
+void notFound(AsyncWebServerRequest *request)
+{
+  request->send(404, "text/plain", "Not found");
+}
+
+// common function begin
+int split(char dst[][80], char *str, const char *spl)
+{
+  int n = 0;
+  char *result = NULL;
+  result = strtok(str, spl);
+  while (result != NULL)
+  {
+    strcpy(dst[n++], result);
+    result = strtok(NULL, spl);
+  }
+  return n;
+}
+// common fucntion end
+
+// mqtt callback function
+void callback(char *topic, byte *payload, unsigned int length)
+{
+  Serial.println("the topic is: " + String(topic));
+
+  if (!SPIFFS.begin())
+  {
+    Serial.println("SPIFFS Mount Failed");
+    return;
+  }
+
+  String topic_name_p = ESP_HOST_NAME;
+  topic_name_p = topic_name_p + "/p";
+  String topic_name_setp = ESP_HOST_NAME;
+  topic_name_setp = topic_name_setp + "/setp";
+  String topic_name_pt = ESP_HOST_NAME;
+  topic_name_pt = topic_name_pt + "/pt";
+
+  String checkonine = ESP_HOST_NAME;
+  checkonine = checkonine + "/check";
+
+  String filecontent;
+  for (int i = 0; i < length; i++)
+  {
+    filecontent = filecontent + (char)payload[i];
+  }
+
+  //Serial.println("the content is: " + filecontent);
+
+  char *p_content;
+  char dst[30][80];
+  int cnt;
+  cJSON *root = NULL;
+  cJSON *item = NULL;
+  const char *jsonstr = filecontent.c_str();
+  root = cJSON_Parse(jsonstr);
+  String itemstr;
+  String checktimetopic = "esp32/checktime";
+
+  if (String(topic) == topic_name_p)
+  {
+    item = cJSON_GetObjectItem(root, "showtype");
+    itemstr = cJSON_Print(item);
+    PWM_INFO_SHOWTYPE = itemstr;
+    PWM_INFO_SHOWTYPE.replace("\"", "");
+    item = cJSON_GetObjectItem(root, "testmode");
+    itemstr = cJSON_Print(item);
+    PWM_INFO_TESTMODE = itemstr;
+    PWM_INFO_TESTMODE.replace("\"", "");
+    item = cJSON_GetObjectItem(root, "sysdate");
+    itemstr = cJSON_Print(item);
+    PWM_INFO_RTC = itemstr;
+    PWM_INFO_RTC.replace("\"", "");
+    struct timeval stime;
+    stime.tv_sec = PWM_INFO_RTC.toInt() + 28816;
+    settimeofday(&stime, NULL);
+    item = cJSON_GetObjectItem(root, "conmode");
+    itemstr = cJSON_Print(item);
+    PWM_INFO_CONMODE = itemstr;
+    PWM_INFO_CONMODE.replace("\"", "");
+    item = cJSON_GetObjectItem(root, "version");
+    itemstr = cJSON_Print(item);
+    PWM_INFO_VERSION = itemstr;
+    PWM_INFO_VERSION.replace("\"", "");    
+    writeFile(SPIFFS, "/pwminfo.ini", filecontent.c_str());
+  }
+  else if (String(topic) == checktimetopic)
+  {
+    PWM_INFO_RTC = filecontent;
+    String pwmifnocontent = getFileString(SPIFFS, "/pwminfo.ini");
+    Serial.println(pwmifnocontent);
+    p_content = new char[200];
+    strcpy(p_content, pwmifnocontent.c_str());
+    cnt = split(dst, p_content, ",");
+    String tpl_sysdate;
+    String change_sysdate = "\"sysdate\":\"";
+    change_sysdate = change_sysdate + PWM_INFO_RTC;
+    change_sysdate = change_sysdate + "\"";
+    for (int i = 0; i < cnt; i++)
+    {
+      if (i == 2)
+      {
+        tpl_sysdate = dst[i];
+        break;
+      }
+    }
+    pwmifnocontent.replace(tpl_sysdate, change_sysdate);
+
+    writeFile(SPIFFS, "/pwminfo.ini", pwmifnocontent.c_str());
+    struct timeval stime;
+    stime.tv_sec = PWM_INFO_RTC.toInt() + 28816;
+    settimeofday(&stime, NULL);
+  }
+  else if (String(topic) == topic_name_pt)
+  {
+    for (int i = 0; i < cnt; i++)
+    {
+      Serial.println(dst[i]);
+      Serial.println(strlen(dst[i]));
+    }
+  }
+  else if(String(topic) == topic_name_setp)
+  {
+    lightopr(filecontent);
+    writeFile(SPIFFS, "/p.ini", filecontent.c_str());
+  }
+  else
+  {
+    Serial.println("mqtt action not found!");
+  }
+
+  cJSON_Delete(root);
+  SPIFFS.end();
+}
+
+// mqtt service
+void mqttconn()
+{
+  while (!client.connected())
+  {
+    Serial.println("MQTT is connecting...");
+    if (client.connect(ESP_HOST_NAME, mqttuser, mqttpwd))
+    {
+      led8.set(100);
+      Serial.println("MQTT has connected...");
+      // subscribe the checktime service
+      client.subscribe("esp32/checktime");
+
+      // subscribe the checkonine servcie
+      String checkonine = ESP_HOST_NAME;
+      checkonine = checkonine + "/check";
+      client.subscribe(checkonine.c_str());
+
+      // subscribe the light basic service
+      String recv_topic_p = ESP_HOST_NAME;
+      recv_topic_p = recv_topic_p + "/p";
+      client.subscribe(recv_topic_p.c_str());
+
+      // subscribe the all light service
+      String recv_topic_pt = ESP_HOST_NAME;
+      recv_topic_pt = recv_topic_pt + "/pt";
+      client.subscribe(recv_topic_pt.c_str());
+
+      // subscribe the setp service
+      String recv_topic_setp = ESP_HOST_NAME;
+      recv_topic_setp = recv_topic_setp + "/setp";
+      client.subscribe(recv_topic_setp.c_str());
+      // // subscibe the p1 light service
+      // String recv_topic_p1 = ESP_HOST_NAME;
+      // recv_topic_p1 = recv_topic_p1 + "/p1";
+      // client.subscribe(recv_topic_p1.c_str());
+      // // subscibe the p2 light service
+      // String recv_topic_p2 = ESP_HOST_NAME;
+      // recv_topic_p2 = recv_topic_p2 + "/p2";
+      // client.subscribe(recv_topic_p2.c_str());
+      // // subscibe the p3 light service
+      // String recv_topic_p3 = ESP_HOST_NAME;
+      // recv_topic_p3 = recv_topic_p3 + "/p3";
+      // client.subscribe(recv_topic_p3.c_str());
+      // // subscibe the p4 light service
+      // String recv_topic_p4 = ESP_HOST_NAME;
+      // recv_topic_p4 = recv_topic_p4 + "/p4";
+      // client.subscribe(recv_topic_p4.c_str());
+      // // subscibe the p5 light service
+      // String recv_topic_p5 = ESP_HOST_NAME;
+      // recv_topic_p5 = recv_topic_p5 + "/p5";
+      // client.subscribe(recv_topic_p5.c_str());
+      // // subscibe the p6 light service
+      // String recv_topic_p6 = ESP_HOST_NAME;
+      // recv_topic_p6 = recv_topic_p6 + "/p6";
+      // client.subscribe(recv_topic_p6.c_str());
+      // // subscibe the p7 light service
+      // String recv_topic_p7 = ESP_HOST_NAME;
+      // recv_topic_p7 = recv_topic_p7 + "/p7";
+      // client.subscribe(recv_topic_p7.c_str());
+
+      // publish the oline notification
+      String online_message = "{mid:";
+      online_message = online_message + ESP_HOST_NAME;
+      online_message = online_message + ",mac:";
+      online_message = online_message + WiFi.macAddress();
+      online_message = online_message + ",ip:";
+      online_message = online_message + String(WiFi.localIP());
+      online_message = online_message + "}";
+      client.publish("esp32/online", online_message.c_str());
+    }
+    else
+    {
+      Serial.printf("MQTT connect failed, the rc=%d; try again in 2 second", client.state());
+      delay(2000);
+    }
+  }
+}
+
+// void printJson(cJSON *root)
+// {
+//   for (int i = 0; i < cJSON_GetArraySize(root); i++)
+//   {
+//     cJSON *item = cJSON_GetArrayItem(root, i);
+//     if (cJSON_Object == item->type)
+//       printJson(item);
+//     else
+//     {
+//       Serial.printf("%s->", item->string);
+//       printf("%s\n", cJSON_Print(item));
+//     }
+//   }
+// }
+
+
+
 // esp32 init config
 void setup()
 {
@@ -1162,15 +521,7 @@ void setup()
   Serial.println("the AP name is : " + String(ssid) + " password is: " + String(password) + "\n the mac address is: " + WiFi.macAddress());
   Serial.print("the current version is: ");
   Serial.println(VERSION_NUM);
-  // /*use mdns for host name resolution*/
-  if (!MDNS.begin(host))
-  { //http://esp32.local
-    Serial.println("Error setting up MDNS responder!");
-    while (1)
-    {
-      delay(1000);
-    }
-  }
+
 
   led1.setup();
   led2.setup();
@@ -1247,8 +598,20 @@ void setup()
           Serial.printf(".");
           i = i - 1;
         }
+        // if (!MDNS.begin(host))
+        //   { //http://esp32.local
+        //     Serial.println("Error setting up MDNS responder!");
+        //     while (1)
+        //     {
+        //       delay(1000);
+        //     }
+        //   }
+
         if (WiFi.status() == WL_CONNECTED)
-        {
+        {          
+          if (MDNS.begin(host)) {
+            Serial.println("MDNS responder started");
+          }
           IS_SMART = true;
           Serial.println(WiFi.localIP());
           led8.set(100);
@@ -1320,8 +683,27 @@ void setup()
 
   SPIFFS.end();
 
-  // index page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+      String html ="";
+      html = html + "<html><head><meta http-equiv=\"Content-Type\"content=\"text/html; charset=utf-8\"/><meta http-equiv=\"X-UA-Compatible\"content=\"IE=edge,Chrome=1\"/><meta http-equiv=\"pragma\"content=\"no-cache\"><meta http-equiv=\"cache-control\"content=\"no-cache\"><meta http-equiv=\"expires\"content=\"0\"><meta name=\"viewport\"content=\"width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no\"><style>";
+      html = html + ".w-header{height:50px;background-color:#eee;line-height:50px;border-bottom:1px solid #999}";
+      html = html + ".w-header-brand{font-size:16px;font-weight:bold;float:left;margin-left:20px;}";
+      html = html + ".w-body{clear:both}";
+      html = html + ".w-body .w-menu{padding:5px 0px 0px 10px;margin:0;font-size:16px}";
+      html = html + ".w-body .w-menu,.w-body .w-menu li{height:30px;list-style-type:none;text-align:center;line-height:30px}";
+      html = html + ".w-body .w-menu li{width:80px;float:left}";
+      html = html + ".w-body .w-menu li a{color: green;text-decoration:none}";
+      html = html + ".w-body .w-menu li.divider{width:20px}";
+      html = html + ".w-body .w-menu li.selected{background-color:#B91818}";
+      html = html + ".w-body .w-menu li.selected a{color:#fff}";
+      html = html + ".w-body iframe{padding:0;margin:0;border:0;overflow-x:hidden}";
+      html = html +  "</style><title>后台管理</title></head><body style=\"overflow:hidden\"><div class=\"w-header\"><div class=\"w-header-brand\">后台管理</div></div><div class=\"w-body\"><ul class=\"w-menu\"><li id=\"basic\"><a target=\"iframe\"href=\"/basic\">基本设置</a></li><li class=\"divider\">|</li><li id=\"light\"><a target=\"iframe\"href=\"/p\">亮度设置</a></li><li class=\"divider\">|</li><li id=\"basic\"><a target=\"iframe\"href=\"/upload\">固件升级</a></li></ul><div id='grid'></div><hr/><iframe name=\"iframe\"width=\"100%\"height=\"80%\"frameborder=\"no\"border=\"0\"scrolling=\"auto\"src=\"/basic\"></iframe></div><div id=\"w-footer\"></div></body></html>";
+
+      request->send(200, "text/html", html);
+  });
+
+  // index page
+  server.on("/basic", HTTP_GET, [](AsyncWebServerRequest *request) {
     if (!SPIFFS.begin())
     {
       Serial.println("SPIFFS Mount Failed");
@@ -1359,7 +741,9 @@ void setup()
     String version = VERSION_NUM;
     Serial.println("the version is: " + version);
     String html = "";
-    html = html + "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>NodeMCU Control Page</title><!--<script type=\"text/javascript\"src=\"jquery.js\"></script>--></head><body><div><h1 id=\"title\">基本信息</h1><table><tr><th style=\"text-align:left;\">版本号</th></tr><tr><td><span id=\"spversion\"></span></td></tr><tr><th style=\"text-align:left;\">系统时间</th></tr><tr><td><span id=\"spCurrent\"></span></td></tr><tr><th style=\"text-align: left;\">修改时间</th></tr><tr><td><input type=\"text\"value=\"2018-03-03 00:00:00\"id=\"txtsysdate\"/>*时间格式:2018-03-03 00:00:00</td></tr><tr><th style=\"text-align:left;\">循环模式</th></tr><tr><td><input type=\"radio\"value=\"repeat\"name=\"showtype\"id=\"rdRpt\"/>循环模式<input type=\"radio\"value=\"fix\"name=\"showtype\"id=\"rdFix\"/>固定模式</td></tr><tr id=\"thtest\"><th style=\"text-align:left;\">是否测试</th></tr><tr id=\"tdtest\"><td><input value=\"production\"type=\"radio\"name=\"testMode\"id=\"rdPrd\"/>否<input value=\"test\"type=\"radio\"name=\"testMode\"id=\"rdTest\"/>是</td></tr><tr id=\"thonline\"><th style=\"text-align:left;\">云端控制</th></tr><tr id=\"tdonline\"><td><input value=\"local\"type=\"radio\"name=\"onlineMode\"id=\"rdlocal\"/>否<input value=\"online\"type=\"radio\"name=\"onlineMode\"id=\"rdonline\"/>是</td></tr><tr><td><input type=\"button\"value=\"联网设置\"id=\"btnwifi\"onclick=\"wifi();\"/><input type=\"submit\"value=\"保存\"id=\"submit\"onclick=\"submit();\"/><input type=\"button\"value=\"恢复出厂\"id=\"btnstop\"onclick=\"init();\"/><input type=\"button\"value=\"重启\"id=\"btnReset\"onclick=\"reset();\"/><input type=\"button\"value=\"更新固件\"id=\"btnupload\"onclick=\"upload();\"/></td></tr></table><hr/><h1 id=\"title\">灯光控制</h1><table><tr><td><a href=\"/p\">进入设置页面</a></td></tr></table></div><script>function submit(){var selectshowtype=document.getElementsByName('showtype');var showtypevalue=\"\";for(var i=0;i<selectshowtype.length;i++){if(selectshowtype[i].checked){showtypevalue=selectshowtype[i].value;break}}var selecttestmode=document.getElementsByName('testMode');var testmodevalue=\"\";for(var i=0;i<selecttestmode.length;i++){if(selecttestmode[i].checked){testmodevalue=selecttestmode[i].value;break}}var str=document.getElementById('txtsysdate').value;str=str.replace(/-/g,\"/\");var date=new Date(str);var unixDate=date.getTime()/1000|0;console.log(unixDate);var selectedconnectionmode=document.getElementsByName(\"onlineMode\");var connectionmodevalue=\"\";for(var i=0;i<selectedconnectionmode.length;i++){if(selectedconnectionmode[i].checked){connectionmodevalue=selectedconnectionmode[i].value;break}}alert('保存成功');var url=\"pwmopr?showtype=\"+showtypevalue+\"&testmode=\"+testmodevalue+\"&sysdate=\"+unixDate+\"&conmode=\"+connectionmodevalue;window.location.href=url}function init(){alert('已恢复出厂设置!');var url=\"init\";window.location.href=url}function wifi(){var url=\"wifi\";window.location.href=url}function reset(){var url=\"reset\";alert(\"已重启,请关闭当前页面\");window.location.href=url}function upload(){var url=\"upload\";window.location.href=url}</script></body></html>";
+    //html = html + "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>NodeMCU Control Page</title><!--<script type=\"text/javascript\"src=\"jquery.js\"></script>--></head><body><div><h1 id=\"title\">基本信息</h1><table><tr><th style=\"text-align:left;\">版本号</th></tr><tr><td><span id=\"spversion\"></span></td></tr><tr><th style=\"text-align:left;\">系统时间</th></tr><tr><td><span id=\"spCurrent\"></span></td></tr><tr><th style=\"text-align: left;\">修改时间</th></tr><tr><td><input type=\"text\"value=\"2018-03-03 00:00:00\"id=\"txtsysdate\"/>*时间格式:2018-03-03 00:00:00</td></tr><tr><th style=\"text-align:left;\">循环模式</th></tr><tr><td><input type=\"radio\"value=\"repeat\"name=\"showtype\"id=\"rdRpt\"/>循环模式<input type=\"radio\"value=\"fix\"name=\"showtype\"id=\"rdFix\"/>固定模式</td></tr><tr id=\"thtest\"><th style=\"text-align:left;\">是否测试</th></tr><tr id=\"tdtest\"><td><input value=\"production\"type=\"radio\"name=\"testMode\"id=\"rdPrd\"/>否<input value=\"test\"type=\"radio\"name=\"testMode\"id=\"rdTest\"/>是</td></tr><tr id=\"thonline\"style=\"display: none;\"><th style=\"text-align:left;\">云端控制</th></tr><tr id=\"tdonline\"style=\"display: none;\"><td><input value=\"local\"type=\"radio\"name=\"onlineMode\"id=\"rdlocal\"/>否<input value=\"online\"type=\"radio\"name=\"onlineMode\"id=\"rdonline\"/>是</td></tr><tr><td><input type=\"button\"value=\"联网设置\"id=\"btnwifi\"onclick=\"wifi();\"/><input type=\"submit\"value=\"保存\"id=\"submit\"onclick=\"submit();\"/><input type=\"button\"value=\"恢复出厂\"id=\"btnstop\"onclick=\"init();\"/><input type=\"button\"value=\"重启\"id=\"btnReset\"onclick=\"reset();\"/><input type=\"button\"value=\"更新固件\"id=\"btnupload\"onclick=\"upload();\"/></td></tr></table><hr/><h1 id=\"title\">灯光控制</h1><table><tr><td><a href=\"/p\">进入设置页面</a></td></tr></table></div><script>function submit(){var selectshowtype=document.getElementsByName('showtype');var showtypevalue=\"\";for(var i=0;i<selectshowtype.length;i++){if(selectshowtype[i].checked){showtypevalue=selectshowtype[i].value;break}}var selecttestmode=document.getElementsByName('testMode');var testmodevalue=\"\";for(var i=0;i<selecttestmode.length;i++){if(selecttestmode[i].checked){testmodevalue=selecttestmode[i].value;break}}var str=document.getElementById('txtsysdate').value;str=str.replace(/-/g,\"/\");var date=new Date(str);var unixDate=date.getTime()/1000|0;console.log(unixDate);var selectedconnectionmode=document.getElementsByName(\"onlineMode\");var connectionmodevalue=\"\";for(var i=0;i<selectedconnectionmode.length;i++){if(selectedconnectionmode[i].checked){connectionmodevalue=selectedconnectionmode[i].value;break}}alert('保存成功');var url=\"pwmopr?showtype=\"+showtypevalue+\"&testmode=\"+testmodevalue+\"&sysdate=\"+unixDate+\"&conmode=\"+connectionmodevalue;window.location.href=url}function init(){alert('已恢复出厂设置!');var url=\"init\";window.location.href=url}function wifi(){var url=\"wifi\";window.location.href=url}function reset(){var url=\"reset\";alert(\"已重启,请关闭当前页面\");window.location.href=url}function upload(){var url=\"upload\";window.location.href=url}</script></body></html>";
+    html = html + "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\"content=\"text/html; charset=utf-8\"/><meta http-equiv=\"X-UA-Compatible\"content=\"IE=edge,Chrome=1\"/><meta http-equiv=\"pragma\"content=\"no-cache\"><!--HTTP 1.1--><meta http-equiv=\"cache-control\"content=\"no-cache\"><!--HTTP 1.0--><meta http-equiv=\"expires\"content=\"0\"><!--Prevent caching at the proxy server--><meta name=\"viewport\"content=\"width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no\"><title>基本信息</title></head><body><div><table><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">版本号</span></td><td style=\"font-size:14px;\"><span id=\"spversion\"></span></td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">系统时间</span></td><td style=\"font-size:14px;\"><span id=\"spCurrent\"></span></td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">修改时间</span></td><td style=\"font-size:14px;\"><input type=\"text\"value=\"2018-12-20 00:00:00\"id=\"txtsysdate\"/></td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">循环模式</span></td><td style=\"font-size:14px;\"><input type=\"radio\"value=\"repeat\"name=\"showtype\"id=\"rdRpt\"/>循环模式<input type=\"radio\"value=\"fix\"name=\"showtype\"id=\"rdFix\"/>固定模式</td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">是否测试</span></td><td style=\"font-size:14px;\"><input value=\"production\"type=\"radio\"name=\"testMode\"id=\"rdPrd\"/>否<input value=\"test\"type=\"radio\"name=\"testMode\"id=\"rdTest\"/>是</td></tr><tr style=\"height:50px;\"><td colspan=\"2\"><input style=\"background:green; color:white; width:80px; height:30px; margin-right:2px;\"type=\"button\"value=\"联网设置\"id=\"btnwifi\"onclick=\"wifi();\"/><input style=\"background:green; color:white; width:80px; height:30px;margin-right:2px;\"type=\"submit\"value=\"保存\"id=\"submit\"onclick=\"submit();\"/><input style=\"background:green; color:white; width:80px; height:30px;margin-right:2px;\"type=\"button\"value=\"恢复出厂\"id=\"btnstop\"onclick=\"init();\"/><input style=\"background:green; color:white; width:80px; height:30px;\"type=\"button\"value=\"重启\"id=\"btnReset\"onclick=\"reset();\"/></td></tr></table><hr/></div><script>var now=new Date();var year=now.getFullYear();var month=now.getMonth();var date=now.getDate();var day=now.getDay();var hour=now.getHours();var minu=now.getMinutes();var sec=now.getSeconds();month=month+1;if(month<10)month=\"0\"+month;if(date<10)date=\"0\"+date;if(hour<10)hour=\"0\"+hour;if(minu<10)minu=\"0\"+minu;if(sec<10)sec=\"0\"+sec;var time=\"\";time=year+\"-\"+month+\"-\"+date+\" \"+hour+\":\"+minu+\":\"+sec;document.getElementById(\"txtsysdate\").value=time;function submit(){var selectshowtype=document.getElementsByName('showtype');var showtypevalue=\"\";for(var i=0;i<selectshowtype.length;i++){if(selectshowtype[i].checked){showtypevalue=selectshowtype[i].value;break}}var selecttestmode=document.getElementsByName('testMode');var testmodevalue=\"\";for(var i=0;i<selecttestmode.length;i++){if(selecttestmode[i].checked){testmodevalue=selecttestmode[i].value;break}}var str=document.getElementById('txtsysdate').value;str=str.replace(/-/g,\"/\");var date=new Date(str);var unixDate=date.getTime()/1000|0;console.log(unixDate);alert('保存成功');var url=\"pwmopr?showtype=\"+showtypevalue+\"&testmode=\"+testmodevalue+\"&sysdate=\"+unixDate+\"&conmode=local\";window.location.href=url}function init(){alert('已恢复出厂设置!');var url=\"init\";window.location.href=url}function wifi(){var url=\"wifi\";window.location.href=url}function reset(){var url=\"reset\";alert(\"已重启,请关闭当前页面\");window.location.href=url}function upload(){var url=\"upload\";window.location.href=url}</script></body></html>";
+
 
     String tpl_currentdate = "<span id=\"spCurrent\"></span>";
     String change_currentdate = "<span id=\"spCurrent\">";
@@ -1376,7 +760,7 @@ void setup()
     change_currentdate = change_currentdate + "</span>";
     html.replace(tpl_currentdate, change_currentdate);
 
-    String tpl_txtcurrentdate = "<input type=\"text\"value=\"2018-03-03 00:00:00\"id=\"txtsysdate\"/>";
+    String tpl_txtcurrentdate = "<input type=\"text\"value=\"2018-12-20 00:00:00\"id=\"txtsysdate\"/>";
     String change_txtcurrentdate = "<input type=\"text\"value=\"";
     change_txtcurrentdate = change_txtcurrentdate + strDate;
     change_txtcurrentdate = change_txtcurrentdate + "\"id=\"txtsysdate\"/>";
@@ -1457,7 +841,14 @@ void setup()
       }
       else
       {
-        String rawhtml = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>操作</title></head><body><h1><span id=\"sptitle\">亮度控制</span><span id=\"lightvalues\"style=\"display:none;\"></span></h1><Table><tr><td colspan=\"6\"><input type=\"radio\"name=\"line\"value=\"1\"checked onchange=\"linechange(1)\"/>第一排<input type=\"radio\"name=\"line\"value=\"2\"onchange=\"linechange(2)\"/>第二排<input type=\"radio\"name=\"line\"value=\"3\"onchange=\"linechange(3)\"/>第三排<input type=\"radio\"name=\"line\"value=\"4\"onchange=\"linechange(4)\"/>第四排<input type=\"radio\"name=\"line\"value=\"5\"onchange=\"linechange(5)\"/>第五排<input type=\"radio\"name=\"line\"value=\"6\"onchange=\"linechange(6)\"/>第六排<input type=\"radio\"name=\"line\"value=\"7\"onchange=\"linechange(7)\"/>第七排<input type=\"hidden\"id=\"hidline\"value=\"1\"/></td></tr><tr><th>0：00</th><th>0:10</th><th>0:20</th><th>0:30</th><th>0:40</th><th>0:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl000\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl001\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl002\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl003\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl004\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl005\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>1：00</th><th>1:10</th><th>1:20</th><th>1:30</th><th>1:40</th><th>1:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl010\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl011\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl012\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl013\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl014\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl015\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>2：00</th><th>2:10</th><th>2:20</th><th>2:30</th><th>2:40</th><th>2:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl020\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl021\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl022\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl023\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl024\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl025\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>3：00</th><th>3:10</th><th>3:20</th><th>3:30</th><th>3:40</th><th>3:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl030\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl031\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl032\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl033\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl034\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl035\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>4：00</th><th>4:10</th><th>4:20</th><th>4:30</th><th>4:40</th><th>4:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl040\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl041\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl042\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl043\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl044\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl045\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>5：00</th><th>5:10</th><th>5:20</th><th>5:30</th><th>5:40</th><th>5:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl050\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl051\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl052\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl053\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl054\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl055\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>6：00</th><th>6:10</th><th>6:20</th><th>6:30</th><th>6:40</th><th>6:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl060\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl061\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl062\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl063\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl064\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl065\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>7：00</th><th>7:10</th><th>7:20</th><th>7:30</th><th>7:40</th><th>7:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl070\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl071\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl072\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl073\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl074\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl075\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>8：00</th><th>8:10</th><th>8:20</th><th>8:30</th><th>8:40</th><th>8:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl080\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl081\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl082\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl083\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl084\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl085\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>9：00</th><th>9:10</th><th>9:20</th><th>9:30</th><th>9:40</th><th>9:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl090\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl091\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl092\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl093\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl094\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl095\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>10：00</th><th>10:10</th><th>10:20</th><th>10:30</th><th>10:40</th><th>10:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl100\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl101\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl102\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl103\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl104\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl105\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>11：00</th><th>11:10</th><th>11:20</th><th>11:30</th><th>11:40</th><th>11:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl110\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl111\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl112\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl113\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl114\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl115\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>12：00</th><th>12:10</th><th>12:20</th><th>12:30</th><th>12:40</th><th>12:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl120\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl121\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl122\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl123\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl124\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl125\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>13：00</th><th>13:10</th><th>13:20</th><th>13:30</th><th>13:40</th><th>13:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl130\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl131\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl132\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl133\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl134\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl135\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>14：00</th><th>14:10</th><th>14:20</th><th>14:30</th><th>14:40</th><th>14:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl140\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl141\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl142\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl143\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl144\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl145\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>15：00</th><th>15:10</th><th>15:20</th><th>15:30</th><th>15:40</th><th>15:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl150\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl151\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl152\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl153\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl154\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl155\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>16：00</th><th>16:10</th><th>16:20</th><th>16:30</th><th>16:40</th><th>16:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl160\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl161\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl162\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl163\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl164\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl165\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>17：00</th><th>17:10</th><th>17:20</th><th>17:30</th><th>17:40</th><th>17:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl170\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl171\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl172\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl173\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl174\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl175\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>18：00</th><th>18:10</th><th>18:20</th><th>18:30</th><th>18:40</th><th>18:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl180\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl181\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl182\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl183\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl184\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl185\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>19：00</th><th>19:10</th><th>19:20</th><th>19:30</th><th>19:40</th><th>19:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl190\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl191\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl192\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl193\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl194\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl195\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>20：00</th><th>20:10</th><th>20:20</th><th>20:30</th><th>20:40</th><th>20:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl200\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl201\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl202\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl203\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl204\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl205\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>21：00</th><th>21:10</th><th>21:20</th><th>21:30</th><th>21:40</th><th>21:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl210\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl211\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl212\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl213\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl214\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl215\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>22：00</th><th>22:10</th><th>22:20</th><th>22:30</th><th>22:40</th><th>22:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl220\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl221\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl222\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl223\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl224\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl225\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>23：00</th><th>23:10</th><th>23:20</th><th>23:30</th><th>23:40</th><th>23:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl230\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl231\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl232\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl233\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl234\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl235\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>固定</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtlfix\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td><input onclick=\"submit();\"type=\"submit\"id=\"submit\"value=\"保存\"/><input onclick=\"back();\"type=\"button\"id=\"btnback\"value=\"返回\"/></td></tr><tr><td sylte=\"color:red\">取值范围0~255</td></tr></Table></body><script language=\"javascript\">function submit(){var savedata=document.getElementById(\"lightvalues\").innerHTML;var url=\"setp?t=\"+savedata;console.log(url);alert('保存成功');window.location.href=url}function tohex(str){if(str==\"0\"){return\"00\"}else{var intval=parseInt(str);if(intval){var hexval=intval.toString(16);if(hexval.length==1){var res=\"0\";return res+hexval}else{return hexval}}else{return\"00\"}}}function back(){var url=\"/\";window.location.href=url}function setlinevalue(pnum,lvs){var startIndex;switch(pnum){case 1:startIndex=0;break;case 2:startIndex=2;break;case 3:startIndex=4;break;case 4:startIndex=6;break;case 5:startIndex=8;break;case 6:startIndex=10;break;case 7:startIndex=12;break;default:break}for(var key in lvs){var resval=lvs[key];resval=resval.substr(startIndex,2);var res=parseInt(resval,16);var cid=key.replace(\"t\",\"\");cid=\"txtl\"+cid;document.getElementById(cid).value=res}}function linechange(val){document.getElementById(\"hidline\").value=val;var lvs=JSON.parse(document.getElementById(\"lightvalues\").innerHTML);setlinevalue(val,lvs)}function checkinput(input){var res=parseInt(input.value);if(res){if(res<0||res>255){document.getElementById(input.id).value=\"0\";alert('输入有误')}}else{document.getElementById(input.id).value=\"0\";alert('输入有误')}}function changevalue(input){var lvs=JSON.parse(document.getElementById(\"lightvalues\").innerHTML);var cid=input.id;var contentarr=tohex(input.value).split('');var tid=cid.replace(\"txtl\",\"t\");var line=parseInt(document.getElementById(\"hidline\").value);var arrcontent=lvs[tid].split('');var startIndex,endIndex;switch(line){case 1:startIndex=0;endIndex=1;break;case 2:startIndex=2;endIndex=3;break;case 3:startIndex=4;endIndex=5;break;case 4:startIndex=6;endIndex=7;break;case 5:startIndex=8;endIndex=9;break;case 6:startIndex=10;endIndex=11;break;case 7:startIndex=12;endIndex=13;break;default:break}arrcontent[startIndex]=contentarr[0];arrcontent[endIndex]=contentarr[1];lvs[tid]=arrcontent.join('');var updstr=JSON.stringify(lvs);document.getElementById('lightvalues').innerHTML=updstr}window.onload=function(){var lvs=JSON.parse(document.getElementById(\"lightvalues\").innerHTML);setlinevalue(1,lvs)}</script></html>";
+        //String rawhtml = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>操作</title></head><body><h1><span id=\"sptitle\">亮度控制</span><span id=\"lightvalues\"style=\"display:none;\"></span></h1><Table><tr><td colspan=\"6\"><input type=\"radio\"name=\"line\"value=\"1\"checked onchange=\"linechange(1)\"/>第一排<input type=\"radio\"name=\"line\"value=\"2\"onchange=\"linechange(2)\"/>第二排<input type=\"radio\"name=\"line\"value=\"3\"onchange=\"linechange(3)\"/>第三排<input type=\"radio\"name=\"line\"value=\"4\"onchange=\"linechange(4)\"/>第四排<input type=\"radio\"name=\"line\"value=\"5\"onchange=\"linechange(5)\"/>第五排<input type=\"radio\"name=\"line\"value=\"6\"onchange=\"linechange(6)\"/>第六排<input type=\"radio\"name=\"line\"value=\"7\"onchange=\"linechange(7)\"/>第七排<input type=\"hidden\"id=\"hidline\"value=\"1\"/></td></tr><tr><th>0：00</th><th>0:10</th><th>0:20</th><th>0:30</th><th>0:40</th><th>0:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl000\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl001\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl002\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl003\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl004\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl005\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>1：00</th><th>1:10</th><th>1:20</th><th>1:30</th><th>1:40</th><th>1:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl010\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl011\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl012\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl013\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl014\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl015\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>2：00</th><th>2:10</th><th>2:20</th><th>2:30</th><th>2:40</th><th>2:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl020\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl021\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl022\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl023\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl024\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl025\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>3：00</th><th>3:10</th><th>3:20</th><th>3:30</th><th>3:40</th><th>3:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl030\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl031\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl032\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl033\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl034\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl035\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>4：00</th><th>4:10</th><th>4:20</th><th>4:30</th><th>4:40</th><th>4:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl040\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl041\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl042\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl043\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl044\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl045\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>5：00</th><th>5:10</th><th>5:20</th><th>5:30</th><th>5:40</th><th>5:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl050\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl051\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl052\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl053\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl054\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl055\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>6：00</th><th>6:10</th><th>6:20</th><th>6:30</th><th>6:40</th><th>6:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl060\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl061\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl062\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl063\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl064\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl065\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>7：00</th><th>7:10</th><th>7:20</th><th>7:30</th><th>7:40</th><th>7:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl070\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl071\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl072\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl073\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl074\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl075\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>8：00</th><th>8:10</th><th>8:20</th><th>8:30</th><th>8:40</th><th>8:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl080\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl081\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl082\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl083\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl084\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl085\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>9：00</th><th>9:10</th><th>9:20</th><th>9:30</th><th>9:40</th><th>9:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl090\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl091\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl092\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl093\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl094\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl095\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>10：00</th><th>10:10</th><th>10:20</th><th>10:30</th><th>10:40</th><th>10:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl100\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl101\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl102\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl103\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl104\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl105\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>11：00</th><th>11:10</th><th>11:20</th><th>11:30</th><th>11:40</th><th>11:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl110\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl111\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl112\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl113\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl114\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl115\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>12：00</th><th>12:10</th><th>12:20</th><th>12:30</th><th>12:40</th><th>12:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl120\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl121\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl122\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl123\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl124\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl125\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>13：00</th><th>13:10</th><th>13:20</th><th>13:30</th><th>13:40</th><th>13:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl130\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl131\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl132\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl133\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl134\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl135\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>14：00</th><th>14:10</th><th>14:20</th><th>14:30</th><th>14:40</th><th>14:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl140\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl141\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl142\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl143\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl144\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl145\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>15：00</th><th>15:10</th><th>15:20</th><th>15:30</th><th>15:40</th><th>15:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl150\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl151\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl152\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl153\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl154\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl155\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>16：00</th><th>16:10</th><th>16:20</th><th>16:30</th><th>16:40</th><th>16:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl160\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl161\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl162\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl163\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl164\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl165\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>17：00</th><th>17:10</th><th>17:20</th><th>17:30</th><th>17:40</th><th>17:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl170\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl171\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl172\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl173\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl174\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl175\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>18：00</th><th>18:10</th><th>18:20</th><th>18:30</th><th>18:40</th><th>18:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl180\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl181\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl182\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl183\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl184\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl185\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>19：00</th><th>19:10</th><th>19:20</th><th>19:30</th><th>19:40</th><th>19:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl190\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl191\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl192\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl193\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl194\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl195\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>20：00</th><th>20:10</th><th>20:20</th><th>20:30</th><th>20:40</th><th>20:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl200\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl201\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl202\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl203\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl204\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl205\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>21：00</th><th>21:10</th><th>21:20</th><th>21:30</th><th>21:40</th><th>21:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl210\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl211\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl212\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl213\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl214\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl215\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>22：00</th><th>22:10</th><th>22:20</th><th>22:30</th><th>22:40</th><th>22:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl220\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl221\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl222\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl223\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl224\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl225\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>23：00</th><th>23:10</th><th>23:20</th><th>23:30</th><th>23:40</th><th>23:50</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtl230\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl231\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl232\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl233\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl234\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"width=\"50\"id=\"txtl235\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><th>固定</th></tr><tr><td><input type=\"text\"width=\"50\"id=\"txtlfix\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td><input onclick=\"submit();\"type=\"submit\"id=\"submit\"value=\"保存\"/><input onclick=\"back();\"type=\"button\"id=\"btnback\"value=\"返回\"/></td></tr><tr><td sylte=\"color:red\">取值范围0~255</td></tr></Table></body><script language=\"javascript\">function submit(){var savedata=document.getElementById(\"lightvalues\").innerHTML;var url=\"setp?t=\"+savedata;console.log(url);alert('保存成功');window.location.href=url}function tohex(str){if(str==\"0\"){return\"00\"}else{var intval=parseInt(str);if(intval){var hexval=intval.toString(16);if(hexval.length==1){var res=\"0\";return res+hexval}else{return hexval}}else{return\"00\"}}}function back(){var url=\"/\";window.location.href=url}function setlinevalue(pnum,lvs){var startIndex;switch(pnum){case 1:startIndex=0;break;case 2:startIndex=2;break;case 3:startIndex=4;break;case 4:startIndex=6;break;case 5:startIndex=8;break;case 6:startIndex=10;break;case 7:startIndex=12;break;default:break}for(var key in lvs){var resval=lvs[key];resval=resval.substr(startIndex,2);var res=parseInt(resval,16);var cid=key.replace(\"t\",\"\");cid=\"txtl\"+cid;document.getElementById(cid).value=res}}function linechange(val){document.getElementById(\"hidline\").value=val;var lvs=JSON.parse(document.getElementById(\"lightvalues\").innerHTML);setlinevalue(val,lvs)}function checkinput(input){var res=parseInt(input.value);if(res){if(res<0||res>255){document.getElementById(input.id).value=\"0\";alert('输入有误')}}else{document.getElementById(input.id).value=\"0\";alert('输入有误')}}function changevalue(input){var lvs=JSON.parse(document.getElementById(\"lightvalues\").innerHTML);var cid=input.id;var contentarr=tohex(input.value).split('');var tid=cid.replace(\"txtl\",\"t\");var line=parseInt(document.getElementById(\"hidline\").value);var arrcontent=lvs[tid].split('');var startIndex,endIndex;switch(line){case 1:startIndex=0;endIndex=1;break;case 2:startIndex=2;endIndex=3;break;case 3:startIndex=4;endIndex=5;break;case 4:startIndex=6;endIndex=7;break;case 5:startIndex=8;endIndex=9;break;case 6:startIndex=10;endIndex=11;break;case 7:startIndex=12;endIndex=13;break;default:break}arrcontent[startIndex]=contentarr[0];arrcontent[endIndex]=contentarr[1];lvs[tid]=arrcontent.join('');var updstr=JSON.stringify(lvs);document.getElementById('lightvalues').innerHTML=updstr}window.onload=function(){var lvs=JSON.parse(document.getElementById(\"lightvalues\").innerHTML);setlinevalue(1,lvs)}</script></html>";
+        String rawhtml = "<html><head><meta charset=\"UTF-8\"><title>操作</title><style>";
+        rawhtml = rawhtml + "body{font-size:14px}";
+        rawhtml = rawhtml + "table tr{text-align:center;height:25px}";
+        rawhtml = rawhtml + ".inputnumber{width:50px;background:transparent;border:0px;border-bottom:1px solid green;text-align:center}";
+        rawhtml = rawhtml + ".buttonstyle{background:green;color:white;width:80px;height:30px}";
+        rawhtml = rawhtml + "</style></head><body><span id=\"lightvalues\"style=\"display:none;\"></span><div style=\"height: 40px;\"><input type=\"radio\"name=\"line\"value=\"1\"checked onchange=\"linechange(1)\"/>第一排<input type=\"radio\"name=\"line\"value=\"2\"onchange=\"linechange(2)\"/>第二排<input type=\"radio\"name=\"line\"value=\"3\"onchange=\"linechange(3)\"/>第三排<input type=\"radio\"name=\"line\"value=\"4\"onchange=\"linechange(4)\"/>第四排<input type=\"radio\"name=\"line\"value=\"5\"onchange=\"linechange(5)\"/>第五排<input type=\"radio\"name=\"line\"value=\"6\"onchange=\"linechange(6)\"/>第六排<input type=\"radio\"name=\"line\"value=\"7\"onchange=\"linechange(7)\"/>第七排<input type=\"hidden\"id=\"hidline\"value=\"1\"/></div><Table><tr><td>0：00</td><td>0:10</td><td>0:20</td><td>0:30</td><td>0:40</td><td>0:50</td></tr><tr><td><input type=\"text\"class=\"inputnumber\"id=\"txtl000\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl001\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl002\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl003\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl004\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl005\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td>1：00</td><td>1:10</td><td>1:20</td><td>1:30</td><td>1:40</td><td>1:50</td></tr><tr><td><input type=\"text\"class=\"inputnumber\"id=\"txtl010\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl011\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl012\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl013\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl014\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl015\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td>2：00</td><td>2:10</td><td>2:20</td><td>2:30</td><td>2:40</td><td>2:50</td></tr><tr><td><input type=\"text\"class=\"inputnumber\"id=\"txtl020\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl021\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl022\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl023\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl024\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl025\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td>3：00</td><td>3:10</td><td>3:20</td><td>3:30</td><td>3:40</td><td>3:50</td></tr><tr><td><input type=\"text\"class=\"inputnumber\"id=\"txtl030\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl031\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl032\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl033\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl034\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl035\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td>4：00</td><td>4:10</td><td>4:20</td><td>4:30</td><td>4:40</td><td>4:50</td></tr><tr><td><input type=\"text\"class=\"inputnumber\"id=\"txtl040\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl041\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl042\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl043\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl044\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl045\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td>5：00</td><td>5:10</td><td>5:20</td><td>5:30</td><td>5:40</td><td>5:50</td></tr><tr><td><input type=\"text\"class=\"inputnumber\"id=\"txtl050\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl051\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl052\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl053\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl054\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl055\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td>6：00</td><td>6:10</td><td>6:20</td><td>6:30</td><td>6:40</td><td>6:50</td></tr><tr><td><input type=\"text\"class=\"inputnumber\"id=\"txtl060\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl061\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl062\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl063\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl064\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl065\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td>7：00</td><td>7:10</td><td>7:20</td><td>7:30</td><td>7:40</td><td>7:50</td></tr><tr><td><input type=\"text\"class=\"inputnumber\"id=\"txtl070\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl071\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl072\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl073\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl074\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl075\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td>8：00</td><td>8:10</td><td>8:20</td><td>8:30</td><td>8:40</td><td>8:50</td></tr><tr><td><input type=\"text\"class=\"inputnumber\"id=\"txtl080\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl081\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl082\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl083\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl084\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl085\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td>9：00</td><td>9:10</td><td>9:20</td><td>9:30</td><td>9:40</td><td>9:50</td></tr><tr><td><input type=\"text\"class=\"inputnumber\"id=\"txtl090\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl091\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl092\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl093\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl094\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl095\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td>10：00</td><td>10:10</td><td>10:20</td><td>10:30</td><td>10:40</td><td>10:50</td></tr><tr><td><input type=\"text\"class=\"inputnumber\"id=\"txtl100\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl101\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl102\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl103\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl104\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl105\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td>11：00</td><td>11:10</td><td>11:20</td><td>11:30</td><td>11:40</td><td>11:50</td></tr><tr><td><input type=\"text\"class=\"inputnumber\"id=\"txtl110\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl111\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl112\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl113\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl114\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl115\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td>12：00</td><td>12:10</td><td>12:20</td><td>12:30</td><td>12:40</td><td>12:50</td></tr><tr><td><input type=\"text\"class=\"inputnumber\"id=\"txtl120\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl121\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl122\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl123\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl124\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl125\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td>13：00</td><td>13:10</td><td>13:20</td><td>13:30</td><td>13:40</td><td>13:50</td></tr><tr><td><input type=\"text\"class=\"inputnumber\"id=\"txtl130\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl131\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl132\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl133\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl134\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl135\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td>14：00</td><td>14:10</td><td>14:20</td><td>14:30</td><td>14:40</td><td>14:50</td></tr><tr><td><input type=\"text\"class=\"inputnumber\"id=\"txtl140\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl141\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl142\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl143\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl144\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl145\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td>15：00</td><td>15:10</td><td>15:20</td><td>15:30</td><td>15:40</td><td>15:50</td></tr><tr><td><input type=\"text\"class=\"inputnumber\"id=\"txtl150\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl151\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl152\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl153\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl154\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl155\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td>16：00</td><td>16:10</td><td>16:20</td><td>16:30</td><td>16:40</td><td>16:50</td></tr><tr><td><input type=\"text\"class=\"inputnumber\"id=\"txtl160\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl161\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl162\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl163\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl164\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl165\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td>17：00</td><td>17:10</td><td>17:20</td><td>17:30</td><td>17:40</td><td>17:50</td></tr><tr><td><input type=\"text\"class=\"inputnumber\"id=\"txtl170\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl171\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl172\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl173\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl174\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl175\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td>18：00</td><td>18:10</td><td>18:20</td><td>18:30</td><td>18:40</td><td>18:50</td></tr><tr><td><input type=\"text\"class=\"inputnumber\"id=\"txtl180\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl181\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl182\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl183\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl184\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl185\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td>19：00</td><td>19:10</td><td>19:20</td><td>19:30</td><td>19:40</td><td>19:50</td></tr><tr><td><input type=\"text\"class=\"inputnumber\"id=\"txtl190\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl191\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl192\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl193\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl194\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl195\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td>20：00</td><td>20:10</td><td>20:20</td><td>20:30</td><td>20:40</td><td>20:50</td></tr><tr><td><input type=\"text\"class=\"inputnumber\"id=\"txtl200\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl201\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl202\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl203\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl204\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl205\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td>21：00</td><td>21:10</td><td>21:20</td><td>21:30</td><td>21:40</td><td>21:50</td></tr><tr><td><input type=\"text\"class=\"inputnumber\"id=\"txtl210\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl211\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl212\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl213\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl214\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl215\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td>22：00</td><td>22:10</td><td>22:20</td><td>22:30</td><td>22:40</td><td>22:50</td></tr><tr><td><input type=\"text\"class=\"inputnumber\"id=\"txtl220\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl221\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl222\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl223\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl224\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl225\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td>23：00</td><td>23:10</td><td>23:20</td><td>23:30</td><td>23:40</td><td>23:50</td></tr><tr><td><input type=\"text\"class=\"inputnumber\"id=\"txtl230\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl231\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl232\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl233\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl234\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td><td><input type=\"text\"class=\"inputnumber\"id=\"txtl235\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td colspan=\"6\">固定</td></tr><tr><td colspan=\"6\"><input type=\"text\"class=\"inputnumber\"id=\"txtlfix\"value='0'oninput=\"checkinput(this)\"onchange=\"changevalue(this)\"/></td></tr><tr><td colspan=\"6\"><input onclick=\"submit();\"type=\"submit\"id=\"submit\"value=\"保存\"/><input onclick=\"back();\"type=\"button\"id=\"btnback\"value=\"返回\"/></td></tr><tr><td sylte=\"color:red\"colspan=\"6\">取值范围0~100</td></tr></Table></body><script language=\"javascript\">function submit(){var savedata=document.getElementById(\"lightvalues\").innerHTML;var url=\"setp?t=\"+savedata;console.log(url);alert('保存成功');window.location.href=url}function tohex(str){if(str==\"0\"){return\"00\"}else{var intval=parseInt(str);if(intval){var hexval=intval.toString(16);if(hexval.length==1){var res=\"0\";return res+hexval}else{return hexval}}else{return\"00\"}}}function back(){var url=\"/\";window.location.href=url}function setlinevalue(pnum,lvs){var startIndex;switch(pnum){case 1:startIndex=0;break;case 2:startIndex=2;break;case 3:startIndex=4;break;case 4:startIndex=6;break;case 5:startIndex=8;break;case 6:startIndex=10;break;case 7:startIndex=12;break;default:break}for(var key in lvs){var resval=lvs[key];resval=resval.substr(startIndex,2);var res=parseInt(resval,16);var cid=key.replace(\"t\",\"\");cid=\"txtl\"+cid;document.getElementById(cid).value=res}}function linechange(val){document.getElementById(\"hidline\").value=val;var lvs=JSON.parse(document.getElementById(\"lightvalues\").innerHTML);setlinevalue(val,lvs)}function checkinput(input){var res=parseInt(input.value);if(res){if(res<0||res>100){document.getElementById(input.id).value=\"0\";alert('输入有误')}}else{document.getElementById(input.id).value=\"0\";alert('输入有误')}}function changevalue(input){var lvs=JSON.parse(document.getElementById(\"lightvalues\").innerHTML);var cid=input.id;var contentarr=tohex(input.value).split('');var tid=cid.replace(\"txtl\",\"t\");var line=parseInt(document.getElementById(\"hidline\").value);var arrcontent=lvs[tid].split('');var startIndex,endIndex;switch(line){case 1:startIndex=0;endIndex=1;break;case 2:startIndex=2;endIndex=3;break;case 3:startIndex=4;endIndex=5;break;case 4:startIndex=6;endIndex=7;break;case 5:startIndex=8;endIndex=9;break;case 6:startIndex=10;endIndex=11;break;case 7:startIndex=12;endIndex=13;break;default:break}arrcontent[startIndex]=contentarr[0];arrcontent[endIndex]=contentarr[1];lvs[tid]=arrcontent.join('');var updstr=JSON.stringify(lvs);document.getElementById('lightvalues').innerHTML=updstr}window.onload=function(){var lvs=JSON.parse(document.getElementById(\"lightvalues\").innerHTML);setlinevalue(1,lvs)}</script></html>";
+
         String tpl_data = "<input type=\"text\"width=\"50\"id=\"txtl{lid}\"value=\"0\"/>";
         String itemstr;
         String changeinput;
@@ -1517,11 +908,14 @@ void setup()
       showtype = request->getParam("showtype")->value();
       testmode = request->getParam("testmode")->value();
       sysdate = request->getParam("sysdate")->value();
-      conmode = request->getParam("conmode")->value();
+      //conmode = request->getParam("conmode")->value();
+
+
+      Serial.println("the show type is: " + showtype + " and the testmode is: " + testmode + " and sysdate is: " + sysdate);
 
       PWM_INFO_SHOWTYPE = showtype;
       PWM_INFO_TESTMODE = testmode;
-      PWM_INFO_CONMODE = conmode;
+      PWM_INFO_CONMODE = "local";
 
       String filecontent;
       filecontent = "{\"showtype\":\"";
@@ -1542,7 +936,7 @@ void setup()
       writeFile(SPIFFS, "/pwminfo.ini", filecontent.c_str());
       SPIFFS.end();
     }
-    request->redirect("/");
+    request->redirect("/basic");
   });
 
   // init system
@@ -1556,12 +950,14 @@ void setup()
     initFileSystem();
     Serial.println("init success.........................");
     SPIFFS.end();
-    request->redirect("/");
+    request->redirect("/basic");
   });
 
   // wifi page
   server.on("/wifi", HTTP_GET, [](AsyncWebServerRequest *request) {
-    String rawhtml = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>WiFi Setup Page</title></head><body><div><h1 id=\"title\">联网设置</h1><table><tr><th style=\"text-align:left;\">WIFI名称</th></tr><tr><td><input type=\"text\"id=\"txtssid\"/></td></tr><tr><th style=\"text-align:left;\">WIFI密码</th></tr><tr><td><input type=\"text\"id=\"txtpwd\"/></td></tr><tr><td><input type=\"submit\"value=\"连接\"id=\"btnConnect\"onclick=\"submit()\"/><input type=\"button\"value=\"返回\"id=\"btnBack\"onclick=\"back()\"/></td></tr><tr><td><span id=\"spResult\"></span></td></tr></table><hr/><h1 id=\"title\">WIFI热点扫描</h1><table id=\"wifilist\"></table></div><script>function submit(){var ssid=document.getElementById('txtssid').value;var pwd=document.getElementById('txtpwd').value;alert(\"正在连接热点,请关闭此页面并切换选择的热点，通过http://esp32访问\");var url=\"savewifi?ssid=\"+ssid+\"&pwd=\"+pwd;window.location.href=url}function back(){var url=\"/\";window.location.href=url}</script></body></html>";
+    //String rawhtml = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>WiFi Setup Page</title></head><body><div><h1 id=\"title\">联网设置</h1><table><tr><th style=\"text-align:left;\">WIFI名称</th></tr><tr><td><input type=\"text\"id=\"txtssid\"/></td></tr><tr><th style=\"text-align:left;\">WIFI密码</th></tr><tr><td><input type=\"text\"id=\"txtpwd\"/></td></tr><tr><td><input type=\"submit\"value=\"连接\"id=\"btnConnect\"onclick=\"submit()\"/><input type=\"button\"value=\"返回\"id=\"btnBack\"onclick=\"back()\"/></td></tr><tr><td><span id=\"spResult\"></span></td></tr></table><hr/><h1 id=\"title\">WIFI热点扫描</h1><table id=\"wifilist\"></table></div><script>function submit(){var ssid=document.getElementById('txtssid').value;var pwd=document.getElementById('txtpwd').value;alert(\"正在连接热点,请关闭此页面并切换选择的热点，通过http://esp32访问\");var url=\"savewifi?ssid=\"+ssid+\"&pwd=\"+pwd;window.location.href=url}function back(){var url=\"/\";window.location.href=url}</script></body></html>";
+    String rawhtml = "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>WiFi Setup Page</title></head><body><div><table><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">WIFI名称</span></td><td style=\"font-size:14px;\"><input type=\"text\"id=\"txtssid\"/></td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">WIFI密码</span></td><td style=\"font-size:14px;\"><input type=\"text\"id=\"txtpwd\"/></td></tr><tr><td colspan=\"2\"><input style=\"background:green; color:white; width:80px; height:30px; margin-right:2px;\"type=\"submit\"value=\"连接\"id=\"btnConnect\"onclick=\"submit()\"/><input style=\"background:green; color:white; width:80px; height:30px;\"type=\"button\"value=\"返回\"id=\"btnBack\"onclick=\"back()\"/></td></tr><tr><td><span id=\"spResult\"style=\"font-size:14px;\"></span></td></tr></table><hr/><div style=\"font-size:14px;\"><span></span><div><table id=\"wifilist\"></table></div></div></div><script>function submit(){var ssid=document.getElementById('txtssid').value;var pwd=document.getElementById('txtpwd').value;alert(\"正在连接热点,请关闭此页面并切换选择的热点，通过http://esp32访问\");var url=\"savewifi?ssid=\"+ssid+\"&pwd=\"+pwd;window.location.href=url}function back(){var url=\"/basic\";window.location.href=url}</script></body></html>";
+
     if (!SPIFFS.begin())
     {
       Serial.println("SPIFFS Mount Failed");
@@ -1596,26 +992,26 @@ void setup()
     }
     SPIFFS.end();
 
-    String tpl_scanresult = "<table id=\"wifilist\"></table>";
-    String change_scanresult = "";
-    int n = WiFi.scanNetworks();
-    if (n == 0)
-    {
-      change_scanresult = "<table id=\"wifilist\"><tr><td>wifi not found</td></tr></table>";
-      rawhtml.replace(tpl_scanresult, change_scanresult);
-    }
-    else
-    {
-      String change_scanresult = "<table id=\"wifilist\">";
-      for (int i = 0; i < n; ++i)
-      {
-        change_scanresult = change_scanresult + "<tr><td>";
-        change_scanresult = change_scanresult + WiFi.SSID(i);
-        change_scanresult = change_scanresult + "</td></tr>";
-      }
-      change_scanresult = change_scanresult + "</table>";
-      rawhtml.replace(tpl_scanresult, change_scanresult);
-    }
+    // String tpl_scanresult = "<table id=\"wifilist\"></table>";
+    // String change_scanresult = "";
+    // int n = WiFi.scanNetworks();
+    // if (n == 0)
+    // {
+    //   change_scanresult = "<table id=\"wifilist\"><tr><td>wifi not found</td></tr></table>";
+    //   rawhtml.replace(tpl_scanresult, change_scanresult);
+    // }
+    // else
+    // {
+    //   String change_scanresult = "<table id=\"wifilist\">";
+    //   for (int i = 0; i < n; ++i)
+    //   {
+    //     change_scanresult = change_scanresult + "<tr><td>";
+    //     change_scanresult = change_scanresult + WiFi.SSID(i);
+    //     change_scanresult = change_scanresult + "</td></tr>";
+    //   }
+    //   change_scanresult = change_scanresult + "</table>";
+    //   rawhtml.replace(tpl_scanresult, change_scanresult);
+    // }
 
     request->send(200, "text/html", rawhtml);
   });
@@ -1646,7 +1042,7 @@ void setup()
     {
       Serial.println("param error");
     }
-    request->redirect("/");
+    request->redirect("/basic");
   });
 
   // reset operation
@@ -1657,7 +1053,8 @@ void setup()
 
   // bin upload page
   server.on("/upload", HTTP_GET, [](AsyncWebServerRequest *request) {
-    String html = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>Update System</title><script src='https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js'></script></head><body><div><h1 id=\"title\">更新固件</h1><hr/><form method='POST'action='#'enctype='multipart/form-data'id='upload_form'><input type='file'name='update'/><input type='submit'value='更新'/></form><div id='prg'>progress:0%</div></div><script>$('form').submit(function(e){e.preventDefault();var form=$('#upload_form')[0];var data=new FormData(form);$.ajax({url:'/update',type:'POST',data:data,contentType:false,processData:false,xhr:function(){var xhr=new window.XMLHttpRequest();xhr.upload.addEventListener('progress',function(evt){if(evt.lengthComputable){var per=evt.loaded/evt.total;$('#prg').html('progress: '+Math.round(per*100)+'%')}},false);return xhr},success:function(d,s){console.log('success!')},error:function(a,b,c){}})});</script></body></html>";
+    //String html = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>Update System</title><script src='https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js'></script></head><body><div><h1 id=\"title\">更新固件</h1><hr/><form method='POST'action='#'enctype='multipart/form-data'id='upload_form'><input type='file'name='update'/><input type='submit'value='更新'/></form><div id='prg'>progress:0%</div></div><script>$('form').submit(function(e){e.preventDefault();var form=$('#upload_form')[0];var data=new FormData(form);$.ajax({url:'/update',type:'POST',data:data,contentType:false,processData:false,xhr:function(){var xhr=new window.XMLHttpRequest();xhr.upload.addEventListener('progress',function(evt){if(evt.lengthComputable){var per=evt.loaded/evt.total;$('#prg').html('progress: '+Math.round(per*100)+'%')}},false);return xhr},success:function(d,s){console.log('success!')},error:function(a,b,c){}})});</script></body></html>";
+    String html = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>Update System</title><script src='https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js'></script></head><body><div><form method='POST'action='#'enctype='multipart/form-data'id='upload_form'><input type='file'name='update'/><input style=\"background:green; color:white; width:80px; height:30px;\"type='submit'value='更新'/></form><div id='prg'style=\"font-size:14px; margin-top:10px;\">上传进步:0%</div></div><script>$('form').submit(function(e){e.preventDefault();var form=$('#upload_form')[0];var data=new FormData(form);$.ajax({url:'/update',type:'POST',data:data,contentType:false,processData:false,xhr:function(){var xhr=new window.XMLHttpRequest();xhr.upload.addEventListener('progress',function(evt){if(evt.lengthComputable){var per=evt.loaded/evt.total;$('#prg').html('progress: '+Math.round(per*100)+'%')}},false);return xhr},success:function(d,s){console.log('success!')},error:function(a,b,c){}})});</script></body></html>";
     request->send(200, "text/html", html);
   });
 
@@ -1705,7 +1102,6 @@ void loop()
   int currenthour = t_st->tm_hour;
   int currentmin = t_st->tm_min;
   int currentsec = t_st->tm_sec;
-
   if (currentmin == 0 || currentmin == 5 || currentmin == 10 || currentmin == 15 || currentmin == 20 || currentmin == 25 || currentmin == 30 || currentmin == 35 || currentmin == 40 || currentmin == 45 || currentmin == 50 || currentmin == 55)
   {
     if (SSID != "" && WiFi.status() != WL_CONNECTED)
@@ -3027,7 +2423,7 @@ void loop()
       }
       else if (PWM_INFO_TESTMODE == "test")
       {
-        Serial.printf("test mode .... current sec is: %d the led1's volume is: %d \n",currentsec,P1[TESTMODE_COUNT]);
+        Serial.printf("test mode .... current sec is: %d the led7's volume is: %d \n",currentsec,P7[TESTMODE_COUNT]);
         if(TESTMODE_COUNT >143) {
           TESTMODE_COUNT = 0;
         }
@@ -3061,7 +2457,7 @@ void loop()
     }
     else if (PWM_INFO_SHOWTYPE == "fix")
     {
-      Serial.printf("fix mode ... the led1's volume is: %d \n", P1[144]);
+      Serial.printf("fix mode ... the led1's volume is: %d \n", P7[144]);
       led1.set(P1[144]);
       led2.set(P2[144]);
       led3.set(P3[144]);
