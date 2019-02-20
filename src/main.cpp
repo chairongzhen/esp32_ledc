@@ -9,9 +9,10 @@
 #include <ESPmDNS.h>
 #include <Update.h>
 #include <PubSubClient.h>
+#include <ArduinoHttpClient.h>
 
 #define RESET_BUTTON 16
-#define VERSION_NUM "0.42"
+#define VERSION_NUM "0.53"
 // #define ESP_HOST_NAME "esp1006"
 #define ESP_RTC_TICK 1542012457
 
@@ -64,11 +65,10 @@ LED_ESP32 led8(25, 0, 100);
 // LED_ESP32 led6(23, 5, 100);
 // LED_ESP32 led7(25, 6, 100);
 
-
 AsyncWebServer server(80);
 WiFiClient espClient;
 PubSubClient client(espClient);
-
+HttpClient http(espClient,mqttServer);
 // file operation begin
 String getFileString(fs::FS &fs, const char *path)
 {
@@ -168,13 +168,13 @@ void initFileSystem()
     String midcontent = "{\"mid\":\"{mid}\",\"mac\":\"{mac}\"}";
     int s;
     srand(time(NULL));
-    s=1000+rand()%9999;
+    s = 1000 + rand() % 9999;
     char c[8];
-    itoa(s,c,10);
+    itoa(s, c, 10);
     String mid = "esp_{mid}";
-    mid.replace("{mid}",c);
+    mid.replace("{mid}", c);
     midcontent.replace("{mac}", WiFi.macAddress());
-    midcontent.replace("{mid}",mid);
+    midcontent.replace("{mid}", mid);
     writeFile(SPIFFS, "/mid.ini", midcontent.c_str());
   }
   String pwminfocontent = "{\"showtype\":\"fix\",\"testmode\":\"test\",\"sysdate\":\"{unixtick}\",\"status\":\"stop\",\"conmode\": \"local\",\"version\":\"{version_num}\"}";
@@ -182,7 +182,6 @@ void initFileSystem()
   pwminfocontent.replace("{unixtick}", String(ESP_RTC_TICK));
   writeFile(SPIFFS, "/pwminfo.ini", pwminfocontent.c_str());
   writeFile(SPIFFS, "/p.ini", "{\"t000\":\"00000000000000\",\"t001\":\"00000000000000\",\"t002\":\"00000000000000\",\"t003\":\"00000000000000\",\"t004\":\"00000000000000\",\"t005\":\"00000000000000\",\"t010\":\"00000000000000\",\"t011\":\"00000000000000\",\"t012\":\"00000000000000\",\"t013\":\"00000000000000\",\"t014\":\"00000000000000\",\"t015\":\"00000000000000\",\"t020\":\"00000000000000\",\"t021\":\"00000000000000\",\"t022\":\"00000000000000\",\"t023\":\"00000000000000\",\"t024\":\"00000000000000\",\"t025\":\"00000000000000\",\"t030\":\"00000000000000\",\"t031\":\"00000000000000\",\"t032\":\"00000000000000\",\"t033\":\"00000000000000\",\"t034\":\"00000000000000\",\"t035\":\"00000000000000\",\"t040\":\"00000000000000\",\"t041\":\"00000000000000\",\"t042\":\"00000000000000\",\"t043\":\"00000000000000\",\"t044\":\"00000000000000\",\"t045\":\"00000000000000\",\"t050\":\"00000000000000\",\"t051\":\"00000000000000\",\"t052\":\"00000000000000\",\"t053\":\"00000000000000\",\"t054\":\"00000000000000\",\"t055\":\"00000000000000\",\"t060\":\"00000000000000\",\"t061\":\"00000000000000\",\"t062\":\"00000000000000\",\"t063\":\"00000000000000\",\"t064\":\"00000000000000\",\"t065\":\"00000000000000\",\"t070\":\"00000000000000\",\"t071\":\"00000000000000\",\"t072\":\"00000000000000\",\"t073\":\"00000000000000\",\"t074\":\"00000000000000\",\"t075\":\"00000000000000\",\"t080\":\"00000000000000\",\"t081\":\"00000000000000\",\"t082\":\"00000000000000\",\"t083\":\"00000000000000\",\"t084\":\"00000000000000\",\"t085\":\"00000000000000\",\"t090\":\"00000000000000\",\"t091\":\"00000000000000\",\"t092\":\"00000000000000\",\"t093\":\"00000000000000\",\"t094\":\"00000000000000\",\"t095\":\"00000000000000\",\"t100\":\"00000000000000\",\"t101\":\"00000000000000\",\"t102\":\"00000000000000\",\"t103\":\"00000000000000\",\"t104\":\"00000000000000\",\"t105\":\"00000000000000\",\"t110\":\"00000000000000\",\"t111\":\"00000000000000\",\"t112\":\"00000000000000\",\"t113\":\"00000000000000\",\"t114\":\"00000000000000\",\"t115\":\"00000000000000\",\"t120\":\"00000000000000\",\"t121\":\"00000000000000\",\"t122\":\"00000000000000\",\"t123\":\"00000000000000\",\"t124\":\"00000000000000\",\"t125\":\"00000000000000\",\"t130\":\"00000000000000\",\"t131\":\"00000000000000\",\"t132\":\"00000000000000\",\"t133\":\"00000000000000\",\"t134\":\"00000000000000\",\"t135\":\"00000000000000\",\"t140\":\"00000000000000\",\"t141\":\"00000000000000\",\"t142\":\"00000000000000\",\"t143\":\"00000000000000\",\"t144\":\"00000000000000\",\"t145\":\"00000000000000\",\"t150\":\"00000000000000\",\"t151\":\"00000000000000\",\"t152\":\"00000000000000\",\"t153\":\"00000000000000\",\"t154\":\"00000000000000\",\"t155\":\"00000000000000\",\"t160\":\"00000000000000\",\"t161\":\"00000000000000\",\"t162\":\"00000000000000\",\"t163\":\"00000000000000\",\"t164\":\"00000000000000\",\"t165\":\"00000000000000\",\"t170\":\"00000000000000\",\"t171\":\"00000000000000\",\"t172\":\"00000000000000\",\"t173\":\"00000000000000\",\"t174\":\"00000000000000\",\"t175\":\"00000000000000\",\"t180\":\"00000000000000\",\"t181\":\"00000000000000\",\"t182\":\"00000000000000\",\"t183\":\"00000000000000\",\"t184\":\"00000000000000\",\"t185\":\"00000000000000\",\"t190\":\"00000000000000\",\"t191\":\"00000000000000\",\"t192\":\"00000000000000\",\"t193\":\"00000000000000\",\"t194\":\"00000000000000\",\"t195\":\"00000000000000\",\"t200\":\"00000000000000\",\"t201\":\"00000000000000\",\"t202\":\"00000000000000\",\"t203\":\"00000000000000\",\"t204\":\"00000000000000\",\"t205\":\"00000000000000\",\"t210\":\"00000000000000\",\"t211\":\"00000000000000\",\"t212\":\"00000000000000\",\"t213\":\"00000000000000\",\"t214\":\"00000000000000\",\"t215\":\"00000000000000\",\"t220\":\"00000000000000\",\"t221\":\"00000000000000\",\"t222\":\"00000000000000\",\"t223\":\"00000000000000\",\"t224\":\"00000000000000\",\"t225\":\"00000000000000\",\"t230\":\"00000000000000\",\"t231\":\"00000000000000\",\"t232\":\"00000000000000\",\"t233\":\"00000000000000\",\"t234\":\"00000000000000\",\"t235\":\"00000000000000\",\"tfix\":\"00000000000000\"}");
-  
 
   SPIFFS.end();
 }
@@ -224,7 +223,6 @@ void lightopr(String content)
   itemstr = cJSON_Print(item);
   PWM_INFO_VERSION = itemstr;
   PWM_INFO_VERSION.replace("\"", "");
-
 
   String sval;
   root = cJSON_Parse(content.c_str());
@@ -378,7 +376,7 @@ void callback(char *topic, byte *payload, unsigned int length)
     item = cJSON_GetObjectItem(root, "version");
     itemstr = cJSON_Print(item);
     PWM_INFO_VERSION = itemstr;
-    PWM_INFO_VERSION.replace("\"", "");    
+    PWM_INFO_VERSION.replace("\"", "");
     writeFile(SPIFFS, "/pwminfo.ini", filecontent.c_str());
   }
   else if (String(topic) == checktimetopic)
@@ -416,7 +414,7 @@ void callback(char *topic, byte *payload, unsigned int length)
       Serial.println(strlen(dst[i]));
     }
   }
-  else if(String(topic) == topic_name_setp)
+  else if (String(topic) == topic_name_setp)
   {
     lightopr(filecontent);
     writeFile(SPIFFS, "/p.ini", filecontent.c_str());
@@ -525,7 +523,215 @@ void mqttconn()
 //   }
 // }
 
+String getHeaderValue(String header, String headerName)
+{
+  return header.substring(strlen(headerName.c_str()));
+}
 
+
+void execOTA()
+{
+  Serial.println("Connecting to: www.polypite.com");
+
+  int contentLength = 0;
+  bool isValidContentType = false;
+  // Connect to S3
+  if (espClient.connect("www.polypite.com", 80))
+  {
+    // Connection Succeed.
+    // Fecthing the bin
+    Serial.println("Fetching Bin: /public/bin/firmware.bin");
+
+    // Get the contents of the bin file
+    espClient.print(String("GET ") + "/public/bin/firmware.bin" + " HTTP/1.1\r\n" +
+                    "Host: " + "www.polypite.com" + "\r\n" +
+                    "Cache-Control: no-cache\r\n" +
+                    "Connection: close\r\n\r\n");
+
+    // Check what is being sent
+    //    Serial.print(String("GET ") + bin + " HTTP/1.1\r\n" +
+    //                 "Host: " + host + "\r\n" +
+    //                 "Cache-Control: no-cache\r\n" +
+    //                 "Connection: close\r\n\r\n");
+
+    unsigned long timeout = millis();
+    while (espClient.available() == 0)
+    {
+      if (millis() - timeout > 5000)
+      {
+        Serial.println("Client Timeout !");
+        espClient.stop();
+        return;
+      }
+    }
+    // Once the response is available,
+    // check stuff
+
+    /*
+       Response Structure
+        HTTP/1.1 200 OK
+        x-amz-id-2: NVKxnU1aIQMmpGKhSwpCBh8y2JPbak18QLIfE+OiUDOos+7UftZKjtCFqrwsGOZRN5Zee0jpTd0=
+        x-amz-request-id: 2D56B47560B764EC
+        Date: Wed, 14 Jun 2017 03:33:59 GMT
+        Last-Modified: Fri, 02 Jun 2017 14:50:11 GMT
+        ETag: "d2afebbaaebc38cd669ce36727152af9"
+        Accept-Ranges: bytes
+        Content-Type: application/octet-stream
+        Content-Length: 357280
+        Server: AmazonS3
+                                   
+        {{BIN FILE CONTENTS}}
+ 
+    */
+    while (espClient.available())
+    {
+      // read line till /n
+      String line = espClient.readStringUntil('\n');
+      // remove space, to check if the line is end of headers
+      line.trim();
+
+      // if the the line is empty,
+      // this is end of headers
+      // break the while and feed the
+      // remaining `client` to the
+      // Update.writeStream();
+      if (!line.length())
+      {
+        //headers ended
+        break; // and get the OTA started
+      }
+
+      // Check if the HTTP Response is 200
+      // else break and Exit Update
+      if (line.startsWith("HTTP/1.1"))
+      {
+        if (line.indexOf("200") < 0)
+        {
+          Serial.println("Got a non 200 status code from server. Exiting OTA Update.");
+          break;
+        }
+      }
+      // extract headers here
+      // Start with content length
+      if (line.startsWith("Content-Length: "))
+      {
+        contentLength = atoi((getHeaderValue(line, "Content-Length: ")).c_str());
+        Serial.println("Got " + String(contentLength) + " bytes from server");
+      }
+      // Next, the content type
+      if (line.startsWith("Content-Type: "))
+      {
+        String contentType = getHeaderValue(line, "Content-Type: ");
+        Serial.println("Got " + contentType + " payload.");
+        if (contentType == "application/octet-stream")
+        {
+          isValidContentType = true;
+        }
+      }
+    }
+  }
+  else
+  {
+    // Connect to S3 failed
+    // May be try?
+    // Probably a choppy network?
+    Serial.println("Connection to www.polypite.com failed. Please check your setup");
+    // retry??
+    // execOTA();
+  }
+  // Check what is the contentLength and if content type is `application/octet-stream`
+  Serial.println("contentLength : " + String(contentLength) + ", isValidContentType : " + String(isValidContentType));
+  // check contentLength and content type
+  if (contentLength && isValidContentType)
+  {
+    // Check if there is enough to OTA Update
+    bool canBegin = Update.begin(contentLength);
+    // If yes, begin
+    if (canBegin)
+    {
+      Serial.println("Begin OTA. This may take 2 - 5 mins to complete. Things might be quite for a while.. Patience!");
+      // No activity would appear on the Serial monitor
+      // So be patient. This may take 2 - 5mins to complete
+      size_t written = Update.writeStream(espClient);
+      if (written == contentLength)
+      {
+        Serial.println("Written : " + String(written) + " successfully");
+      }
+      else
+      {
+        Serial.println("Written only : " + String(written) + "/" + String(contentLength) + ". Retry?");
+        // retry??
+        // execOTA();
+      }
+      if (Update.end())
+      {
+        Serial.println("OTA done!");
+        if (Update.isFinished())
+        {
+          Serial.println("Update successfully completed. Rebooting.");
+          ESP.restart();
+        }
+        else
+        {
+          Serial.println("Update not finished? Something went wrong!");
+        }
+      }
+      else
+      {
+        Serial.println("Error Occurred. Error #: " + String(Update.getError()));
+      }
+    }
+    else
+    {
+      // not enough space to begin OTA
+      // Understand the partitions and
+      // space availability
+      Serial.println("Not enough space to begin OTA");
+      espClient.flush();
+    }
+  }
+  else
+  {
+    Serial.println("There was no content in the response");
+    espClient.flush();
+  }
+}
+
+bool execCheckVersion(String oldversion)
+{
+  String version = "0.50";
+  bool needtoupdate = false;
+  int err = http.get("/version");
+  if(err == 0) {
+    err = http.responseStatusCode();
+    if(err >=0) {
+      while(http.available() && !http.endOfBodyReached()) {
+        String line = http.readStringUntil('\n');
+        line.trim();
+        if (line.startsWith("version:")) {
+          line.replace("version:","");
+          version = line;
+        }
+      }
+    }
+  }
+  if(oldversion != version) {
+    needtoupdate =  true;
+  }
+  return needtoupdate;
+}
+
+// void setup() {
+//   Serial.begin(115200);
+//   WiFi.begin("cg-livingroom","13501983117");
+//   while (WiFi.status() != WL_CONNECTED) {
+//     Serial.print("."); // Keep the serial monitor lit!
+//     delay(500);
+//   }
+
+//   execOTA();
+
+// }
 
 // esp32 init config
 void setup()
@@ -537,9 +743,8 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(RESET_BUTTON), handleRestButtonChanged, CHANGE);
   WiFi.mode(WIFI_AP_STA);
 
-  Serial.print("the current version is: ");
-  Serial.println(VERSION_NUM);
-
+  // Serial.print("the current version is: ");
+  // Serial.println(VERSION_NUM);
 
   led1.setup();
   led2.setup();
@@ -580,8 +785,8 @@ void setup()
       // Serial.println(tempfile);
       cJSON *root = NULL;
       cJSON *item = NULL;
-      
-      if(SPIFFS.exists("/mid.ini"))
+
+      if (SPIFFS.exists("/mid.ini"))
       {
         String midcontent;
         midcontent = getFileString(SPIFFS, "/mid.ini");
@@ -593,16 +798,13 @@ void setup()
         itemstr.replace("\"", "");
         ESP_HOST_NAME = itemstr;
 
-
         item = cJSON_GetObjectItem(root, "mac");
         itemstr = cJSON_Print(item);
         itemstr.replace("\"", "");
         ESP_MAC = itemstr;
-
       }
-      
-      Serial.println("the AP name is : " + String(ssid) + " password is: " + String(password) + "\n the mac address is: " + ESP_MAC);
 
+      Serial.println("the AP name is : " + String(ssid) + " password is: " + String(password) + "\n the mac address is: " + ESP_MAC);
 
       if (SPIFFS.exists("/wifi.ini"))
       {
@@ -627,7 +829,7 @@ void setup()
         itemstr = cJSON_Print(item);
         String pwd = itemstr;
 
-        cJSON_Delete(root);
+        // cJSON_Delete(root);
 
         ssid.replace("\"", "");
         pwd.replace("\"", "");
@@ -652,8 +854,9 @@ void setup()
         //   }
 
         if (WiFi.status() == WL_CONNECTED)
-        {          
-          if (MDNS.begin(host)) {
+        {
+          if (MDNS.begin(host))
+          {
             Serial.println("MDNS responder started");
           }
           IS_SMART = true;
@@ -662,6 +865,22 @@ void setup()
           client.setServer(mqttServer, mqttPort);
           client.setCallback(callback);
           mqttconn();
+
+          String filestr = getFileString(SPIFFS, "/pwminfo.ini");
+          const char *jsonstr = filestr.c_str();
+          root = cJSON_Parse(jsonstr);
+          String itemstr;
+          item = cJSON_GetObjectItem(root, "version");
+          itemstr = cJSON_Print(item);
+          PWM_INFO_VERSION = itemstr;
+          PWM_INFO_VERSION.replace("\"", "");
+          Serial.println("the current version is: "+PWM_INFO_VERSION);
+          if(execCheckVersion(PWM_INFO_VERSION)) {
+            Serial.println("need to be update");
+            execOTA();
+          }
+
+          
         }
       }
       else
@@ -719,8 +938,10 @@ void setup()
           }
         }
       }
+      cJSON_Delete(root);
       // online or offline light operation
       String strlvs = getFileString(SPIFFS, "/p.ini");
+      
       lightopr(strlvs);
     }
   }
@@ -728,23 +949,23 @@ void setup()
   SPIFFS.end();
 
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-      String html ="";
-      html = html + "<html><head><meta http-equiv=\"Content-Type\"content=\"text/html; charset=utf-8\"/><meta http-equiv=\"X-UA-Compatible\"content=\"IE=edge,Chrome=1\"/><meta name=\"format-detection\" content=\"telephone=no\" /><meta http-equiv=\"pragma\"content=\"no-cache\"><meta http-equiv=\"cache-control\"content=\"no-cache\"><meta http-equiv=\"expires\"content=\"0\"><meta name=\"viewport\"content=\"width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no\"><style>";
-      html = html + ".w-header{height:50px;background-color:#eee;line-height:50px;border-bottom:1px solid #999}";
-      html = html + ".w-header-brand{font-size:16px;font-weight:bold;float:left;margin-left:20px;}";
-      html = html + ".w-body{clear:both}";
-      html = html + ".w-body .w-menu{padding:5px 0px 0px 10px;margin:0;font-size:16px}";
-      html = html + ".w-body .w-menu,.w-body .w-menu li{height:30px;list-style-type:none;text-align:center;line-height:30px}";
-      html = html + ".w-body .w-menu li{width:80px;float:left}";
-      html = html + ".w-body .w-menu li a{color: green;text-decoration:none}";
-      html = html + ".w-body .w-menu li.divider{width:20px}";
-      html = html + ".w-body .w-menu li.selected{background-color:#B91818}";
-      html = html + ".w-body .w-menu li.selected a{color:#fff}";
-      html = html + ".w-body iframe{padding:0;margin:0;border:0;overflow-x:hidden}";
-      //html = html +  "</style><title>后台管理</title></head><body style=\"overflow:hidden\"><div class=\"w-header\"><div class=\"w-header-brand\">后台管理</div></div><div class=\"w-body\"><ul class=\"w-menu\"><li id=\"basic\"><a target=\"iframe\"href=\"/basic\">基本设置</a></li><li class=\"divider\">|</li><li id=\"light\"><a target=\"iframe\"href=\"/p\">亮度设置</a></li><li class=\"divider\">|</li><li id=\"basic\"><a target=\"iframe\"href=\"/upload\">固件升级</a></li></ul><div id='grid'></div><hr/><iframe name=\"iframe\"width=\"100%\"height=\"80%\"frameborder=\"no\"border=\"0\"scrolling=\"auto\"src=\"/basic\"></iframe></div><div id=\"w-footer\"></div></body></html>";
-      html = html + "</style><title>后台管理</title></head><body style=\"overflow:hidden\"><div class=\"w-header\"><div class=\"w-header-brand\">后台管理</div></div><div class=\"w-body\"><ul class=\"w-menu\"><li id=\"basic\"><a target=\"iframe\"href=\"/basic\">基本设置</a></li><li class=\"divider\">|</li><li id=\"light\"><a target=\"iframe\"href=\"/p\">亮度设置</a></li><li class=\"divider\">|<li id=\"light\"><a target=\"iframe\"href=\"/mid\">二维码</a></li><li class=\"divider\">|</li><li id=\"upload\"><a target=\"iframe\"href=\"/upload\">固件更新</a></li></ul><hr/><iframe name=\"iframe\"width=\"100%\"height=\"80%\"frameborder=\"no\"border=\"0\"scrolling=\"auto\"src=\"./basic\"></iframe></div><div id=\"w-footer\"></div></body></html>";
+    String html = "";
+    html = html + "<html><head><meta http-equiv=\"Content-Type\"content=\"text/html; charset=utf-8\"/><meta http-equiv=\"X-UA-Compatible\"content=\"IE=edge,Chrome=1\"/><meta name=\"format-detection\" content=\"telephone=no\" /><meta http-equiv=\"pragma\"content=\"no-cache\"><meta http-equiv=\"cache-control\"content=\"no-cache\"><meta http-equiv=\"expires\"content=\"0\"><meta name=\"viewport\"content=\"width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no\"><style>";
+    html = html + ".w-header{height:50px;background-color:#eee;line-height:50px;border-bottom:1px solid #999}";
+    html = html + ".w-header-brand{font-size:16px;font-weight:bold;float:left;margin-left:20px;}";
+    html = html + ".w-body{clear:both}";
+    html = html + ".w-body .w-menu{padding:5px 0px 0px 10px;margin:0;font-size:16px}";
+    html = html + ".w-body .w-menu,.w-body .w-menu li{height:30px;list-style-type:none;text-align:center;line-height:30px}";
+    html = html + ".w-body .w-menu li{width:80px;float:left}";
+    html = html + ".w-body .w-menu li a{color: green;text-decoration:none}";
+    html = html + ".w-body .w-menu li.divider{width:20px}";
+    html = html + ".w-body .w-menu li.selected{background-color:#B91818}";
+    html = html + ".w-body .w-menu li.selected a{color:#fff}";
+    html = html + ".w-body iframe{padding:0;margin:0;border:0;overflow-x:hidden}";
+    //html = html +  "</style><title>后台管理</title></head><body style=\"overflow:hidden\"><div class=\"w-header\"><div class=\"w-header-brand\">后台管理</div></div><div class=\"w-body\"><ul class=\"w-menu\"><li id=\"basic\"><a target=\"iframe\"href=\"/basic\">基本设置</a></li><li class=\"divider\">|</li><li id=\"light\"><a target=\"iframe\"href=\"/p\">亮度设置</a></li><li class=\"divider\">|</li><li id=\"basic\"><a target=\"iframe\"href=\"/upload\">固件升级</a></li></ul><div id='grid'></div><hr/><iframe name=\"iframe\"width=\"100%\"height=\"80%\"frameborder=\"no\"border=\"0\"scrolling=\"auto\"src=\"/basic\"></iframe></div><div id=\"w-footer\"></div></body></html>";
+    html = html + "</style><title>后台管理</title></head><body style=\"overflow:hidden\"><div class=\"w-header\"><div class=\"w-header-brand\">后台管理</div></div><div class=\"w-body\"><ul class=\"w-menu\"><li id=\"basic\"><a target=\"iframe\"href=\"/basic\">基本设置</a></li><li class=\"divider\">|</li><li id=\"light\"><a target=\"iframe\"href=\"/p\">亮度设置</a></li><li class=\"divider\">|<li id=\"light\"><a target=\"iframe\"href=\"/mid\">二维码</a></li><li class=\"divider\">|</li><li id=\"upload\"><a target=\"iframe\"href=\"/upload\">固件更新</a></li></ul><hr/><iframe name=\"iframe\"width=\"100%\"height=\"80%\"frameborder=\"no\"border=\"0\"scrolling=\"auto\"src=\"./basic\"></iframe></div><div id=\"w-footer\"></div></body></html>";
 
-      request->send(200, "text/html", html);
+    request->send(200, "text/html", html);
   });
 
   // index page
@@ -788,8 +1009,7 @@ void setup()
     String html = "";
     //html = html + "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>NodeMCU Control Page</title><!--<script type=\"text/javascript\"src=\"jquery.js\"></script>--></head><body><div><h1 id=\"title\">基本信息</h1><table><tr><th style=\"text-align:left;\">版本号</th></tr><tr><td><span id=\"spversion\"></span></td></tr><tr><th style=\"text-align:left;\">系统时间</th></tr><tr><td><span id=\"spCurrent\"></span></td></tr><tr><th style=\"text-align: left;\">修改时间</th></tr><tr><td><input type=\"text\"value=\"2018-03-03 00:00:00\"id=\"txtsysdate\"/>*时间格式:2018-03-03 00:00:00</td></tr><tr><th style=\"text-align:left;\">循环模式</th></tr><tr><td><input type=\"radio\"value=\"repeat\"name=\"showtype\"id=\"rdRpt\"/>循环模式<input type=\"radio\"value=\"fix\"name=\"showtype\"id=\"rdFix\"/>固定模式</td></tr><tr id=\"thtest\"><th style=\"text-align:left;\">是否测试</th></tr><tr id=\"tdtest\"><td><input value=\"production\"type=\"radio\"name=\"testMode\"id=\"rdPrd\"/>否<input value=\"test\"type=\"radio\"name=\"testMode\"id=\"rdTest\"/>是</td></tr><tr id=\"thonline\"style=\"display: none;\"><th style=\"text-align:left;\">云端控制</th></tr><tr id=\"tdonline\"style=\"display: none;\"><td><input value=\"local\"type=\"radio\"name=\"onlineMode\"id=\"rdlocal\"/>否<input value=\"online\"type=\"radio\"name=\"onlineMode\"id=\"rdonline\"/>是</td></tr><tr><td><input type=\"button\"value=\"联网设置\"id=\"btnwifi\"onclick=\"wifi();\"/><input type=\"submit\"value=\"保存\"id=\"submit\"onclick=\"submit();\"/><input type=\"button\"value=\"恢复出厂\"id=\"btnstop\"onclick=\"init();\"/><input type=\"button\"value=\"重启\"id=\"btnReset\"onclick=\"reset();\"/><input type=\"button\"value=\"更新固件\"id=\"btnupload\"onclick=\"upload();\"/></td></tr></table><hr/><h1 id=\"title\">灯光控制</h1><table><tr><td><a href=\"/p\">进入设置页面</a></td></tr></table></div><script>function submit(){var selectshowtype=document.getElementsByName('showtype');var showtypevalue=\"\";for(var i=0;i<selectshowtype.length;i++){if(selectshowtype[i].checked){showtypevalue=selectshowtype[i].value;break}}var selecttestmode=document.getElementsByName('testMode');var testmodevalue=\"\";for(var i=0;i<selecttestmode.length;i++){if(selecttestmode[i].checked){testmodevalue=selecttestmode[i].value;break}}var str=document.getElementById('txtsysdate').value;str=str.replace(/-/g,\"/\");var date=new Date(str);var unixDate=date.getTime()/1000|0;console.log(unixDate);var selectedconnectionmode=document.getElementsByName(\"onlineMode\");var connectionmodevalue=\"\";for(var i=0;i<selectedconnectionmode.length;i++){if(selectedconnectionmode[i].checked){connectionmodevalue=selectedconnectionmode[i].value;break}}alert('保存成功');var url=\"pwmopr?showtype=\"+showtypevalue+\"&testmode=\"+testmodevalue+\"&sysdate=\"+unixDate+\"&conmode=\"+connectionmodevalue;window.location.href=url}function init(){alert('已恢复出厂设置!');var url=\"init\";window.location.href=url}function wifi(){var url=\"wifi\";window.location.href=url}function reset(){var url=\"reset\";alert(\"已重启,请关闭当前页面\");window.location.href=url}function upload(){var url=\"upload\";window.location.href=url}</script></body></html>";
     //html = html + "<!DOCTYPE html><html><head><meta name=\"format-detection\" content=\"telephone=no\" /><meta http-equiv=\"Content-Type\"content=\"text/html; charset=utf-8\"/><meta http-equiv=\"X-UA-Compatible\"content=\"IE=edge,Chrome=1\"/><meta http-equiv=\"pragma\"content=\"no-cache\"><!--HTTP 1.1--><meta http-equiv=\"cache-control\"content=\"no-cache\"><!--HTTP 1.0--><meta http-equiv=\"expires\"content=\"0\"><!--Prevent caching at the proxy server--><meta name=\"viewport\"content=\"width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no\"><title>基本信息</title></head><body><div><table><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">版本号</span></td><td style=\"font-size:14px;\"><span id=\"spversion\"></span></td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">系统时间</span></td><td style=\"font-size:14px;\"><span id=\"spCurrent\"></span></td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">修改时间</span></td><td style=\"font-size:14px;\"><input type=\"text\"value=\"2018-12-20 00:00:00\"id=\"txtsysdate\"/></td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">循环模式</span></td><td style=\"font-size:14px;\"><input type=\"radio\"value=\"repeat\"name=\"showtype\"id=\"rdRpt\"/>循环模式<input type=\"radio\"value=\"fix\"name=\"showtype\"id=\"rdFix\"/>固定模式</td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">是否测试</span></td><td style=\"font-size:14px;\"><input value=\"production\"type=\"radio\"name=\"testMode\"id=\"rdPrd\"/>否<input value=\"test\"type=\"radio\"name=\"testMode\"id=\"rdTest\"/>是</td></tr><tr style=\"height:50px;\"><td colspan=\"2\"><input style=\"background:green; color:white; width:80px; height:30px; margin-right:2px;\"type=\"button\"value=\"联网设置\"id=\"btnwifi\"onclick=\"wifi();\"/><input style=\"background:green; color:white; width:80px; height:30px;margin-right:2px;\"type=\"submit\"value=\"保存\"id=\"submit\"onclick=\"submit();\"/><input style=\"background:green; color:white; width:80px; height:30px;margin-right:2px;\"type=\"button\"value=\"恢复出厂\"id=\"btnstop\"onclick=\"init();\"/><input style=\"background:green; color:white; width:80px; height:30px;\"type=\"button\"value=\"重启\"id=\"btnReset\"onclick=\"reset();\"/></td></tr></table><hr/></div><script>var now=new Date();var year=now.getFullYear();var month=now.getMonth();var date=now.getDate();var day=now.getDay();var hour=now.getHours();var minu=now.getMinutes();var sec=now.getSeconds();month=month+1;if(month<10)month=\"0\"+month;if(date<10)date=\"0\"+date;if(hour<10)hour=\"0\"+hour;if(minu<10)minu=\"0\"+minu;if(sec<10)sec=\"0\"+sec;var time=\"\";time=year+\"-\"+month+\"-\"+date+\" \"+hour+\":\"+minu+\":\"+sec;document.getElementById(\"txtsysdate\").value=time;function submit(){var selectshowtype=document.getElementsByName('showtype');var showtypevalue=\"\";for(var i=0;i<selectshowtype.length;i++){if(selectshowtype[i].checked){showtypevalue=selectshowtype[i].value;break}}var selecttestmode=document.getElementsByName('testMode');var testmodevalue=\"\";for(var i=0;i<selecttestmode.length;i++){if(selecttestmode[i].checked){testmodevalue=selecttestmode[i].value;break}}var str=document.getElementById('txtsysdate').value;str=str.replace(/-/g,\"/\");var date=new Date(str);var unixDate=date.getTime()/1000|0;console.log(unixDate);alert('保存成功');var url=\"pwmopr?showtype=\"+showtypevalue+\"&testmode=\"+testmodevalue+\"&sysdate=\"+unixDate+\"&conmode=local\";window.location.href=url}function init(){alert('已恢复出厂设置!');var url=\"init\";window.location.href=url}function wifi(){var url=\"wifi\";window.location.href=url}function reset(){var url=\"reset\";alert(\"已重启,请关闭当前页面\");window.location.href=url}function upload(){var url=\"upload\";window.location.href=url}</script></body></html>";
-    html = html + "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\"content=\"text/html; charset=utf-8\"/><meta http-equiv=\"X-UA-Compatible\"content=\"IE=edge,Chrome=1\"/><meta http-equiv=\"pragma\"content=\"no-cache\"><!--HTTP 1.1--><meta http-equiv=\"cache-control\"content=\"no-cache\"><!--HTTP 1.0--><meta http-equiv=\"expires\"content=\"0\"><!--Prevent caching at the proxy server--><meta name=\"viewport\"content=\"width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no\"><title>基本信息</title></head><body><div><table><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">版本号</span></td><td style=\"font-size:14px;\"><span id=\"spversion\"></span></td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">系统时间</span></td><td style=\"font-size:14px;\"><span id=\"spCurrent\"></span></td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">修改时间</span></td><td style=\"font-size:14px;\"><input type=\"text\"value=\"2018-12-20 00:00:00\"id=\"txtsysdate\"/></td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">循环模式</span></td><td style=\"font-size:14px;\"><input type=\"radio\"value=\"repeat\"name=\"showtype\"id=\"rdRpt\"/>循环模式<input type=\"radio\"value=\"fix\"name=\"showtype\"id=\"rdFix\"/>固定模式</td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">是否测试</span></td><td style=\"font-size:14px;\"><input value=\"production\"type=\"radio\"name=\"testMode\"id=\"rdPrd\"/>否<input value=\"test\"type=\"radio\"name=\"testMode\"id=\"rdTest\"/>是</td></tr><tr style=\"height:50px;\"><td colspan=\"2\"><input style=\"background:green; color:white; width:80px; height:30px; margin-right:2px;\"type=\"button\"value=\"联网设置\"id=\"btnwifi\"onclick=\"wifi();\"/><input style=\"background:green; color:white; width:80px; height:30px;margin-right:2px;\"type=\"submit\"value=\"保存\"id=\"submit\"onclick=\"submit();\"/><input style=\"background:green; color:white; width:80px; height:30px;margin-right:2px;\"type=\"button\"value=\"恢复出厂\"id=\"btnstop\"onclick=\"init();\"/><input style=\"background:green; color:white; width:80px; height:30px;\"type=\"button\"value=\"重启\"id=\"btnReset\"onclick=\"reset();\"/><input style=\"background:green; color:white; width:80px; height:30px;\"type=\"button\"value=\"二维码\"id=\"btnQrcode\"onclick=\"qrcode();\"/></td></tr></table><hr/></div><script>var now=new Date();var year=now.getFullYear();var month=now.getMonth();var date=now.getDate();var day=now.getDay();var hour=now.getHours();var minu=now.getMinutes();var sec=now.getSeconds();month=month+1;if(month<10)month=\"0\"+month;if(date<10)date=\"0\"+date;if(hour<10)hour=\"0\"+hour;if(minu<10)minu=\"0\"+minu;if(sec<10)sec=\"0\"+sec;var time=\"\";time=year+\"-\"+month+\"-\"+date+\" \"+hour+\":\"+minu+\":\"+sec;document.getElementById(\"txtsysdate\").value=time;function submit(){var selectshowtype=document.getElementsByName('showtype');var showtypevalue=\"\";for(var i=0;i<selectshowtype.length;i++){if(selectshowtype[i].checked){showtypevalue=selectshowtype[i].value;break}}var selecttestmode=document.getElementsByName('testMode');var testmodevalue=\"\";for(var i=0;i<selecttestmode.length;i++){if(selecttestmode[i].checked){testmodevalue=selecttestmode[i].value;break}}var str=document.getElementById('txtsysdate').value;str=str.replace(/-/g,\"/\");var date=new Date(str);var unixDate=date.getTime()/1000|0;console.log(unixDate);alert('保存成功');var url=\"pwmopr?showtype=\"+showtypevalue+\"&testmode=\"+testmodevalue+\"&sysdate=\"+unixDate+\"&conmode=local\";window.location.href=url}function init(){alert('已恢复出厂设置!');var url=\"init\";window.location.href=url}function wifi(){var url=\"wifi\";window.location.href=url}function reset(){var url=\"reset\";alert(\"已重启,请关闭当前页面\");window.location.href=url}function upload(){var url=\"upload\";window.location.href=url}function qrcode(){var url=\"mid\";window.location.href=url}</script></body></html>";
-
+    html = html + "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\"content=\"text/html; charset=utf-8\"/><meta http-equiv=\"X-UA-Compatible\"content=\"IE=edge,Chrome=1\"/><meta http-equiv=\"pragma\"content=\"no-cache\"><!--HTTP 1.1--><meta http-equiv=\"cache-control\"content=\"no-cache\"><!--HTTP 1.0--><meta http-equiv=\"expires\"content=\"0\"><!--Prevent caching at the proxy server--><meta name=\"viewport\"content=\"width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no\"><title>基本信息</title></head><body><div><table><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">版本号</span></td><td style=\"font-size:14px;\"><span id=\"spversion\"></span></td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">系统时间</span></td><td style=\"font-size:14px;\"><span id=\"spCurrent\"></span></td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">修改时间</span></td><td style=\"font-size:14px;\"><input type=\"text\"value=\"2018-12-20 00:00:00\"id=\"txtsysdate\"/></td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">循环模式</span></td><td style=\"font-size:14px;\"><input type=\"radio\"value=\"repeat\"name=\"showtype\"id=\"rdRpt\"/>循环模式<input type=\"radio\"value=\"fix\"name=\"showtype\"id=\"rdFix\"/>固定模式</td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">是否测试</span></td><td style=\"font-size:14px;\"><input value=\"production\"type=\"radio\"name=\"testMode\"id=\"rdPrd\"/>否<input value=\"test\"type=\"radio\"name=\"testMode\"id=\"rdTest\"/>是</td></tr><tr style=\"height:50px;\"><td colspan=\"2\"><input style=\"background:green; color:white; width:80px; height:30px; margin-right:2px;\"type=\"button\"value=\"联网设置\"id=\"btnwifi\"onclick=\"wifi();\"/><input style=\"background:green; color:white; width:80px; height:30px;margin-right:2px;\"type=\"submit\"value=\"保存\"id=\"submit\"onclick=\"submit();\"/><input style=\"background:green; color:white; width:80px; height:30px;margin-right:2px;\"type=\"button\"value=\"恢复出厂\"id=\"btnstop\"onclick=\"init();\"/><input style=\"background:green; color:white; width:80px; height:30px;\"type=\"button\"value=\"重启\"id=\"btnReset\"onclick=\"reset();\"/><input style=\"background:green; color:white; width:80px; height:30px;\"type=\"button\"value=\"二维码\"id=\"btnQrcode\"onclick=\"qrcode();\"/></td></tr></table><hr/></div><script>var now=new Date();var year=now.getFullYear();var month=now.getMonth();var date=now.getDate();var day=now.getDay();var hour=now.getHours();var minu=now.getMinutes();var sec=now.getSeconds();month=month+1;if(month<10)month=\"0\"+month;if(date<10)date=\"0\"+date;if(hour<10)hour=\"0\"+hour;if(minu<10)minu=\"0\"+minu;if(sec<10)sec=\"0\"+sec;var time=\"\";time=year+\"-\"+month+\"-\"+date+\" \"+hour+\":\"+minu+\":\"+sec;document.getElementById(\"txtsysdate\").value=time;function submit(){var selectshowtype=document.getElementsByName('showtype');var showtypevalue=\"\";for(var i=0;i<selectshowtype.length;i++){if(selectshowtype[i].checked){showtypevalue=selectshowtype[i].value;break}}var selecttestmode=document.getElementsByName('testMode');var testmodevalue=\"\";for(var i=0;i<selecttestmode.length;i++){if(selecttestmode[i].checked){testmodevalue=selecttestmode[i].value;break}}var str=document.getElementById('txtsysdate').value;str=str.replace(/-/g,\"/\");var date=new Date(str);var unixDate=date.getTime()/1000|0;console.log(unixDate);alert('保存成功');var url=\"pwmopr?showtype=\"+showtypevalue+\"&testmode=\"+testmodevalue+\"&sysdate=\"+unixDate+\"&conmode=local\";window.location.href=url}function init(){alert('已恢复出厂设置!');var url=\"init\";window.location.href=url}function wifi(){var url=\"wifi\";window.location.href=url}function reset(){var url=\"reset\";alert(\"已重启,请关闭当前页面\");window.location.href=url}function upload(){var url=\"upload\";window.location.href=url}function qrcode(){var url=\"mid\";window.location.href=url}function update(){var url=\"onlineupdate\";window.location.href=url}</script></body></html>";
 
     String tpl_currentdate = "<span id=\"spCurrent\"></span>";
     String change_currentdate = "<span id=\"spCurrent\">";
@@ -903,7 +1123,7 @@ void setup()
         String tpl_hidval = "<span id=\"lightvalues\"style=\"display:none;\"></span>";
         String change_hidval = "<span id=\"lightvalues\"style=\"display:none;\">";
         change_hidval += filestr;
-        
+
         change_hidval += "</span>";
         rawhtml.replace(tpl_hidval, change_hidval);
         html = html + rawhtml;
@@ -956,7 +1176,6 @@ void setup()
       sysdate = request->getParam("sysdate")->value();
       //conmode = request->getParam("conmode")->value();
 
-
       Serial.println("the show type is: " + showtype + " and the testmode is: " + testmode + " and sysdate is: " + sysdate);
 
       PWM_INFO_SHOWTYPE = showtype;
@@ -1000,7 +1219,7 @@ void setup()
   });
 
   // change mid & qrcode
-  server.on("/mid",HTTP_GET, [](AsyncWebServerRequest *request) {
+  server.on("/mid", HTTP_GET, [](AsyncWebServerRequest *request) {
     String rawhtml = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>QRCode</title></head><body><div><table><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">设备名:</span></td><td style=\"font-size:14px;\"><input type=\"text\"id=\"txtmid\"onchange=\"midchange()\"/></td></tr><tr><td colspan=\"2\"><input style=\"background:green; color:white; width:80px; height:30px; margin-right:2px;\"type=\"submit\"value=\"修改\"id=\"btnModify\"onclick=\"submit()\"/><input style=\"background:green; color:white; width:80px; height:30px;\"type=\"button\"value=\"返回\"id=\"btnBack\"onclick=\"back()\"/><span style=\"color:red;\">修改完设备名后wifi热点名也会随之改变,需要重新选择wifi热点并刷新页面</span></td></tr></table><hr/><div style=\"font-size:14px;\"id=\"divqrcode\"><span>扫描下方二维码进行绑定,如改名需要重新绑定</span><span style=\"color:red;\">需要联网</span><div id=\"code\"></div></div></div><script src='https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js'></script><script src='https://cdn.bootcss.com/jquery.qrcode/1.0/jquery.qrcode.min.js'></script><script>function toUtf8(str){var out,i,len,c;out=\"\";len=str.length;for(i=0;i<len;i++){c=str.charCodeAt(i);if((c>=0x0001)&&(c<=0x007F)){out+=str.charAt(i)}else if(c>0x07FF){out+=String.fromCharCode(0xE0|((c>>12)&0x0F));out+=String.fromCharCode(0x80|((c>>6)&0x3F));out+=String.fromCharCode(0x80|((c>>0)&0x3F))}else{out+=String.fromCharCode(0xC0|((c>>6)&0x1F));out+=String.fromCharCode(0x80|((c>>0)&0x3F))}}return out}function submit(){var mid=document.getElementById('txtmid').value;var url=\"cmid?mid=\"+mid;window.location.href=url}function midchange(){var mid=document.getElementById('txtmid').value;var qrcode=toUtf8(`{mid:${mid},mac:00000000}`);$('#code').empty();$('#code').qrcode(qrcode)}$(\"#divqrcode\").show();var mid=document.getElementById('txtmid').value;var str=toUtf8(`{mid:${mid},mac:00000000}`);$('#code').qrcode(str);$(\"#offline\").hide();</script></body></html>";
 
     if (!SPIFFS.begin())
@@ -1009,7 +1228,8 @@ void setup()
       return;
     }
 
-    if (SPIFFS.exists("/mid.ini")) {
+    if (SPIFFS.exists("/mid.ini"))
+    {
       String filestr;
       filestr = getFileString(SPIFFS, "/mid.ini");
       cJSON *root = NULL;
@@ -1030,7 +1250,6 @@ void setup()
     }
     SPIFFS.end();
     request->send(200, "text/html", rawhtml);
-
   });
 
   // change mid handle
@@ -1124,8 +1343,6 @@ void setup()
     request->send(200, "text/html", rawhtml);
   });
 
-
-
   // wifi setting
   server.on("/savewifi", HTTP_GET, [](AsyncWebServerRequest *request) {
     if (request->hasParam("ssid"))
@@ -1183,6 +1400,10 @@ void setup()
     ESP.restart();
   },
             onFileUpload);
+
+  server.on("/onlineupdate", HTTP_GET, [](AsyncWebServerRequest *request) {
+    execOTA();
+  });
 
   server.onNotFound(notFound);
   server.begin();
@@ -1257,10 +1478,11 @@ void loop()
 
       if (PWM_INFO_TESTMODE == "production")
       {
-        Serial.printf("product mode .... current hour is: %d \n",currenthour);
+        Serial.printf("product mode .... current hour is: %d \n", currenthour);
         if (currenthour == 0)
         {
-          if(currentmin == 0) {
+          if (currentmin == 0)
+          {
             led1.set(P1[0]);
             led2.set(P2[0]);
             led3.set(P3[0]);
@@ -1269,7 +1491,8 @@ void loop()
             led6.set(P6[0]);
             led7.set(P7[0]);
           }
-          else if(currentmin == 10) {
+          else if (currentmin == 10)
+          {
             led1.set(P1[1]);
             led2.set(P2[1]);
             led3.set(P3[1]);
@@ -1277,7 +1500,9 @@ void loop()
             led5.set(P5[1]);
             led6.set(P6[1]);
             led7.set(P7[1]);
-          } else if(currentmin == 20) {
+          }
+          else if (currentmin == 20)
+          {
             led1.set(P1[2]);
             led2.set(P2[2]);
             led3.set(P3[2]);
@@ -1285,7 +1510,9 @@ void loop()
             led5.set(P5[2]);
             led6.set(P6[2]);
             led7.set(P7[2]);
-          } else if(currentmin == 30) {
+          }
+          else if (currentmin == 30)
+          {
             led1.set(P1[3]);
             led2.set(P2[3]);
             led3.set(P3[3]);
@@ -1293,7 +1520,9 @@ void loop()
             led5.set(P5[3]);
             led6.set(P6[3]);
             led7.set(P7[3]);
-          } else if(currentmin == 40) {
+          }
+          else if (currentmin == 40)
+          {
             led1.set(P1[4]);
             led2.set(P2[4]);
             led3.set(P3[4]);
@@ -1301,7 +1530,9 @@ void loop()
             led5.set(P5[4]);
             led6.set(P6[4]);
             led7.set(P7[4]);
-          } else if(currentmin == 50) {
+          }
+          else if (currentmin == 50)
+          {
             led1.set(P1[5]);
             led2.set(P2[5]);
             led3.set(P3[5]);
@@ -1313,7 +1544,8 @@ void loop()
         }
         else if (currenthour == 1)
         {
-          if(currentmin == 0) {
+          if (currentmin == 0)
+          {
             led1.set(P1[6]);
             led2.set(P2[6]);
             led3.set(P3[6]);
@@ -1322,7 +1554,8 @@ void loop()
             led6.set(P6[6]);
             led7.set(P7[6]);
           }
-          else if(currentmin == 10) {
+          else if (currentmin == 10)
+          {
             led1.set(P1[7]);
             led2.set(P2[7]);
             led3.set(P3[7]);
@@ -1330,7 +1563,9 @@ void loop()
             led5.set(P5[7]);
             led6.set(P6[7]);
             led7.set(P7[7]);
-          } else if(currentmin == 20) {
+          }
+          else if (currentmin == 20)
+          {
             led1.set(P1[8]);
             led2.set(P2[8]);
             led3.set(P3[8]);
@@ -1338,7 +1573,9 @@ void loop()
             led5.set(P5[8]);
             led6.set(P6[8]);
             led7.set(P7[8]);
-          } else if(currentmin == 30) {
+          }
+          else if (currentmin == 30)
+          {
             led1.set(P1[9]);
             led2.set(P2[9]);
             led3.set(P3[9]);
@@ -1346,7 +1583,9 @@ void loop()
             led5.set(P5[9]);
             led6.set(P6[9]);
             led7.set(P7[9]);
-          } else if(currentmin == 40) {
+          }
+          else if (currentmin == 40)
+          {
             led1.set(P1[10]);
             led2.set(P2[10]);
             led3.set(P3[10]);
@@ -1354,7 +1593,9 @@ void loop()
             led5.set(P5[10]);
             led6.set(P6[10]);
             led7.set(P7[10]);
-          } else if(currentmin == 50) {
+          }
+          else if (currentmin == 50)
+          {
             led1.set(P1[11]);
             led2.set(P2[11]);
             led3.set(P3[11]);
@@ -1366,7 +1607,8 @@ void loop()
         }
         else if (currenthour == 2)
         {
-          if(currentmin == 0) {
+          if (currentmin == 0)
+          {
             led1.set(P1[12]);
             led2.set(P2[12]);
             led3.set(P3[12]);
@@ -1375,7 +1617,8 @@ void loop()
             led6.set(P6[12]);
             led7.set(P7[12]);
           }
-          else if(currentmin == 10) {
+          else if (currentmin == 10)
+          {
             led1.set(P1[13]);
             led2.set(P2[13]);
             led3.set(P3[13]);
@@ -1383,7 +1626,9 @@ void loop()
             led5.set(P5[13]);
             led6.set(P6[13]);
             led7.set(P7[13]);
-          } else if(currentmin == 20) {
+          }
+          else if (currentmin == 20)
+          {
             led1.set(P1[14]);
             led2.set(P2[14]);
             led3.set(P3[14]);
@@ -1391,7 +1636,9 @@ void loop()
             led5.set(P5[14]);
             led6.set(P6[14]);
             led7.set(P7[14]);
-          } else if(currentmin == 30) {
+          }
+          else if (currentmin == 30)
+          {
             led1.set(P1[15]);
             led2.set(P2[15]);
             led3.set(P3[15]);
@@ -1399,7 +1646,9 @@ void loop()
             led5.set(P5[15]);
             led6.set(P6[15]);
             led7.set(P7[15]);
-          } else if(currentmin == 40) {
+          }
+          else if (currentmin == 40)
+          {
             led1.set(P1[16]);
             led2.set(P2[16]);
             led3.set(P3[16]);
@@ -1407,7 +1656,9 @@ void loop()
             led5.set(P5[16]);
             led6.set(P6[16]);
             led7.set(P7[16]);
-          } else if(currentmin == 50) {
+          }
+          else if (currentmin == 50)
+          {
             led1.set(P1[17]);
             led2.set(P2[17]);
             led3.set(P3[17]);
@@ -1419,7 +1670,8 @@ void loop()
         }
         else if (currenthour == 3)
         {
-          if(currentmin == 0) {
+          if (currentmin == 0)
+          {
             led1.set(P1[18]);
             led2.set(P2[18]);
             led3.set(P3[18]);
@@ -1428,7 +1680,8 @@ void loop()
             led6.set(P6[18]);
             led7.set(P7[18]);
           }
-          else if(currentmin == 10) {
+          else if (currentmin == 10)
+          {
             led1.set(P1[19]);
             led2.set(P2[19]);
             led3.set(P3[19]);
@@ -1436,7 +1689,9 @@ void loop()
             led5.set(P5[19]);
             led6.set(P6[19]);
             led7.set(P7[19]);
-          } else if(currentmin == 20) {
+          }
+          else if (currentmin == 20)
+          {
             led1.set(P1[20]);
             led2.set(P2[20]);
             led3.set(P3[20]);
@@ -1444,7 +1699,9 @@ void loop()
             led5.set(P5[20]);
             led6.set(P6[20]);
             led7.set(P7[20]);
-          } else if(currentmin == 30) {
+          }
+          else if (currentmin == 30)
+          {
             led1.set(P1[21]);
             led2.set(P2[21]);
             led3.set(P3[21]);
@@ -1452,7 +1709,9 @@ void loop()
             led5.set(P5[21]);
             led6.set(P6[21]);
             led7.set(P7[21]);
-          } else if(currentmin == 40) {
+          }
+          else if (currentmin == 40)
+          {
             led1.set(P1[22]);
             led2.set(P2[22]);
             led3.set(P3[22]);
@@ -1460,7 +1719,9 @@ void loop()
             led5.set(P5[22]);
             led6.set(P6[22]);
             led7.set(P7[22]);
-          } else if(currentmin == 50) {
+          }
+          else if (currentmin == 50)
+          {
             led1.set(P1[23]);
             led2.set(P2[23]);
             led3.set(P3[23]);
@@ -1472,7 +1733,8 @@ void loop()
         }
         else if (currenthour == 4)
         {
-          if(currentmin == 0) {
+          if (currentmin == 0)
+          {
             led1.set(P1[24]);
             led2.set(P2[24]);
             led3.set(P3[24]);
@@ -1481,7 +1743,8 @@ void loop()
             led6.set(P6[24]);
             led7.set(P7[24]);
           }
-          else if(currentmin == 10) {
+          else if (currentmin == 10)
+          {
             led1.set(P1[25]);
             led2.set(P2[25]);
             led3.set(P3[25]);
@@ -1489,7 +1752,9 @@ void loop()
             led5.set(P5[25]);
             led6.set(P6[25]);
             led7.set(P7[25]);
-          } else if(currentmin == 20) {
+          }
+          else if (currentmin == 20)
+          {
             led1.set(P1[26]);
             led2.set(P2[26]);
             led3.set(P3[26]);
@@ -1497,7 +1762,9 @@ void loop()
             led5.set(P5[26]);
             led6.set(P6[26]);
             led7.set(P7[26]);
-          } else if(currentmin == 30) {
+          }
+          else if (currentmin == 30)
+          {
             led1.set(P1[27]);
             led2.set(P2[27]);
             led3.set(P3[27]);
@@ -1505,7 +1772,9 @@ void loop()
             led5.set(P5[27]);
             led6.set(P6[27]);
             led7.set(P7[27]);
-          } else if(currentmin == 40) {
+          }
+          else if (currentmin == 40)
+          {
             led1.set(P1[28]);
             led2.set(P2[28]);
             led3.set(P3[28]);
@@ -1513,7 +1782,9 @@ void loop()
             led5.set(P5[28]);
             led6.set(P6[28]);
             led7.set(P7[28]);
-          } else if(currentmin == 50) {
+          }
+          else if (currentmin == 50)
+          {
             led1.set(P1[29]);
             led2.set(P2[29]);
             led3.set(P3[29]);
@@ -1525,7 +1796,8 @@ void loop()
         }
         else if (currenthour == 5)
         {
-          if(currentmin == 0) {
+          if (currentmin == 0)
+          {
             led1.set(P1[30]);
             led2.set(P2[30]);
             led3.set(P3[30]);
@@ -1534,7 +1806,8 @@ void loop()
             led6.set(P6[30]);
             led7.set(P7[30]);
           }
-          else if(currentmin == 10) {
+          else if (currentmin == 10)
+          {
             led1.set(P1[31]);
             led2.set(P2[31]);
             led3.set(P3[31]);
@@ -1542,7 +1815,9 @@ void loop()
             led5.set(P5[31]);
             led6.set(P6[31]);
             led7.set(P7[31]);
-          } else if(currentmin == 20) {
+          }
+          else if (currentmin == 20)
+          {
             led1.set(P1[32]);
             led2.set(P2[32]);
             led3.set(P3[32]);
@@ -1550,7 +1825,9 @@ void loop()
             led5.set(P5[32]);
             led6.set(P6[32]);
             led7.set(P7[32]);
-          } else if(currentmin == 30) {
+          }
+          else if (currentmin == 30)
+          {
             led1.set(P1[33]);
             led2.set(P2[33]);
             led3.set(P3[33]);
@@ -1558,7 +1835,9 @@ void loop()
             led5.set(P5[33]);
             led6.set(P6[33]);
             led7.set(P7[33]);
-          } else if(currentmin == 40) {
+          }
+          else if (currentmin == 40)
+          {
             led1.set(P1[34]);
             led2.set(P2[34]);
             led3.set(P3[34]);
@@ -1566,7 +1845,9 @@ void loop()
             led5.set(P5[34]);
             led6.set(P6[34]);
             led7.set(P7[34]);
-          } else if(currentmin == 50) {
+          }
+          else if (currentmin == 50)
+          {
             led1.set(P1[35]);
             led2.set(P2[35]);
             led3.set(P3[35]);
@@ -1578,7 +1859,8 @@ void loop()
         }
         else if (currenthour == 6)
         {
-          if(currentmin == 0) {
+          if (currentmin == 0)
+          {
             led1.set(P1[36]);
             led2.set(P2[36]);
             led3.set(P3[36]);
@@ -1587,7 +1869,8 @@ void loop()
             led6.set(P6[36]);
             led7.set(P7[36]);
           }
-          else if(currentmin == 10) {
+          else if (currentmin == 10)
+          {
             led1.set(P1[37]);
             led2.set(P2[37]);
             led3.set(P3[37]);
@@ -1595,7 +1878,9 @@ void loop()
             led5.set(P5[37]);
             led6.set(P6[37]);
             led7.set(P7[37]);
-          } else if(currentmin == 20) {
+          }
+          else if (currentmin == 20)
+          {
             led1.set(P1[38]);
             led2.set(P2[38]);
             led3.set(P3[38]);
@@ -1603,7 +1888,9 @@ void loop()
             led5.set(P5[38]);
             led6.set(P6[38]);
             led7.set(P7[38]);
-          } else if(currentmin == 30) {
+          }
+          else if (currentmin == 30)
+          {
             led1.set(P1[39]);
             led2.set(P2[39]);
             led3.set(P3[39]);
@@ -1611,7 +1898,9 @@ void loop()
             led5.set(P5[39]);
             led6.set(P6[39]);
             led7.set(P7[39]);
-          } else if(currentmin == 40) {
+          }
+          else if (currentmin == 40)
+          {
             led1.set(P1[40]);
             led2.set(P2[40]);
             led3.set(P3[40]);
@@ -1619,7 +1908,9 @@ void loop()
             led5.set(P5[40]);
             led6.set(P6[40]);
             led7.set(P7[40]);
-          } else if(currentmin == 50) {
+          }
+          else if (currentmin == 50)
+          {
             led1.set(P1[41]);
             led2.set(P2[41]);
             led3.set(P3[41]);
@@ -1631,7 +1922,8 @@ void loop()
         }
         else if (currenthour == 7)
         {
-          if(currentmin == 0) {
+          if (currentmin == 0)
+          {
             led1.set(P1[42]);
             led2.set(P2[42]);
             led3.set(P3[42]);
@@ -1640,7 +1932,8 @@ void loop()
             led6.set(P6[42]);
             led7.set(P7[42]);
           }
-          else if(currentmin == 10) {
+          else if (currentmin == 10)
+          {
             led1.set(P1[43]);
             led2.set(P2[43]);
             led3.set(P3[43]);
@@ -1648,7 +1941,9 @@ void loop()
             led5.set(P5[43]);
             led6.set(P6[43]);
             led7.set(P7[43]);
-          } else if(currentmin == 20) {
+          }
+          else if (currentmin == 20)
+          {
             led1.set(P1[44]);
             led2.set(P2[44]);
             led3.set(P3[44]);
@@ -1656,7 +1951,9 @@ void loop()
             led5.set(P5[44]);
             led6.set(P6[44]);
             led7.set(P7[44]);
-          } else if(currentmin == 30) {
+          }
+          else if (currentmin == 30)
+          {
             led1.set(P1[45]);
             led2.set(P2[45]);
             led3.set(P3[45]);
@@ -1664,7 +1961,9 @@ void loop()
             led5.set(P5[45]);
             led6.set(P6[45]);
             led7.set(P7[45]);
-          } else if(currentmin == 40) {
+          }
+          else if (currentmin == 40)
+          {
             led1.set(P1[46]);
             led2.set(P2[46]);
             led3.set(P3[46]);
@@ -1672,7 +1971,9 @@ void loop()
             led5.set(P5[46]);
             led6.set(P6[46]);
             led7.set(P7[46]);
-          } else if(currentmin == 50) {
+          }
+          else if (currentmin == 50)
+          {
             led1.set(P1[47]);
             led2.set(P2[47]);
             led3.set(P3[47]);
@@ -1684,7 +1985,8 @@ void loop()
         }
         else if (currenthour == 8)
         {
-          if(currentmin == 0) {
+          if (currentmin == 0)
+          {
             led1.set(P1[48]);
             led2.set(P2[48]);
             led3.set(P3[48]);
@@ -1693,7 +1995,8 @@ void loop()
             led6.set(P6[48]);
             led7.set(P7[48]);
           }
-          else if(currentmin == 10) {
+          else if (currentmin == 10)
+          {
             led1.set(P1[49]);
             led2.set(P2[49]);
             led3.set(P3[49]);
@@ -1701,7 +2004,9 @@ void loop()
             led5.set(P5[49]);
             led6.set(P6[49]);
             led7.set(P7[49]);
-          } else if(currentmin == 20) {
+          }
+          else if (currentmin == 20)
+          {
             led1.set(P1[50]);
             led2.set(P2[50]);
             led3.set(P3[50]);
@@ -1709,7 +2014,9 @@ void loop()
             led5.set(P5[50]);
             led6.set(P6[50]);
             led7.set(P7[50]);
-          } else if(currentmin == 30) {
+          }
+          else if (currentmin == 30)
+          {
             led1.set(P1[51]);
             led2.set(P2[51]);
             led3.set(P3[51]);
@@ -1717,7 +2024,9 @@ void loop()
             led5.set(P5[51]);
             led6.set(P6[51]);
             led7.set(P7[51]);
-          } else if(currentmin == 40) {
+          }
+          else if (currentmin == 40)
+          {
             led1.set(P1[52]);
             led2.set(P2[52]);
             led3.set(P3[52]);
@@ -1725,7 +2034,9 @@ void loop()
             led5.set(P5[52]);
             led6.set(P6[52]);
             led7.set(P7[52]);
-          } else if(currentmin == 50) {
+          }
+          else if (currentmin == 50)
+          {
             led1.set(P1[53]);
             led2.set(P2[53]);
             led3.set(P3[53]);
@@ -1737,7 +2048,8 @@ void loop()
         }
         else if (currenthour == 9)
         {
-          if(currentmin == 0) {
+          if (currentmin == 0)
+          {
             led1.set(P1[54]);
             led2.set(P2[54]);
             led3.set(P3[54]);
@@ -1746,7 +2058,8 @@ void loop()
             led6.set(P6[54]);
             led7.set(P7[54]);
           }
-          else if(currentmin == 10) {
+          else if (currentmin == 10)
+          {
             led1.set(P1[55]);
             led2.set(P2[55]);
             led3.set(P3[55]);
@@ -1754,7 +2067,9 @@ void loop()
             led5.set(P5[55]);
             led6.set(P6[55]);
             led7.set(P7[55]);
-          } else if(currentmin == 20) {
+          }
+          else if (currentmin == 20)
+          {
             led1.set(P1[56]);
             led2.set(P2[56]);
             led3.set(P3[56]);
@@ -1762,7 +2077,9 @@ void loop()
             led5.set(P5[56]);
             led6.set(P6[56]);
             led7.set(P7[56]);
-          } else if(currentmin == 30) {
+          }
+          else if (currentmin == 30)
+          {
             led1.set(P1[57]);
             led2.set(P2[57]);
             led3.set(P3[57]);
@@ -1770,7 +2087,9 @@ void loop()
             led5.set(P5[57]);
             led6.set(P6[57]);
             led7.set(P7[57]);
-          } else if(currentmin == 40) {
+          }
+          else if (currentmin == 40)
+          {
             led1.set(P1[58]);
             led2.set(P2[58]);
             led3.set(P3[58]);
@@ -1778,7 +2097,9 @@ void loop()
             led5.set(P5[58]);
             led6.set(P6[58]);
             led7.set(P7[58]);
-          } else if(currentmin == 50) {
+          }
+          else if (currentmin == 50)
+          {
             led1.set(P1[59]);
             led2.set(P2[59]);
             led3.set(P3[59]);
@@ -1790,7 +2111,8 @@ void loop()
         }
         else if (currenthour == 10)
         {
-          if(currentmin == 0) {
+          if (currentmin == 0)
+          {
             led1.set(P1[60]);
             led2.set(P2[60]);
             led3.set(P3[60]);
@@ -1799,7 +2121,8 @@ void loop()
             led6.set(P6[60]);
             led7.set(P7[60]);
           }
-          else if(currentmin == 10) {
+          else if (currentmin == 10)
+          {
             led1.set(P1[61]);
             led2.set(P2[61]);
             led3.set(P3[61]);
@@ -1807,7 +2130,9 @@ void loop()
             led5.set(P5[61]);
             led6.set(P6[61]);
             led7.set(P7[61]);
-          } else if(currentmin == 20) {
+          }
+          else if (currentmin == 20)
+          {
             led1.set(P1[62]);
             led2.set(P2[62]);
             led3.set(P3[62]);
@@ -1815,7 +2140,9 @@ void loop()
             led5.set(P5[62]);
             led6.set(P6[62]);
             led7.set(P7[62]);
-          } else if(currentmin == 30) {
+          }
+          else if (currentmin == 30)
+          {
             led1.set(P1[63]);
             led2.set(P2[63]);
             led3.set(P3[63]);
@@ -1823,7 +2150,9 @@ void loop()
             led5.set(P5[63]);
             led6.set(P6[63]);
             led7.set(P7[63]);
-          } else if(currentmin == 40) {
+          }
+          else if (currentmin == 40)
+          {
             led1.set(P1[64]);
             led2.set(P2[64]);
             led3.set(P3[64]);
@@ -1831,7 +2160,9 @@ void loop()
             led5.set(P5[64]);
             led6.set(P6[64]);
             led7.set(P7[64]);
-          } else if(currentmin == 50) {
+          }
+          else if (currentmin == 50)
+          {
             led1.set(P1[65]);
             led2.set(P2[65]);
             led3.set(P3[65]);
@@ -1843,7 +2174,8 @@ void loop()
         }
         else if (currenthour == 11)
         {
-          if(currentmin == 0) {
+          if (currentmin == 0)
+          {
             led1.set(P1[66]);
             led2.set(P2[66]);
             led3.set(P3[66]);
@@ -1852,7 +2184,8 @@ void loop()
             led6.set(P6[66]);
             led7.set(P7[66]);
           }
-          else if(currentmin == 10) {
+          else if (currentmin == 10)
+          {
             led1.set(P1[67]);
             led2.set(P2[67]);
             led3.set(P3[67]);
@@ -1860,7 +2193,9 @@ void loop()
             led5.set(P5[67]);
             led6.set(P6[67]);
             led7.set(P7[67]);
-          } else if(currentmin == 20) {
+          }
+          else if (currentmin == 20)
+          {
             led1.set(P1[68]);
             led2.set(P2[68]);
             led3.set(P3[68]);
@@ -1868,7 +2203,9 @@ void loop()
             led5.set(P5[68]);
             led6.set(P6[68]);
             led7.set(P7[68]);
-          } else if(currentmin == 30) {
+          }
+          else if (currentmin == 30)
+          {
             led1.set(P1[69]);
             led2.set(P2[69]);
             led3.set(P3[69]);
@@ -1876,7 +2213,9 @@ void loop()
             led5.set(P5[69]);
             led6.set(P6[69]);
             led7.set(P7[69]);
-          } else if(currentmin == 40) {
+          }
+          else if (currentmin == 40)
+          {
             led1.set(P1[70]);
             led2.set(P2[70]);
             led3.set(P3[70]);
@@ -1884,7 +2223,9 @@ void loop()
             led5.set(P5[70]);
             led6.set(P6[70]);
             led7.set(P7[70]);
-          } else if(currentmin == 50) {
+          }
+          else if (currentmin == 50)
+          {
             led1.set(P1[71]);
             led2.set(P2[71]);
             led3.set(P3[71]);
@@ -1896,7 +2237,8 @@ void loop()
         }
         else if (currenthour == 12)
         {
-          if(currentmin == 0) {
+          if (currentmin == 0)
+          {
             led1.set(P1[72]);
             led2.set(P2[72]);
             led3.set(P3[72]);
@@ -1905,7 +2247,8 @@ void loop()
             led6.set(P6[72]);
             led7.set(P7[72]);
           }
-          else if(currentmin == 10) {
+          else if (currentmin == 10)
+          {
             led1.set(P1[73]);
             led2.set(P2[73]);
             led3.set(P3[73]);
@@ -1913,7 +2256,9 @@ void loop()
             led5.set(P5[73]);
             led6.set(P6[73]);
             led7.set(P7[73]);
-          } else if(currentmin == 20) {
+          }
+          else if (currentmin == 20)
+          {
             led1.set(P1[74]);
             led2.set(P2[74]);
             led3.set(P3[74]);
@@ -1921,7 +2266,9 @@ void loop()
             led5.set(P5[74]);
             led6.set(P6[74]);
             led7.set(P7[74]);
-          } else if(currentmin == 30) {
+          }
+          else if (currentmin == 30)
+          {
             led1.set(P1[75]);
             led2.set(P2[75]);
             led3.set(P3[75]);
@@ -1929,7 +2276,9 @@ void loop()
             led5.set(P5[75]);
             led6.set(P6[75]);
             led7.set(P7[75]);
-          } else if(currentmin == 40) {
+          }
+          else if (currentmin == 40)
+          {
             led1.set(P1[76]);
             led2.set(P2[76]);
             led3.set(P3[76]);
@@ -1937,7 +2286,9 @@ void loop()
             led5.set(P5[76]);
             led6.set(P6[76]);
             led7.set(P7[76]);
-          } else if(currentmin == 50) {
+          }
+          else if (currentmin == 50)
+          {
             led1.set(P1[77]);
             led2.set(P2[77]);
             led3.set(P3[77]);
@@ -1949,7 +2300,8 @@ void loop()
         }
         else if (currenthour == 13)
         {
-          if(currentmin == 0) {
+          if (currentmin == 0)
+          {
             led1.set(P1[78]);
             led2.set(P2[78]);
             led3.set(P3[78]);
@@ -1958,7 +2310,8 @@ void loop()
             led6.set(P6[78]);
             led7.set(P7[78]);
           }
-          else if(currentmin == 10) {
+          else if (currentmin == 10)
+          {
             led1.set(P1[79]);
             led2.set(P2[79]);
             led3.set(P3[79]);
@@ -1966,7 +2319,9 @@ void loop()
             led5.set(P5[79]);
             led6.set(P6[79]);
             led7.set(P7[79]);
-          } else if(currentmin == 20) {
+          }
+          else if (currentmin == 20)
+          {
             led1.set(P1[80]);
             led2.set(P2[80]);
             led3.set(P3[80]);
@@ -1974,7 +2329,9 @@ void loop()
             led5.set(P5[80]);
             led6.set(P6[80]);
             led7.set(P7[80]);
-          } else if(currentmin == 30) {
+          }
+          else if (currentmin == 30)
+          {
             led1.set(P1[81]);
             led2.set(P2[81]);
             led3.set(P3[81]);
@@ -1982,7 +2339,9 @@ void loop()
             led5.set(P5[81]);
             led6.set(P6[81]);
             led7.set(P7[81]);
-          } else if(currentmin == 40) {
+          }
+          else if (currentmin == 40)
+          {
             led1.set(P1[82]);
             led2.set(P2[82]);
             led3.set(P3[82]);
@@ -1990,7 +2349,9 @@ void loop()
             led5.set(P5[82]);
             led6.set(P6[82]);
             led7.set(P7[82]);
-          } else if(currentmin == 50) {
+          }
+          else if (currentmin == 50)
+          {
             led1.set(P1[83]);
             led2.set(P2[83]);
             led3.set(P3[83]);
@@ -2002,7 +2363,8 @@ void loop()
         }
         else if (currenthour == 14)
         {
-          if(currentmin == 0) {
+          if (currentmin == 0)
+          {
             led1.set(P1[84]);
             led2.set(P2[84]);
             led3.set(P3[84]);
@@ -2011,7 +2373,8 @@ void loop()
             led6.set(P6[84]);
             led7.set(P7[84]);
           }
-          else if(currentmin == 10) {
+          else if (currentmin == 10)
+          {
             led1.set(P1[85]);
             led2.set(P2[85]);
             led3.set(P3[85]);
@@ -2019,7 +2382,9 @@ void loop()
             led5.set(P5[85]);
             led6.set(P6[85]);
             led7.set(P7[85]);
-          } else if(currentmin == 20) {
+          }
+          else if (currentmin == 20)
+          {
             led1.set(P1[86]);
             led2.set(P2[86]);
             led3.set(P3[86]);
@@ -2027,7 +2392,9 @@ void loop()
             led5.set(P5[86]);
             led6.set(P6[86]);
             led7.set(P7[86]);
-          } else if(currentmin == 30) {
+          }
+          else if (currentmin == 30)
+          {
             led1.set(P1[87]);
             led2.set(P2[87]);
             led3.set(P3[87]);
@@ -2035,7 +2402,9 @@ void loop()
             led5.set(P5[87]);
             led6.set(P6[87]);
             led7.set(P7[87]);
-          } else if(currentmin == 40) {
+          }
+          else if (currentmin == 40)
+          {
             led1.set(P1[88]);
             led2.set(P2[88]);
             led3.set(P3[88]);
@@ -2043,7 +2412,9 @@ void loop()
             led5.set(P5[88]);
             led6.set(P6[88]);
             led7.set(P7[88]);
-          } else if(currentmin == 50) {
+          }
+          else if (currentmin == 50)
+          {
             led1.set(P1[89]);
             led2.set(P2[89]);
             led3.set(P3[89]);
@@ -2055,7 +2426,8 @@ void loop()
         }
         else if (currenthour == 15)
         {
-          if(currentmin == 0) {
+          if (currentmin == 0)
+          {
             led1.set(P1[90]);
             led2.set(P2[90]);
             led3.set(P3[90]);
@@ -2064,7 +2436,8 @@ void loop()
             led6.set(P6[90]);
             led7.set(P7[90]);
           }
-          else if(currentmin == 10) {
+          else if (currentmin == 10)
+          {
             led1.set(P1[91]);
             led2.set(P2[91]);
             led3.set(P3[91]);
@@ -2072,7 +2445,9 @@ void loop()
             led5.set(P5[91]);
             led6.set(P6[91]);
             led7.set(P7[91]);
-          } else if(currentmin == 20) {
+          }
+          else if (currentmin == 20)
+          {
             led1.set(P1[92]);
             led2.set(P2[92]);
             led3.set(P3[92]);
@@ -2080,7 +2455,9 @@ void loop()
             led5.set(P5[92]);
             led6.set(P6[92]);
             led7.set(P7[92]);
-          } else if(currentmin == 30) {
+          }
+          else if (currentmin == 30)
+          {
             led1.set(P1[93]);
             led2.set(P2[93]);
             led3.set(P3[93]);
@@ -2088,7 +2465,9 @@ void loop()
             led5.set(P5[93]);
             led6.set(P6[93]);
             led7.set(P7[93]);
-          } else if(currentmin == 40) {
+          }
+          else if (currentmin == 40)
+          {
             led1.set(P1[94]);
             led2.set(P2[94]);
             led3.set(P3[94]);
@@ -2096,7 +2475,9 @@ void loop()
             led5.set(P5[94]);
             led6.set(P6[94]);
             led7.set(P7[94]);
-          } else if(currentmin == 50) {
+          }
+          else if (currentmin == 50)
+          {
             led1.set(P1[95]);
             led2.set(P2[95]);
             led3.set(P3[95]);
@@ -2108,7 +2489,8 @@ void loop()
         }
         else if (currenthour == 16)
         {
-          if(currentmin == 0) {
+          if (currentmin == 0)
+          {
             led1.set(P1[96]);
             led2.set(P2[96]);
             led3.set(P3[96]);
@@ -2117,7 +2499,8 @@ void loop()
             led6.set(P6[96]);
             led7.set(P7[96]);
           }
-          else if(currentmin == 10) {
+          else if (currentmin == 10)
+          {
             led1.set(P1[97]);
             led2.set(P2[97]);
             led3.set(P3[97]);
@@ -2125,7 +2508,9 @@ void loop()
             led5.set(P5[97]);
             led6.set(P6[97]);
             led7.set(P7[97]);
-          } else if(currentmin == 20) {
+          }
+          else if (currentmin == 20)
+          {
             led1.set(P1[98]);
             led2.set(P2[98]);
             led3.set(P3[98]);
@@ -2133,7 +2518,9 @@ void loop()
             led5.set(P5[98]);
             led6.set(P6[98]);
             led7.set(P7[98]);
-          } else if(currentmin == 30) {
+          }
+          else if (currentmin == 30)
+          {
             led1.set(P1[99]);
             led2.set(P2[99]);
             led3.set(P3[99]);
@@ -2141,7 +2528,9 @@ void loop()
             led5.set(P5[99]);
             led6.set(P6[99]);
             led7.set(P7[99]);
-          } else if(currentmin == 40) {
+          }
+          else if (currentmin == 40)
+          {
             led1.set(P1[100]);
             led2.set(P2[100]);
             led3.set(P3[100]);
@@ -2149,7 +2538,9 @@ void loop()
             led5.set(P5[100]);
             led6.set(P6[100]);
             led7.set(P7[100]);
-          } else if(currentmin == 50) {
+          }
+          else if (currentmin == 50)
+          {
             led1.set(P1[101]);
             led2.set(P2[101]);
             led3.set(P3[101]);
@@ -2161,7 +2552,8 @@ void loop()
         }
         else if (currenthour == 17)
         {
-         if(currentmin == 0) {
+          if (currentmin == 0)
+          {
             led1.set(P1[102]);
             led2.set(P2[102]);
             led3.set(P3[102]);
@@ -2170,7 +2562,8 @@ void loop()
             led6.set(P6[102]);
             led7.set(P7[102]);
           }
-          else if(currentmin == 10) {
+          else if (currentmin == 10)
+          {
             led1.set(P1[103]);
             led2.set(P2[103]);
             led3.set(P3[103]);
@@ -2178,7 +2571,9 @@ void loop()
             led5.set(P5[103]);
             led6.set(P6[103]);
             led7.set(P7[103]);
-          } else if(currentmin == 20) {
+          }
+          else if (currentmin == 20)
+          {
             led1.set(P1[104]);
             led2.set(P2[104]);
             led3.set(P3[104]);
@@ -2186,7 +2581,9 @@ void loop()
             led5.set(P5[104]);
             led6.set(P6[104]);
             led7.set(P7[104]);
-          } else if(currentmin == 30) {
+          }
+          else if (currentmin == 30)
+          {
             led1.set(P1[105]);
             led2.set(P2[105]);
             led3.set(P3[105]);
@@ -2194,7 +2591,9 @@ void loop()
             led5.set(P5[105]);
             led6.set(P6[105]);
             led7.set(P7[105]);
-          } else if(currentmin == 40) {
+          }
+          else if (currentmin == 40)
+          {
             led1.set(P1[106]);
             led2.set(P2[106]);
             led3.set(P3[106]);
@@ -2202,7 +2601,9 @@ void loop()
             led5.set(P5[106]);
             led6.set(P6[106]);
             led7.set(P7[106]);
-          } else if(currentmin == 50) {
+          }
+          else if (currentmin == 50)
+          {
             led1.set(P1[107]);
             led2.set(P2[107]);
             led3.set(P3[107]);
@@ -2214,7 +2615,8 @@ void loop()
         }
         else if (currenthour == 18)
         {
-         if(currentmin == 0) {
+          if (currentmin == 0)
+          {
             led1.set(P1[108]);
             led2.set(P2[108]);
             led3.set(P3[108]);
@@ -2223,7 +2625,8 @@ void loop()
             led6.set(P6[108]);
             led7.set(P7[108]);
           }
-          else if(currentmin == 10) {
+          else if (currentmin == 10)
+          {
             led1.set(P1[109]);
             led2.set(P2[109]);
             led3.set(P3[109]);
@@ -2231,7 +2634,9 @@ void loop()
             led5.set(P5[109]);
             led6.set(P6[109]);
             led7.set(P7[109]);
-          } else if(currentmin == 20) {
+          }
+          else if (currentmin == 20)
+          {
             led1.set(P1[110]);
             led2.set(P2[110]);
             led3.set(P3[110]);
@@ -2239,7 +2644,9 @@ void loop()
             led5.set(P5[110]);
             led6.set(P6[110]);
             led7.set(P7[110]);
-          } else if(currentmin == 30) {
+          }
+          else if (currentmin == 30)
+          {
             led1.set(P1[111]);
             led2.set(P2[111]);
             led3.set(P3[111]);
@@ -2247,7 +2654,9 @@ void loop()
             led5.set(P5[111]);
             led6.set(P6[111]);
             led7.set(P7[111]);
-          } else if(currentmin == 40) {
+          }
+          else if (currentmin == 40)
+          {
             led1.set(P1[112]);
             led2.set(P2[112]);
             led3.set(P3[112]);
@@ -2255,7 +2664,9 @@ void loop()
             led5.set(P5[112]);
             led6.set(P6[112]);
             led7.set(P7[112]);
-          } else if(currentmin == 50) {
+          }
+          else if (currentmin == 50)
+          {
             led1.set(P1[113]);
             led2.set(P2[113]);
             led3.set(P3[113]);
@@ -2267,7 +2678,8 @@ void loop()
         }
         else if (currenthour == 19)
         {
-         if(currentmin == 0) {
+          if (currentmin == 0)
+          {
             led1.set(P1[114]);
             led2.set(P2[114]);
             led3.set(P3[114]);
@@ -2276,7 +2688,8 @@ void loop()
             led6.set(P6[114]);
             led7.set(P7[114]);
           }
-          else if(currentmin == 10) {
+          else if (currentmin == 10)
+          {
             led1.set(P1[115]);
             led2.set(P2[115]);
             led3.set(P3[115]);
@@ -2284,7 +2697,9 @@ void loop()
             led5.set(P5[115]);
             led6.set(P6[115]);
             led7.set(P7[115]);
-          } else if(currentmin == 20) {
+          }
+          else if (currentmin == 20)
+          {
             led1.set(P1[116]);
             led2.set(P2[116]);
             led3.set(P3[116]);
@@ -2292,7 +2707,9 @@ void loop()
             led5.set(P5[116]);
             led6.set(P6[116]);
             led7.set(P7[116]);
-          } else if(currentmin == 30) {
+          }
+          else if (currentmin == 30)
+          {
             led1.set(P1[117]);
             led2.set(P2[117]);
             led3.set(P3[117]);
@@ -2300,7 +2717,9 @@ void loop()
             led5.set(P5[117]);
             led6.set(P6[117]);
             led7.set(P7[117]);
-          } else if(currentmin == 40) {
+          }
+          else if (currentmin == 40)
+          {
             led1.set(P1[118]);
             led2.set(P2[118]);
             led3.set(P3[118]);
@@ -2308,7 +2727,9 @@ void loop()
             led5.set(P5[118]);
             led6.set(P6[118]);
             led7.set(P7[118]);
-          } else if(currentmin == 50) {
+          }
+          else if (currentmin == 50)
+          {
             led1.set(P1[119]);
             led2.set(P2[119]);
             led3.set(P3[119]);
@@ -2320,7 +2741,8 @@ void loop()
         }
         else if (currenthour == 20)
         {
-          if(currentmin == 0) {
+          if (currentmin == 0)
+          {
             led1.set(P1[120]);
             led2.set(P2[120]);
             led3.set(P3[120]);
@@ -2329,7 +2751,8 @@ void loop()
             led6.set(P6[120]);
             led7.set(P7[120]);
           }
-          else if(currentmin == 10) {
+          else if (currentmin == 10)
+          {
             led1.set(P1[121]);
             led2.set(P2[121]);
             led3.set(P3[121]);
@@ -2337,7 +2760,9 @@ void loop()
             led5.set(P5[121]);
             led6.set(P6[121]);
             led7.set(P7[121]);
-          } else if(currentmin == 20) {
+          }
+          else if (currentmin == 20)
+          {
             led1.set(P1[122]);
             led2.set(P2[122]);
             led3.set(P3[122]);
@@ -2345,7 +2770,9 @@ void loop()
             led5.set(P5[122]);
             led6.set(P6[122]);
             led7.set(P7[122]);
-          } else if(currentmin == 30) {
+          }
+          else if (currentmin == 30)
+          {
             led1.set(P1[123]);
             led2.set(P2[123]);
             led3.set(P3[123]);
@@ -2353,7 +2780,9 @@ void loop()
             led5.set(P5[123]);
             led6.set(P6[123]);
             led7.set(P7[123]);
-          } else if(currentmin == 40) {
+          }
+          else if (currentmin == 40)
+          {
             led1.set(P1[124]);
             led2.set(P2[124]);
             led3.set(P3[124]);
@@ -2361,7 +2790,9 @@ void loop()
             led5.set(P5[124]);
             led6.set(P6[124]);
             led7.set(P7[124]);
-          } else if(currentmin == 50) {
+          }
+          else if (currentmin == 50)
+          {
             led1.set(P1[125]);
             led2.set(P2[125]);
             led3.set(P3[125]);
@@ -2373,7 +2804,8 @@ void loop()
         }
         else if (currenthour == 21)
         {
-          if(currentmin == 0) {
+          if (currentmin == 0)
+          {
             led1.set(P1[126]);
             led2.set(P2[126]);
             led3.set(P3[126]);
@@ -2382,7 +2814,8 @@ void loop()
             led6.set(P6[126]);
             led7.set(P7[126]);
           }
-          else if(currentmin == 10) {
+          else if (currentmin == 10)
+          {
             led1.set(P1[127]);
             led2.set(P2[127]);
             led3.set(P3[127]);
@@ -2390,7 +2823,9 @@ void loop()
             led5.set(P5[127]);
             led6.set(P6[127]);
             led7.set(P7[127]);
-          } else if(currentmin == 20) {
+          }
+          else if (currentmin == 20)
+          {
             led1.set(P1[128]);
             led2.set(P2[128]);
             led3.set(P3[128]);
@@ -2398,7 +2833,9 @@ void loop()
             led5.set(P5[128]);
             led6.set(P6[128]);
             led7.set(P7[128]);
-          } else if(currentmin == 30) {
+          }
+          else if (currentmin == 30)
+          {
             led1.set(P1[129]);
             led2.set(P2[129]);
             led3.set(P3[129]);
@@ -2406,7 +2843,9 @@ void loop()
             led5.set(P5[129]);
             led6.set(P6[129]);
             led7.set(P7[129]);
-          } else if(currentmin == 40) {
+          }
+          else if (currentmin == 40)
+          {
             led1.set(P1[130]);
             led2.set(P2[130]);
             led3.set(P3[130]);
@@ -2414,7 +2853,9 @@ void loop()
             led5.set(P5[130]);
             led6.set(P6[130]);
             led7.set(P7[130]);
-          } else if(currentmin == 50) {
+          }
+          else if (currentmin == 50)
+          {
             led1.set(P1[131]);
             led2.set(P2[131]);
             led3.set(P3[131]);
@@ -2426,7 +2867,8 @@ void loop()
         }
         else if (currenthour == 22)
         {
-          if(currentmin == 0) {
+          if (currentmin == 0)
+          {
             led1.set(P1[132]);
             led2.set(P2[132]);
             led3.set(P3[132]);
@@ -2435,7 +2877,8 @@ void loop()
             led6.set(P6[132]);
             led7.set(P7[132]);
           }
-          else if(currentmin == 10) {
+          else if (currentmin == 10)
+          {
             led1.set(P1[133]);
             led2.set(P2[133]);
             led3.set(P3[133]);
@@ -2443,7 +2886,9 @@ void loop()
             led5.set(P5[133]);
             led6.set(P6[133]);
             led7.set(P7[133]);
-          } else if(currentmin == 20) {
+          }
+          else if (currentmin == 20)
+          {
             led1.set(P1[134]);
             led2.set(P2[134]);
             led3.set(P3[134]);
@@ -2451,7 +2896,9 @@ void loop()
             led5.set(P5[134]);
             led6.set(P6[134]);
             led7.set(P7[134]);
-          } else if(currentmin == 30) {
+          }
+          else if (currentmin == 30)
+          {
             led1.set(P1[135]);
             led2.set(P2[135]);
             led3.set(P3[135]);
@@ -2459,7 +2906,9 @@ void loop()
             led5.set(P5[135]);
             led6.set(P6[135]);
             led7.set(P7[135]);
-          } else if(currentmin == 40) {
+          }
+          else if (currentmin == 40)
+          {
             led1.set(P1[136]);
             led2.set(P2[136]);
             led3.set(P3[136]);
@@ -2467,7 +2916,9 @@ void loop()
             led5.set(P5[136]);
             led6.set(P6[136]);
             led7.set(P7[136]);
-          } else if(currentmin == 50) {
+          }
+          else if (currentmin == 50)
+          {
             led1.set(P1[137]);
             led2.set(P2[137]);
             led3.set(P3[137]);
@@ -2479,7 +2930,8 @@ void loop()
         }
         else if (currenthour == 23)
         {
-          if(currentmin == 0) {
+          if (currentmin == 0)
+          {
             led1.set(P1[138]);
             led2.set(P2[138]);
             led3.set(P3[138]);
@@ -2488,7 +2940,8 @@ void loop()
             led6.set(P6[138]);
             led7.set(P7[138]);
           }
-          else if(currentmin == 10) {
+          else if (currentmin == 10)
+          {
             led1.set(P1[139]);
             led2.set(P2[139]);
             led3.set(P3[139]);
@@ -2496,7 +2949,9 @@ void loop()
             led5.set(P5[139]);
             led6.set(P6[139]);
             led7.set(P7[139]);
-          } else if(currentmin == 20) {
+          }
+          else if (currentmin == 20)
+          {
             led1.set(P1[140]);
             led2.set(P2[140]);
             led3.set(P3[140]);
@@ -2504,7 +2959,9 @@ void loop()
             led5.set(P5[140]);
             led6.set(P6[140]);
             led7.set(P7[140]);
-          } else if(currentmin == 30) {
+          }
+          else if (currentmin == 30)
+          {
             led1.set(P1[141]);
             led2.set(P2[141]);
             led3.set(P3[141]);
@@ -2512,7 +2969,9 @@ void loop()
             led5.set(P5[141]);
             led6.set(P6[141]);
             led7.set(P7[141]);
-          } else if(currentmin == 40) {
+          }
+          else if (currentmin == 40)
+          {
             led1.set(P1[142]);
             led2.set(P2[142]);
             led3.set(P3[142]);
@@ -2520,7 +2979,9 @@ void loop()
             led5.set(P5[142]);
             led6.set(P6[142]);
             led7.set(P7[142]);
-          } else if(currentmin == 50) {
+          }
+          else if (currentmin == 50)
+          {
             led1.set(P1[143]);
             led2.set(P2[143]);
             led3.set(P3[143]);
@@ -2533,8 +2994,9 @@ void loop()
       }
       else if (PWM_INFO_TESTMODE == "test")
       {
-        Serial.printf("test mode .... current sec is: %d the led7's volume is: %d \n",currentsec,P7[TESTMODE_COUNT]);
-        if(TESTMODE_COUNT >143) {
+        Serial.printf("test mode .... current sec is: %d the led7's volume is: %d \n", currentsec, P7[TESTMODE_COUNT]);
+        if (TESTMODE_COUNT > 143)
+        {
           TESTMODE_COUNT = 0;
         }
 
@@ -2545,8 +3007,8 @@ void loop()
         led5.set(P5[TESTMODE_COUNT]);
         led6.set(P6[TESTMODE_COUNT]);
         led7.set(P7[TESTMODE_COUNT]);
-        
-        TESTMODE_COUNT = TESTMODE_COUNT +1;
+
+        TESTMODE_COUNT = TESTMODE_COUNT + 1;
       }
 
       if (IS_SMART)
