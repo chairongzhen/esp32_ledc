@@ -5,14 +5,17 @@
 #include <ESPAsyncWebServer.h>
 #include <cJSON.h>
 #include <time.h>
+#include <sys/time.h>
 #include "LED_ESP32.h"
 #include <ESPmDNS.h>
 #include <Update.h>
 #include <PubSubClient.h>
 #include <ArduinoHttpClient.h>
+#include <WiFiUdp.h>
+#include <NTPClient.h>
 
 #define RESET_BUTTON 16
-#define VERSION_NUM "0.53"
+#define VERSION_NUM "0.54"
 // #define ESP_HOST_NAME "esp1006"
 #define ESP_RTC_TICK 1542012457
 
@@ -69,6 +72,11 @@ AsyncWebServer server(80);
 WiFiClient espClient;
 PubSubClient client(espClient);
 HttpClient http(espClient,mqttServer);
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP,"cn.pool.ntp.org",28800,60000);
+
+
+
 // file operation begin
 String getFileString(fs::FS &fs, const char *path)
 {
@@ -365,10 +373,16 @@ void callback(char *topic, byte *payload, unsigned int length)
     item = cJSON_GetObjectItem(root, "sysdate");
     itemstr = cJSON_Print(item);
     PWM_INFO_RTC = itemstr;
+    Serial.print("the sysdate is: ");
+    Serial.println(PWM_INFO_RTC);
     PWM_INFO_RTC.replace("\"", "");
-    struct timeval stime;
-    stime.tv_sec = PWM_INFO_RTC.toInt() + 28816;
-    settimeofday(&stime, NULL);
+
+    // struct timeval stime;
+    // stime.tv_sec = PWM_INFO_RTC.toInt() + 28816;
+    // Serial.print("the sysdate add 28816 = ");
+    // Serial.println(stime.tv_sec);
+    // settimeofday(&stime, NULL);
+    
     item = cJSON_GetObjectItem(root, "conmode");
     itemstr = cJSON_Print(item);
     PWM_INFO_CONMODE = itemstr;
@@ -403,7 +417,8 @@ void callback(char *topic, byte *payload, unsigned int length)
 
     writeFile(SPIFFS, "/pwminfo.ini", pwmifnocontent.c_str());
     struct timeval stime;
-    stime.tv_sec = PWM_INFO_RTC.toInt() + 28816;
+    //stime.tv_sec = PWM_INFO_RTC.toInt() + 28816;
+    stime.tv_sec = PWM_INFO_RTC.toInt();
     settimeofday(&stime, NULL);
   }
   else if (String(topic) == topic_name_pt)
@@ -994,6 +1009,13 @@ void setup()
     String sysdate = itemstr;
     sysdate.replace("\"", "");
     PWM_INFO_RTC = sysdate;
+
+
+    // struct timeval stime;
+    // stime.tv_sec = PWM_INFO_RTC.toInt() + 28816;
+    // settimeofday(&stime, NULL);
+
+
     item = cJSON_GetObjectItem(root, "status");
     itemstr = cJSON_Print(item);
     String status = itemstr;
@@ -1013,14 +1035,27 @@ void setup()
 
     String tpl_currentdate = "<span id=\"spCurrent\"></span>";
     String change_currentdate = "<span id=\"spCurrent\">";
-    time_t t = time(NULL);
-    struct tm *t_st;
-    t_st = localtime(&t);
-    char nowtime[24];
-    memset(nowtime, 0, sizeof(nowtime));
-    strftime(nowtime, 24, "%Y-%m-%d %H:%M:%S", t_st);
-    String strDate = nowtime;
-    //Serial.println(strDate);
+
+
+    // int currenthour = t_st->tm_hour;
+    // int currentmin = t_st->tm_min;
+    // int currentsec = t_st->tm_sec;
+    //time_t t = time(NULL);
+    // char nowtime[24];  
+    // struct tm *t_st;
+    // t_st = localtime(&t);
+    // memset(nowtime, 0, sizeof(nowtime));
+    // strftime(nowtime, 24, "%Y-%m-%d %H:%M:%S", t_st);
+    // String strDate = nowtime;
+    // //getEpochTime
+    // Serial.println(PWM_INFO_RTC);
+    time_t t;
+    struct tm *p;
+    t= atoi(PWM_INFO_RTC.c_str()) + 28800;
+    p=gmtime(&t);
+    char s[80];
+    strftime(s, 80, "%Y-%m-%d %H:%M:%S", p);
+    String strDate = s;
 
     change_currentdate = change_currentdate + strDate;
     change_currentdate = change_currentdate + "</span>";
@@ -1182,6 +1217,17 @@ void setup()
       PWM_INFO_TESTMODE = testmode;
       PWM_INFO_CONMODE = "local";
 
+      struct timeval stime;
+      if (WiFi.status() != WL_CONNECTED) { 
+        stime.tv_sec = atoi(PWM_INFO_RTC.c_str()) + 28800;
+        settimeofday(&stime, NULL);
+      } else {
+        timeClient.update();        
+        stime.tv_sec = timeClient.getEpochTime();        
+        settimeofday(&stime, NULL);
+        sysdate = timeClient.getEpochTime() - 28800;
+      }
+
       String filecontent;
       filecontent = "{\"showtype\":\"";
       filecontent = filecontent + showtype;
@@ -1194,10 +1240,6 @@ void setup()
       filecontent = filecontent + "\"}";
       PWM_INFO_RTC = sysdate;
 
-      struct timeval stime;
-      stime.tv_sec = PWM_INFO_RTC.toInt() + 28816;
-      settimeofday(&stime, NULL);
-      //Serial.println("the new time is: " + PWM_INFO_RTC);
       writeFile(SPIFFS, "/pwminfo.ini", filecontent.c_str());
       SPIFFS.end();
     }
@@ -1427,12 +1469,48 @@ void loop()
     ESP.restart();
   }
 
-  time_t t = time(NULL);
-  struct tm *t_st;
-  t_st = localtime(&t);
-  int currenthour = t_st->tm_hour;
-  int currentmin = t_st->tm_min;
-  int currentsec = t_st->tm_sec;
+
+  //Serial.println(timeClient.getFormattedTime());
+  // Serial.print(timeClient.getHours());
+  // Serial.print(":");
+  // Serial.print(timeClient.getMinutes());
+  // Serial.print(":");
+  // Serial.print(timeClient.getSeconds());
+  // Serial.println("..");
+
+
+  
+  int currenthour;
+  int currentmin;
+  int currentsec;
+
+  String wifistatus = "online";
+
+  if (WiFi.status() != WL_CONNECTED) {
+    time_t t = time(NULL);
+    struct tm *t_st;
+    t_st = localtime(&t);
+    currenthour = t_st->tm_hour;
+    currentmin = t_st->tm_min;
+    currentsec = t_st->tm_sec;
+    wifistatus = "offline";
+  } else {
+    timeClient.update();
+    currenthour = timeClient.getHours();
+    currentmin = timeClient.getMinutes();
+    currentsec = timeClient.getSeconds();
+    wifistatus = "online";
+  }
+
+  // Serial.print(currenthour);
+  // Serial.print(":");
+  // Serial.print(currentmin);
+  // Serial.print(":");
+  // Serial.print(currentsec);
+  // Serial.println(wifistatus);
+  // Serial.println(timeClient.getEpochTime());
+  
+
   if (currentmin == 0 || currentmin == 5 || currentmin == 10 || currentmin == 15 || currentmin == 20 || currentmin == 25 || currentmin == 30 || currentmin == 35 || currentmin == 40 || currentmin == 45 || currentmin == 50 || currentmin == 55)
   {
     if (SSID != "" && WiFi.status() != WL_CONNECTED)
