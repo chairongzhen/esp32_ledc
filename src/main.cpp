@@ -15,7 +15,7 @@
 #include <NTPClient.h>
 
 #define RESET_BUTTON 16
-#define VERSION_NUM "0.55"
+#define VERSION_NUM "0.60"
 // #define ESP_HOST_NAME "esp1006"
 #define ESP_RTC_TICK 1542012457
 
