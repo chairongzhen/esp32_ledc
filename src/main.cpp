@@ -76,7 +76,7 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 HttpClient http(espClient,mqttServer);
 WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP,"cn.pool.ntp.org",28800,60000);
+NTPClient timeClient(ntpUDP,"ntp1.aliyun.com",28800,60000);
 
 
 
@@ -1169,11 +1169,13 @@ void setup()
       if (WiFi.status() != WL_CONNECTED) { 
         stime.tv_sec = atoi(PWM_INFO_RTC.c_str()) + 27726;
         settimeofday(&stime, NULL);
-      } else {
-        timeClient.update();        
-        stime.tv_sec = timeClient.getEpochTime();        
-        settimeofday(&stime, NULL);
-        sysdate = timeClient.getEpochTime(); // - 28800;
+      } 
+      else {
+        if(timeClient.update()) {
+          stime.tv_sec = timeClient.getEpochTime();        
+          settimeofday(&stime, NULL);
+          sysdate = timeClient.getEpochTime();
+        }        
       }
 
       String filecontent;
@@ -1519,19 +1521,34 @@ void loop()
       settimeofday(&stime, NULL);
     } else {
       Serial.println("update ntp failed");
+      if(!isUpaded) {
+        Serial.println("set time from RTC File");
+        stime.tv_sec = atoi(PWM_INFO_RTC.c_str()) + 27726;
+        settimeofday(&stime, NULL);
+        isUpaded = true;
+        WiFi.softAP(ESP_HOST_NAME.c_str(), password);
+      }
+      time_t t = time(NULL);      
+      struct tm *t_st;
+      t_st = localtime(&t);
+      currenthour = t_st->tm_hour;
+      currentmin = t_st->tm_min;
+      currentsec = t_st->tm_sec;
+      Serial.println(t_st, "%A, %B %d %Y %H:%M:%S");
+
     }
     wifistatus = "online";
   }
 
 
-  // Serial.print(currenthour);
-  // Serial.print(":");
-  // Serial.print(currentmin);
-  // Serial.print(":");
-  // Serial.print(currentsec);
-  // Serial.println(wifistatus);
-  // Serial.println("ntp:" + String(timeClient.getEpochTime()));
-  // Serial.println("system:"+String(stime.tv_sec));
+  Serial.print(currenthour);
+  Serial.print(":");
+  Serial.print(currentmin);
+  Serial.print(":");
+  Serial.print(currentsec);
+  Serial.println(wifistatus);
+  Serial.println("ntp:" + String(timeClient.getEpochTime()));
+  Serial.println("system:"+String(stime.tv_sec));
 
   
 
@@ -3382,7 +3399,7 @@ void loop()
         {
           TESTMODE_COUNT = 0;
         }
-
+ 
         led1.set(P1[TESTMODE_COUNT]);
         led2.set(P2[TESTMODE_COUNT]);
         led3.set(P3[TESTMODE_COUNT]);
