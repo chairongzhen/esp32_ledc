@@ -34,6 +34,7 @@ int P7[145] = {};
 int P8[145] = {};
 
 int TESTMODE_COUNT = 0;
+bool isUpaded = false;
 
 String SSID, SSID_PWD;
 
@@ -794,7 +795,8 @@ void setup()
   }
   else
   {
-    // deleteFile(SPIFFS,"/wifi.ini");
+    //deleteFile(SPIFFS,"/wifi.ini");
+    //deleteFile(SPIFFS,"/pwminfo.ini");
 
     if (!SPIFFS.exists("/pwminfo.ini"))
     {
@@ -1165,13 +1167,13 @@ void setup()
 
       struct timeval stime;
       if (WiFi.status() != WL_CONNECTED) { 
-        stime.tv_sec = atoi(PWM_INFO_RTC.c_str()) + 28800;
+        stime.tv_sec = atoi(PWM_INFO_RTC.c_str()) + 27726;
         settimeofday(&stime, NULL);
       } else {
         timeClient.update();        
         stime.tv_sec = timeClient.getEpochTime();        
         settimeofday(&stime, NULL);
-        sysdate = timeClient.getEpochTime() - 28800;
+        sysdate = timeClient.getEpochTime(); // - 28800;
       }
 
       String filecontent;
@@ -1475,84 +1477,94 @@ void loop()
     ESP.restart();
   }
 
-
-  // Serial.println(timeClient.getFormattedTime());
-  // Serial.print(timeClient.getHours());
-  // Serial.print(":");
-  // Serial.print(timeClient.getMinutes());
-  // Serial.print(":");
-  // Serial.print(timeClient.getSeconds());
-  // Serial.println("..");
-
-
-  
+ 
   int currenthour;
   int currentmin;
   int currentsec;
 
   String wifistatus = "online";
-
+  struct timeval stime;
   if (WiFi.status() != WL_CONNECTED) {
-    time_t t = time(NULL);
-    struct tm *t_st;
-    t_st = localtime(&t);
-    // currenthour = t_st->tm_hour;
-    // currentmin = t_st->tm_min;
-    // currentsec = t_st->tm_sec;
-    currenthour = timeClient.getHours();
-    currentmin = timeClient.getMinutes();
-    currentsec = timeClient.getSeconds();
-    wifistatus = "offline";
-    WiFi.softAP(ESP_HOST_NAME.c_str(), password);
+    if(timeClient.getEpochTime() < 28900 && stime.tv_sec < 28900) {
+      if(!isUpaded) {
+        Serial.println("set time from RTC File");
+        stime.tv_sec = atoi(PWM_INFO_RTC.c_str()) + 27726;
+        settimeofday(&stime, NULL);
+        isUpaded = true;
+        WiFi.softAP(ESP_HOST_NAME.c_str(), password);
+      } 
+    } else if(timeClient.getEpochTime() > 1562000000) {
+      Serial.println("use offline npt value");
+      currenthour = timeClient.getHours();
+      currentmin = timeClient.getMinutes();
+      currentsec = timeClient.getSeconds();
+    } else {
+      Serial.println("use local time value");      
+      time_t t = time(NULL);      
+      struct tm *t_st;
+      t_st = localtime(&t);
+      currenthour = t_st->tm_hour;
+      currentmin = t_st->tm_min;
+      currentsec = t_st->tm_sec;
+      Serial.println(t_st, "%A, %B %d %Y %H:%M:%S");
+    }
+    wifistatus = "offline";   
   } else {
-    timeClient.update();
-    currenthour = timeClient.getHours();
-    currentmin = timeClient.getMinutes();
-    currentsec = timeClient.getSeconds();
-    struct timeval stime;
-    PWM_INFO_RTC = timeClient.getEpochTime();
-    stime.tv_sec = PWM_INFO_RTC.toInt();
-    settimeofday(&stime, NULL);
+    if(timeClient.update()) {
+      currenthour = timeClient.getHours();
+      currentmin = timeClient.getMinutes();
+      currentsec = timeClient.getSeconds();
+      PWM_INFO_RTC = timeClient.getEpochTime();
+      stime.tv_sec = PWM_INFO_RTC.toInt();
+      settimeofday(&stime, NULL);
+    } else {
+      Serial.println("update ntp failed");
+    }
     wifistatus = "online";
-
   }
 
-  Serial.print(currenthour);
-  Serial.print(":");
-  Serial.print(currentmin);
-  Serial.print(":");
-  Serial.print(currentsec);
-  Serial.println(wifistatus);
-  Serial.println(timeClient.getEpochTime());
+
+  // Serial.print(currenthour);
+  // Serial.print(":");
+  // Serial.print(currentmin);
+  // Serial.print(":");
+  // Serial.print(currentsec);
+  // Serial.println(wifistatus);
+  // Serial.println("ntp:" + String(timeClient.getEpochTime()));
+  // Serial.println("system:"+String(stime.tv_sec));
+
   
 
   if (currentmin == 0 || currentmin == 5 || currentmin == 10 || currentmin == 15 || currentmin == 20 || currentmin == 25 || currentmin == 30 || currentmin == 35 || currentmin == 40 || currentmin == 45 || currentmin == 50 || currentmin == 55)
   {
-    if (WiFi.status() != WL_CONNECTED)
-    {
-      led8.set(0);
-      Serial.printf("try to reconnecting ..\n");
-      WiFi.begin(SSID.c_str(), SSID_PWD.c_str());
-      int i = 30;
-      while ((WiFi.status() != WL_CONNECTED) && i > 0)
+    if(currentsec <=15) {
+      if (WiFi.status() != WL_CONNECTED && SSID != "")
       {
-        led8.set(100);
-        delay(500);
         led8.set(0);
-        Serial.printf(".");
-        i = i - 1;
-      }
-      if (WiFi.status() == WL_CONNECTED)
-      {
-        Serial.println(WiFi.localIP());
-        led8.set(100);
-        client.setServer(mqttServer, mqttPort);
-        client.setCallback(callback);
-        mqttconn();
-      } else {
-        WiFi.softAP(ESP_HOST_NAME.c_str(), password);
+        Serial.printf("try to reconnecting ..\n");
+        WiFi.begin(SSID.c_str(), SSID_PWD.c_str());
+        int i = 30;
+        while ((WiFi.status() != WL_CONNECTED) && i > 0)
+        {
+          led8.set(100);
+          delay(500);
+          led8.set(0);
+          Serial.printf(".");
+          i = i - 1;
+        }
+        if (WiFi.status() == WL_CONNECTED)
+        {
+          Serial.println(WiFi.localIP());
+          led8.set(100);
+          client.setServer(mqttServer, mqttPort);
+          client.setCallback(callback);
+          mqttconn();
+        } else {
+          WiFi.softAP(ESP_HOST_NAME.c_str(), password);
+        }
       }
     }
+
   }
 
 
@@ -1576,15 +1588,6 @@ void loop()
             led6.set(getCurrentValue(P6[0],P6[1],currentmin));
             led7.set(getCurrentValue(P7[0],P7[1],currentmin));
             led8.set(getCurrentValue(P8[0],P8[1],currentmin));       
-            // led1.set(P1[0]);
-            // led2.set(P2[0]);
-            // led3.set(P3[0]);
-            // led4.set(P4[0]);
-            // led5.set(P5[0]);
-            // led6.set(P6[0]);
-            // led7.set(P7[0]);
-            // led8.set(P8[0]);
-            // led8.set(P8[0]);
           }
           else if (currentmin >= 10 and currentmin <20)
           {
@@ -1597,14 +1600,6 @@ void loop()
             led6.set(getCurrentValue(P6[1],P6[2],min));
             led7.set(getCurrentValue(P7[1],P7[2],min));
             led8.set(getCurrentValue(P8[1],P8[2],min));  
-            // led1.set(P1[1]);
-            // led2.set(P2[1]);
-            // led3.set(P3[1]);
-            // led4.set(P4[1]);
-            // led5.set(P5[1]);
-            // led6.set(P6[1]);
-            // led7.set(P7[1]);
-            // led8.set(P8[1]);
           }
           else if (currentmin >= 20 and currentmin <30)
           {
@@ -1617,25 +1612,9 @@ void loop()
             led6.set(getCurrentValue(P6[2],P6[3],min));
             led7.set(getCurrentValue(P7[2],P7[3],min));
             led8.set(getCurrentValue(P8[2],P8[3],min));  
-            // led1.set(P1[2]);
-            // led2.set(P2[2]);
-            // led3.set(P3[2]);
-            // led4.set(P4[2]);
-            // led5.set(P5[2]);
-            // led6.set(P6[2]);
-            // led7.set(P7[2]);
-            // led8.set(P8[2]);
           }
           else if (currentmin >= 30 and currentmin <40)
           {
-            // led1.set(P1[3]);
-            // led2.set(P2[3]);
-            // led3.set(P3[3]);
-            // led4.set(P4[3]);
-            // led5.set(P5[3]);
-            // led6.set(P6[3]);
-            // led7.set(P7[3]);
-            // led8.set(P8[3]);
             int min = currentmin - 30;            
             led1.set(getCurrentValue(P1[3],P1[4],min));
             led2.set(getCurrentValue(P2[3],P2[4],min));
@@ -1648,14 +1627,6 @@ void loop()
           }
           else if (currentmin >= 40 and currentmin <50)
           {
-            // led1.set(P1[4]);
-            // led2.set(P2[4]);
-            // led3.set(P3[4]);
-            // led4.set(P4[4]);
-            // led5.set(P5[4]);
-            // led6.set(P6[4]);
-            // led7.set(P7[4]);
-            // led8.set(P8[4]);
             int min = currentmin - 40;            
             led1.set(getCurrentValue(P1[4],P1[5],min));
             led2.set(getCurrentValue(P2[4],P2[5],min));
@@ -1668,13 +1639,6 @@ void loop()
           }
           else if (currentmin >= 50)
           {
-            // led1.set(P1[5]);
-            // led2.set(P2[5]);
-            // led3.set(P3[5]);
-            // led4.set(P4[5]);
-            // led5.set(P5[5]);
-            // led6.set(P6[5]);
-            // led7.set(P7[5]);
             int min = currentmin - 50;            
             led1.set(getCurrentValue(P1[5],P1[6],min));
             led2.set(getCurrentValue(P2[5],P2[6],min));
@@ -1690,14 +1654,6 @@ void loop()
         {
           if (currentmin < 10)
           {
-            // led1.set(P1[6]);
-            // led2.set(P2[6]);
-            // led3.set(P3[6]);
-            // led4.set(P4[6]);
-            // led5.set(P5[6]);
-            // led6.set(P6[6]);
-            // led7.set(P7[6]);
-            // led8.set(P8[6]);
             int min = currentmin;            
             led1.set(getCurrentValue(P1[6],P1[7],min));
             led2.set(getCurrentValue(P2[6],P2[7],min));
@@ -1710,14 +1666,6 @@ void loop()
           }
           else if (currentmin >= 10 and currentmin <20)
           {
-            // led1.set(P1[7]);
-            // led2.set(P2[7]);
-            // led3.set(P3[7]);
-            // led4.set(P4[7]);
-            // led5.set(P5[7]);
-            // led6.set(P6[7]);
-            // led7.set(P7[7]);
-            // led8.set(P8[7]);
             int min = currentmin - 10;            
             led1.set(getCurrentValue(P1[7],P1[8],min));
             led2.set(getCurrentValue(P2[7],P2[8],min));
@@ -1730,14 +1678,6 @@ void loop()
           }
           else if (currentmin >= 20 and currentmin <30)
           {
-            // led1.set(P1[8]);
-            // led2.set(P2[8]);
-            // led3.set(P3[8]);
-            // led4.set(P4[8]);
-            // led5.set(P5[8]);
-            // led6.set(P6[8]);
-            // led7.set(P7[8]);
-            // led8.set(P8[8]);
             int min = currentmin - 20;            
             led1.set(getCurrentValue(P1[8],P1[9],min));
             led2.set(getCurrentValue(P2[8],P2[9],min));
@@ -1750,14 +1690,6 @@ void loop()
           }
           else if (currentmin >= 30 and currentmin <40)
           {
-            // led1.set(P1[9]);
-            // led2.set(P2[9]);
-            // led3.set(P3[9]);
-            // led4.set(P4[9]);
-            // led5.set(P5[9]);
-            // led6.set(P6[9]);
-            // led7.set(P7[9]);
-            // led8.set(P8[9]);
             int min = currentmin - 30;            
             led1.set(getCurrentValue(P1[9],P1[10],min));
             led2.set(getCurrentValue(P2[9],P2[10],min));
@@ -1770,13 +1702,6 @@ void loop()
           }
           else if (currentmin >= 40 and currentmin <50)
           {
-            // led1.set(P1[10]);
-            // led2.set(P2[10]);
-            // led3.set(P3[10]);
-            // led4.set(P4[10]);
-            // led5.set(P5[10]);
-            // led6.set(P6[10]);
-            // led7.set(P7[10]);
             int min = currentmin - 40;            
             led1.set(getCurrentValue(P1[10],P1[11],min));
             led2.set(getCurrentValue(P2[10],P2[11],min));
@@ -1789,14 +1714,6 @@ void loop()
           }
           else if (currentmin >= 50)
           {
-            // led1.set(P1[11]);
-            // led2.set(P2[11]);
-            // led3.set(P3[11]);
-            // led4.set(P4[11]);
-            // led5.set(P5[11]);
-            // led6.set(P6[11]);
-            // led7.set(P7[11]);
-            // led8.set(P8[11]);
             int min = currentmin - 50;            
             led1.set(getCurrentValue(P1[11],P1[12],min));
             led2.set(getCurrentValue(P2[11],P2[12],min));
@@ -1812,14 +1729,6 @@ void loop()
         {
           if (currentmin < 10)
           {
-            // led1.set(P1[12]);
-            // led2.set(P2[12]);
-            // led3.set(P3[12]);
-            // led4.set(P4[12]);
-            // led5.set(P5[12]);
-            // led6.set(P6[12]);
-            // led7.set(P7[12]);
-            // led8.set(P8[12]);
             int min = currentmin;            
             led1.set(getCurrentValue(P1[12],P1[13],min));
             led2.set(getCurrentValue(P2[12],P2[13],min));
@@ -1832,14 +1741,6 @@ void loop()
           }
           else if (currentmin >= 10 and currentmin <20)
           {
-            // led1.set(P1[13]);
-            // led2.set(P2[13]);
-            // led3.set(P3[13]);
-            // led4.set(P4[13]);
-            // led5.set(P5[13]);
-            // led6.set(P6[13]);
-            // led7.set(P7[13]);
-            // led8.set(P8[13]);
             int min = currentmin - 10;            
             led1.set(getCurrentValue(P1[13],P1[14],min));
             led2.set(getCurrentValue(P2[13],P2[14],min));
@@ -1852,14 +1753,6 @@ void loop()
           }
           else if (currentmin >= 20 and currentmin <30)
           {
-            // led1.set(P1[14]);
-            // led2.set(P2[14]);
-            // led3.set(P3[14]);
-            // led4.set(P4[14]);
-            // led5.set(P5[14]);
-            // led6.set(P6[14]);
-            // led7.set(P7[14]);
-            // led8.set(P8[14]);
             int min = currentmin - 20;            
             led1.set(getCurrentValue(P1[14],P1[15],min));
             led2.set(getCurrentValue(P2[14],P2[15],min));
@@ -1872,14 +1765,6 @@ void loop()
           }
           else if (currentmin >= 30 and currentmin <40)
           {
-            // led1.set(P1[15]);
-            // led2.set(P2[15]);
-            // led3.set(P3[15]);
-            // led4.set(P4[15]);
-            // led5.set(P5[15]);
-            // led6.set(P6[15]);
-            // led7.set(P7[15]);
-            // led8.set(P8[15]);
             int min = currentmin - 30;            
             led1.set(getCurrentValue(P1[15],P1[16],min));
             led2.set(getCurrentValue(P2[15],P2[16],min));
@@ -1892,14 +1777,6 @@ void loop()
           }
           else if (currentmin >= 40 and currentmin <50)
           {
-            // led1.set(P1[16]);
-            // led2.set(P2[16]);
-            // led3.set(P3[16]);
-            // led4.set(P4[16]);
-            // led5.set(P5[16]);
-            // led6.set(P6[16]);
-            // led7.set(P7[16]);
-            // led8.set(P8[16]);
             int min = currentmin - 40;            
             led1.set(getCurrentValue(P1[16],P1[17],min));
             led2.set(getCurrentValue(P2[16],P2[17],min));
@@ -1912,14 +1789,6 @@ void loop()
           }
           else if (currentmin >= 50)
           {
-            // led1.set(P1[17]);
-            // led2.set(P2[17]);
-            // led3.set(P3[17]);
-            // led4.set(P4[17]);
-            // led5.set(P5[17]);
-            // led6.set(P6[17]);
-            // led7.set(P7[17]);
-            // led8.set(P8[17]);
             int min = currentmin - 50;            
             led1.set(getCurrentValue(P1[17],P1[18],min));
             led2.set(getCurrentValue(P2[17],P2[18],min));
@@ -1935,14 +1804,6 @@ void loop()
         {
           if (currentmin < 10)
           {
-            // led1.set(P1[18]);
-            // led2.set(P2[18]);
-            // led3.set(P3[18]);
-            // led4.set(P4[18]);
-            // led5.set(P5[18]);
-            // led6.set(P6[18]);
-            // led7.set(P7[18]);
-            // led8.set(P8[18]);
             int min = currentmin;            
             led1.set(getCurrentValue(P1[18],P1[19],min));
             led2.set(getCurrentValue(P2[18],P2[19],min));
@@ -1955,14 +1816,6 @@ void loop()
           }
           else if (currentmin >= 10 and currentmin <20)
           {
-            // led1.set(P1[19]);
-            // led2.set(P2[19]);
-            // led3.set(P3[19]);
-            // led4.set(P4[19]);
-            // led5.set(P5[19]);
-            // led6.set(P6[19]);
-            // led7.set(P7[19]);
-            // led8.set(P8[19]);
             int min = currentmin - 10;            
             led1.set(getCurrentValue(P1[19],P1[20],min));
             led2.set(getCurrentValue(P2[19],P2[20],min));
@@ -1975,14 +1828,6 @@ void loop()
           }
           else if (currentmin >= 20 and currentmin <30)
           {
-            // led1.set(P1[20]);
-            // led2.set(P2[20]);
-            // led3.set(P3[20]);
-            // led4.set(P4[20]);
-            // led5.set(P5[20]);
-            // led6.set(P6[20]);
-            // led7.set(P7[20]);
-            // led8.set(P8[20]);
             int min = currentmin - 20;            
             led1.set(getCurrentValue(P1[20],P1[21],min));
             led2.set(getCurrentValue(P2[20],P2[21],min));
@@ -1995,14 +1840,6 @@ void loop()
           }
           else if (currentmin >= 30 and currentmin <40)
           {
-            // led1.set(P1[21]);
-            // led2.set(P2[21]);
-            // led3.set(P3[21]);
-            // led4.set(P4[21]);
-            // led5.set(P5[21]);
-            // led6.set(P6[21]);
-            // led7.set(P7[21]);
-            // led8.set(P8[21]);
             int min = currentmin - 30;            
             led1.set(getCurrentValue(P1[21],P1[22],min));
             led2.set(getCurrentValue(P2[21],P2[22],min));
@@ -2015,14 +1852,6 @@ void loop()
           }
           else if (currentmin >= 40 and currentmin <50)
           {
-            // led1.set(P1[22]);
-            // led2.set(P2[22]);
-            // led3.set(P3[22]);
-            // led4.set(P4[22]);
-            // led5.set(P5[22]);
-            // led6.set(P6[22]);
-            // led7.set(P7[22]);
-            // led8.set(P8[22]);
             int min = currentmin - 40;            
             led1.set(getCurrentValue(P1[22],P1[23],min));
             led2.set(getCurrentValue(P2[22],P2[23],min));
@@ -2035,14 +1864,6 @@ void loop()
           }
           else if (currentmin >= 50)
           {
-            // led1.set(P1[23]);
-            // led2.set(P2[23]);
-            // led3.set(P3[23]);
-            // led4.set(P4[23]);
-            // led5.set(P5[23]);
-            // led6.set(P6[23]);
-            // led7.set(P7[23]);
-            // led8.set(P8[23]);
             int min = currentmin - 50;            
             led1.set(getCurrentValue(P1[23],P1[24],min));
             led2.set(getCurrentValue(P2[23],P2[24],min));
@@ -2058,14 +1879,6 @@ void loop()
         {
           if (currentmin < 10)
           {
-            // led1.set(P1[24]);
-            // led2.set(P2[24]);
-            // led3.set(P3[24]);
-            // led4.set(P4[24]);
-            // led5.set(P5[24]);
-            // led6.set(P6[24]);
-            // led7.set(P7[24]);
-            // led8.set(P8[24]);
             int min = currentmin;            
             led1.set(getCurrentValue(P1[24],P1[25],min));
             led2.set(getCurrentValue(P2[24],P2[25],min));
@@ -2078,14 +1891,6 @@ void loop()
           }
           else if (currentmin >= 10 and currentmin <20)
           {
-            // led1.set(P1[25]);
-            // led2.set(P2[25]);
-            // led3.set(P3[25]);
-            // led4.set(P4[25]);
-            // led5.set(P5[25]);
-            // led6.set(P6[25]);
-            // led7.set(P7[25]);
-            // led8.set(P8[25]);
             int min = currentmin - 10;            
             led1.set(getCurrentValue(P1[25],P1[26],min));
             led2.set(getCurrentValue(P2[25],P2[26],min));
@@ -2098,14 +1903,6 @@ void loop()
           }
           else if (currentmin >= 20 and currentmin <30)
           {
-            // led1.set(P1[26]);
-            // led2.set(P2[26]);
-            // led3.set(P3[26]);
-            // led4.set(P4[26]);
-            // led5.set(P5[26]);
-            // led6.set(P6[26]);
-            // led7.set(P7[26]);
-            // led8.set(P8[26]);
             int min = currentmin - 20;            
             led1.set(getCurrentValue(P1[26],P1[27],min));
             led2.set(getCurrentValue(P2[26],P2[27],min));
@@ -2118,14 +1915,6 @@ void loop()
           }
           else if (currentmin >= 30 and currentmin <40)
           {
-            // led1.set(P1[27]);
-            // led2.set(P2[27]);
-            // led3.set(P3[27]);
-            // led4.set(P4[27]);
-            // led5.set(P5[27]);
-            // led6.set(P6[27]);
-            // led7.set(P7[27]);
-            // led8.set(P8[27]);
             int min = currentmin - 30;            
             led1.set(getCurrentValue(P1[27],P1[28],min));
             led2.set(getCurrentValue(P2[27],P2[28],min));
@@ -2138,14 +1927,6 @@ void loop()
           }
           else if (currentmin >= 40 and currentmin <50)
           {
-            // led1.set(P1[28]);
-            // led2.set(P2[28]);
-            // led3.set(P3[28]);
-            // led4.set(P4[28]);
-            // led5.set(P5[28]);
-            // led6.set(P6[28]);
-            // led7.set(P7[28]);
-            // led8.set(P8[28]);
             int min = currentmin - 40;            
             led1.set(getCurrentValue(P1[28],P1[29],min));
             led2.set(getCurrentValue(P2[28],P2[29],min));
@@ -2158,14 +1939,6 @@ void loop()
           }
           else if (currentmin >= 50)
           {
-            // led1.set(P1[29]);
-            // led2.set(P2[29]);
-            // led3.set(P3[29]);
-            // led4.set(P4[29]);
-            // led5.set(P5[29]);
-            // led6.set(P6[29]);
-            // led7.set(P7[29]);
-            // led8.set(P8[29]);
             int min = currentmin - 50;            
             led1.set(getCurrentValue(P1[29],P1[30],min));
             led2.set(getCurrentValue(P2[29],P2[30],min));
@@ -2181,14 +1954,6 @@ void loop()
         {
           if (currentmin < 10)
           {
-            // led1.set(P1[30]);
-            // led2.set(P2[30]);
-            // led3.set(P3[30]);
-            // led4.set(P4[30]);
-            // led5.set(P5[30]);
-            // led6.set(P6[30]);
-            // led7.set(P7[30]);
-            // led8.set(P8[30]);
             int min = currentmin;            
             led1.set(getCurrentValue(P1[30],P1[31],min));
             led2.set(getCurrentValue(P2[30],P2[31],min));
@@ -2201,14 +1966,6 @@ void loop()
           }
           else if (currentmin >= 10 and currentmin <20)
           {
-            // led1.set(P1[31]);
-            // led2.set(P2[31]);
-            // led3.set(P3[31]);
-            // led4.set(P4[31]);
-            // led5.set(P5[31]);
-            // led6.set(P6[31]);
-            // led7.set(P7[31]);
-            // led8.set(P8[31]);
             int min = currentmin - 10;             
             led1.set(getCurrentValue(P1[31],P1[32],min));
             led2.set(getCurrentValue(P2[31],P2[32],min));
@@ -2221,14 +1978,6 @@ void loop()
           }
           else if (currentmin >= 20 and currentmin <30)
           {
-            // led1.set(P1[32]);
-            // led2.set(P2[32]);
-            // led3.set(P3[32]);
-            // led4.set(P4[32]);
-            // led5.set(P5[32]);
-            // led6.set(P6[32]);
-            // led7.set(P7[32]);
-            // led8.set(P8[32]);
             int min = currentmin - 20;             
             led1.set(getCurrentValue(P1[32],P1[33],min));
             led2.set(getCurrentValue(P2[32],P2[33],min));
@@ -2241,14 +1990,6 @@ void loop()
           }
           else if (currentmin >= 30 and currentmin <40)
           {
-            // led1.set(P1[33]);
-            // led2.set(P2[33]);
-            // led3.set(P3[33]);
-            // led4.set(P4[33]);
-            // led5.set(P5[33]);
-            // led6.set(P6[33]);
-            // led7.set(P7[33]);
-            // led8.set(P8[33]);
             int min = currentmin - 30;             
             led1.set(getCurrentValue(P1[33],P1[34],min));
             led2.set(getCurrentValue(P2[33],P2[34],min));
@@ -2261,14 +2002,6 @@ void loop()
           }
           else if (currentmin >= 40 and currentmin <50)
           {
-            // led1.set(P1[34]);
-            // led2.set(P2[34]);
-            // led3.set(P3[34]);
-            // led4.set(P4[34]);
-            // led5.set(P5[34]);
-            // led6.set(P6[34]);
-            // led7.set(P7[34]);
-            // led8.set(P8[34]);
             int min = currentmin - 40;             
             led1.set(getCurrentValue(P1[34],P1[35],min));
             led2.set(getCurrentValue(P2[34],P2[35],min));
@@ -2281,14 +2014,6 @@ void loop()
           }
           else if (currentmin >= 50)
           {
-            // led1.set(P1[35]);
-            // led2.set(P2[35]);
-            // led3.set(P3[35]);
-            // led4.set(P4[35]);
-            // led5.set(P5[35]);
-            // led6.set(P6[35]);
-            // led7.set(P7[35]);
-            // led8.set(P8[35]);
             int min = currentmin - 50;             
             led1.set(getCurrentValue(P1[35],P1[36],min));
             led2.set(getCurrentValue(P2[35],P2[36],min));
@@ -2304,14 +2029,6 @@ void loop()
         {
           if (currentmin < 10)
           {
-            // led1.set(P1[36]);
-            // led2.set(P2[36]);
-            // led3.set(P3[36]);
-            // led4.set(P4[36]);
-            // led5.set(P5[36]);
-            // led6.set(P6[36]);
-            // led7.set(P7[36]);
-            // led8.set(P8[36]);
             int min = currentmin;             
             led1.set(getCurrentValue(P1[36],P1[37],min));
             led2.set(getCurrentValue(P2[36],P2[37],min));
@@ -2324,14 +2041,6 @@ void loop()
           }
           else if (currentmin >= 10 and currentmin <20)
           {
-            // led1.set(P1[37]);
-            // led2.set(P2[37]);
-            // led3.set(P3[37]);
-            // led4.set(P4[37]);
-            // led5.set(P5[37]);
-            // led6.set(P6[37]);
-            // led7.set(P7[37]);
-            // led8.set(P8[37]);
             int min = currentmin - 10 ;             
             led1.set(getCurrentValue(P1[37],P1[38],min));
             led2.set(getCurrentValue(P2[37],P2[38],min));
@@ -2344,14 +2053,6 @@ void loop()
           }
           else if (currentmin >= 20 and currentmin <30)
           {
-            // led1.set(P1[38]);
-            // led2.set(P2[38]);
-            // led3.set(P3[38]);
-            // led4.set(P4[38]);
-            // led5.set(P5[38]);
-            // led6.set(P6[38]);
-            // led7.set(P7[38]);
-            // led8.set(P8[38]);
             int min = currentmin - 20 ;             
             led1.set(getCurrentValue(P1[38],P1[39],min));
             led2.set(getCurrentValue(P2[38],P2[39],min));
@@ -2364,14 +2065,6 @@ void loop()
           }
           else if (currentmin >= 30 and currentmin < 40)
           {
-            // led1.set(P1[39]);
-            // led2.set(P2[39]);
-            // led3.set(P3[39]);
-            // led4.set(P4[39]);
-            // led5.set(P5[39]);
-            // led6.set(P6[39]);
-            // led7.set(P7[39]);
-            // led8.set(P8[39]);
             int min = currentmin - 30 ;             
             led1.set(getCurrentValue(P1[39],P1[40],min));
             led2.set(getCurrentValue(P2[39],P2[40],min));
@@ -2384,14 +2077,6 @@ void loop()
           }
           else if (currentmin >= 40 and currentmin < 50)
           {
-            // led1.set(P1[40]);
-            // led2.set(P2[40]);
-            // led3.set(P3[40]);
-            // led4.set(P4[40]);
-            // led5.set(P5[40]);
-            // led6.set(P6[40]);
-            // led7.set(P7[40]);
-            // led8.set(P8[40]);
             int min = currentmin - 40 ;             
             led1.set(getCurrentValue(P1[40],P1[41],min));
             led2.set(getCurrentValue(P2[40],P2[41],min));
@@ -2404,14 +2089,6 @@ void loop()
           }
           else if (currentmin >= 50)
           {
-            // led1.set(P1[41]);
-            // led2.set(P2[41]);
-            // led3.set(P3[41]);
-            // led4.set(P4[41]);
-            // led5.set(P5[41]);
-            // led6.set(P6[41]);
-            // led7.set(P7[41]);
-            // led8.set(P8[41]);
             int min = currentmin - 50 ;             
             led1.set(getCurrentValue(P1[41],P1[42],min));
             led2.set(getCurrentValue(P2[41],P2[42],min));
@@ -2427,14 +2104,6 @@ void loop()
         {
           if (currentmin < 10)
           {
-            // led1.set(P1[42]);
-            // led2.set(P2[42]);
-            // led3.set(P3[42]);
-            // led4.set(P4[42]);
-            // led5.set(P5[42]);
-            // led6.set(P6[42]);
-            // led7.set(P7[42]);
-            // led8.set(P8[42]);
             int min = currentmin ;             
             led1.set(getCurrentValue(P1[42],P1[43],min));
             led2.set(getCurrentValue(P2[42],P2[43],min));
@@ -2447,14 +2116,6 @@ void loop()
           }
           else if (currentmin >= 10 and currentmin < 20)
           {
-            // led1.set(P1[43]);
-            // led2.set(P2[43]);
-            // led3.set(P3[43]);
-            // led4.set(P4[43]);
-            // led5.set(P5[43]);
-            // led6.set(P6[43]);
-            // led7.set(P7[43]);
-            // led8.set(P8[43]);
             int min = currentmin - 10;             
             led1.set(getCurrentValue(P1[43],P1[44],min));
             led2.set(getCurrentValue(P2[43],P2[44],min));
@@ -2467,14 +2128,6 @@ void loop()
           }
           else if (currentmin >= 20 and currentmin < 30)
           {
-            // led1.set(P1[44]);
-            // led2.set(P2[44]);
-            // led3.set(P3[44]);
-            // led4.set(P4[44]);
-            // led5.set(P5[44]);
-            // led6.set(P6[44]);
-            // led7.set(P7[44]);
-            // led8.set(P8[44]);
             int min = currentmin - 20;             
             led1.set(getCurrentValue(P1[44],P1[45],min));
             led2.set(getCurrentValue(P2[44],P2[45],min));
@@ -2487,14 +2140,6 @@ void loop()
           }
           else if (currentmin >= 30 and currentmin < 40)
           {
-            // led1.set(P1[45]);
-            // led2.set(P2[45]);
-            // led3.set(P3[45]);
-            // led4.set(P4[45]);
-            // led5.set(P5[45]);
-            // led6.set(P6[45]);
-            // led7.set(P7[45]);
-            // led8.set(P8[45]);
             int min = currentmin - 30;             
             led1.set(getCurrentValue(P1[45],P1[46],min));
             led2.set(getCurrentValue(P2[45],P2[46],min));
@@ -2507,14 +2152,6 @@ void loop()
           }
           else if (currentmin >= 40 and currentmin < 50)
           {
-            // led1.set(P1[46]);
-            // led2.set(P2[46]);
-            // led3.set(P3[46]);
-            // led4.set(P4[46]);
-            // led5.set(P5[46]);
-            // led6.set(P6[46]);
-            // led7.set(P7[46]);
-            // led8.set(P8[46]);
             int min = currentmin - 40;             
             led1.set(getCurrentValue(P1[46],P1[47],min));
             led2.set(getCurrentValue(P2[46],P2[47],min));
@@ -2527,14 +2164,6 @@ void loop()
           }
           else if (currentmin >= 50)
           {
-            // led1.set(P1[47]);
-            // led2.set(P2[47]);
-            // led3.set(P3[47]);
-            // led4.set(P4[47]);
-            // led5.set(P5[47]);
-            // led6.set(P6[47]);
-            // led7.set(P7[47]);
-            // led8.set(P8[47]);
             int min = currentmin - 50;             
             led1.set(getCurrentValue(P1[47],P1[48],min));
             led2.set(getCurrentValue(P2[47],P2[48],min));
@@ -2550,14 +2179,6 @@ void loop()
         {
           if (currentmin < 10)
           {
-            // led1.set(P1[48]);
-            // led2.set(P2[48]);
-            // led3.set(P3[48]);
-            // led4.set(P4[48]);
-            // led5.set(P5[48]);
-            // led6.set(P6[48]);
-            // led7.set(P7[48]);
-            // led8.set(P8[48]);
             int min = currentmin;             
             led1.set(getCurrentValue(P1[48],P1[49],min));
             led2.set(getCurrentValue(P2[48],P2[49],min));
@@ -2570,14 +2191,6 @@ void loop()
           }
           else if (currentmin >= 10 and currentmin < 20)
           {
-            // led1.set(P1[49]);
-            // led2.set(P2[49]);
-            // led3.set(P3[49]);
-            // led4.set(P4[49]);
-            // led5.set(P5[49]);
-            // led6.set(P6[49]);
-            // led7.set(P7[49]);
-            // led8.set(P8[49]);
             int min = currentmin - 10;             
             led1.set(getCurrentValue(P1[49],P1[50],min));
             led2.set(getCurrentValue(P2[49],P2[50],min));
@@ -2590,14 +2203,6 @@ void loop()
           }
           else if (currentmin >= 20 and currentmin < 30)
           {
-            // led1.set(P1[50]);
-            // led2.set(P2[50]);
-            // led3.set(P3[50]);
-            // led4.set(P4[50]);
-            // led5.set(P5[50]);
-            // led6.set(P6[50]);
-            // led7.set(P7[50]);
-            // led8.set(P8[50]);
             int min = currentmin - 20;             
             led1.set(getCurrentValue(P1[50],P1[51],min));
             led2.set(getCurrentValue(P2[50],P2[51],min));
@@ -2610,14 +2215,6 @@ void loop()
           }
           else if (currentmin >= 30 and currentmin < 40)
           {
-            // led1.set(P1[51]);
-            // led2.set(P2[51]);
-            // led3.set(P3[51]);
-            // led4.set(P4[51]);
-            // led5.set(P5[51]);
-            // led6.set(P6[51]);
-            // led7.set(P7[51]);
-            // led8.set(P8[51]);
             int min = currentmin - 30;             
             led1.set(getCurrentValue(P1[51],P1[52],min));
             led2.set(getCurrentValue(P2[51],P2[52],min));
@@ -2630,14 +2227,6 @@ void loop()
           }
           else if (currentmin >= 40 and currentmin < 50)
           {
-            // led1.set(P1[52]);
-            // led2.set(P2[52]);
-            // led3.set(P3[52]);
-            // led4.set(P4[52]);
-            // led5.set(P5[52]);
-            // led6.set(P6[52]);
-            // led7.set(P7[52]);
-            // led8.set(P8[52]);
             int min = currentmin - 40;             
             led1.set(getCurrentValue(P1[52],P1[53],min));
             led2.set(getCurrentValue(P2[52],P2[53],min));
@@ -2650,14 +2239,6 @@ void loop()
           }
           else if (currentmin >= 50)
           {
-            // led1.set(P1[53]);
-            // led2.set(P2[53]);
-            // led3.set(P3[53]);
-            // led4.set(P4[53]);
-            // led5.set(P5[53]);
-            // led6.set(P6[53]);
-            // led7.set(P7[53]);
-            // led8.set(P8[53]);
             int min = currentmin - 50;             
             led1.set(getCurrentValue(P1[53],P1[54],min));
             led2.set(getCurrentValue(P2[53],P2[54],min));
@@ -2673,14 +2254,6 @@ void loop()
         {
           if (currentmin < 10)
           {
-            // led1.set(P1[54]);
-            // led2.set(P2[54]);
-            // led3.set(P3[54]);
-            // led4.set(P4[54]);
-            // led5.set(P5[54]);
-            // led6.set(P6[54]);
-            // led7.set(P7[54]);
-            // led8.set(P8[54]);
             int min = currentmin;             
             led1.set(getCurrentValue(P1[54],P1[55],min));
             led2.set(getCurrentValue(P2[54],P2[55],min));
@@ -2693,14 +2266,6 @@ void loop()
           }
           else if (currentmin >= 10 and currentmin < 20)
           {
-            // led1.set(P1[55]);
-            // led2.set(P2[55]);
-            // led3.set(P3[55]);
-            // led4.set(P4[55]);
-            // led5.set(P5[55]);
-            // led6.set(P6[55]);
-            // led7.set(P7[55]);
-            // led8.set(P8[55]);
             int min = currentmin - 10;             
             led1.set(getCurrentValue(P1[55],P1[56],min));
             led2.set(getCurrentValue(P2[55],P2[56],min));
@@ -2713,14 +2278,6 @@ void loop()
           }
           else if (currentmin >= 20 and currentmin <30)
           {
-            // led1.set(P1[56]);
-            // led2.set(P2[56]);
-            // led3.set(P3[56]);
-            // led4.set(P4[56]);
-            // led5.set(P5[56]);
-            // led6.set(P6[56]);
-            // led7.set(P7[56]);
-            // led8.set(P8[56]);
             int min = currentmin - 20;             
             led1.set(getCurrentValue(P1[56],P1[57],min));
             led2.set(getCurrentValue(P2[56],P2[57],min));
@@ -2733,14 +2290,6 @@ void loop()
           }
           else if (currentmin >= 30 and currentmin < 40)
           {
-            // led1.set(P1[57]);
-            // led2.set(P2[57]);
-            // led3.set(P3[57]);
-            // led4.set(P4[57]);
-            // led5.set(P5[57]);
-            // led6.set(P6[57]);
-            // led7.set(P7[57]);
-            // led8.set(P8[57]);
             int min = currentmin - 30;             
             led1.set(getCurrentValue(P1[57],P1[58],min));
             led2.set(getCurrentValue(P2[57],P2[58],min));
@@ -2753,14 +2302,6 @@ void loop()
           }
           else if (currentmin >= 40 and currentmin < 50)
           {
-            // led1.set(P1[58]);
-            // led2.set(P2[58]);
-            // led3.set(P3[58]);
-            // led4.set(P4[58]);
-            // led5.set(P5[58]);
-            // led6.set(P6[58]);
-            // led7.set(P7[58]);
-            // led8.set(P8[58]);
             int min = currentmin - 40;             
             led1.set(getCurrentValue(P1[58],P1[59],min));
             led2.set(getCurrentValue(P2[58],P2[59],min));
@@ -2773,13 +2314,6 @@ void loop()
           }
           else if (currentmin >= 50)
           {
-            // led1.set(P1[59]);
-            // led2.set(P2[59]);
-            // led3.set(P3[59]);
-            // led4.set(P4[59]);
-            // led5.set(P5[59]);
-            // led6.set(P6[59]);
-            // led7.set(P7[59]);
             int min = currentmin - 50;             
             led1.set(getCurrentValue(P1[59],P1[60],min));
             led2.set(getCurrentValue(P2[59],P2[60],min));
@@ -2795,14 +2329,6 @@ void loop()
         {
           if (currentmin < 10)
           {
-            // led1.set(P1[60]);
-            // led2.set(P2[60]);
-            // led3.set(P3[60]);
-            // led4.set(P4[60]);
-            // led5.set(P5[60]);
-            // led6.set(P6[60]);
-            // led7.set(P7[60]);
-            // led8.set(P8[60]);
             int min = currentmin;             
             led1.set(getCurrentValue(P1[60],P1[61],min));
             led2.set(getCurrentValue(P2[60],P2[61],min));
@@ -2815,14 +2341,6 @@ void loop()
           }
           else if (currentmin >= 10 and currentmin < 20)
           {
-            // led1.set(P1[61]);
-            // led2.set(P2[61]);
-            // led3.set(P3[61]);
-            // led4.set(P4[61]);
-            // led5.set(P5[61]);
-            // led6.set(P6[61]);
-            // led7.set(P7[61]);
-            // led8.set(P8[61]);
             int min = currentmin - 10;             
             led1.set(getCurrentValue(P1[61],P1[62],min));
             led2.set(getCurrentValue(P2[61],P2[62],min));
@@ -2835,14 +2353,6 @@ void loop()
           }
           else if (currentmin >= 20 and currentmin < 30)
           {
-            // led1.set(P1[62]);
-            // led2.set(P2[62]);
-            // led3.set(P3[62]);
-            // led4.set(P4[62]);
-            // led5.set(P5[62]);
-            // led6.set(P6[62]);
-            // led7.set(P7[62]);
-            // led8.set(P8[62]);
             int min = currentmin - 20;             
             led1.set(getCurrentValue(P1[62],P1[63],min));
             led2.set(getCurrentValue(P2[62],P2[63],min));
@@ -2855,14 +2365,6 @@ void loop()
           }
           else if (currentmin >= 30 and currentmin < 40)
           {
-            // led1.set(P1[63]);
-            // led2.set(P2[63]);
-            // led3.set(P3[63]);
-            // led4.set(P4[63]);
-            // led5.set(P5[63]);
-            // led6.set(P6[63]);
-            // led7.set(P7[63]);
-            // led8.set(P8[63]);
             int min = currentmin - 30;             
             led1.set(getCurrentValue(P1[63],P1[64],min));
             led2.set(getCurrentValue(P2[63],P2[64],min));
@@ -2875,14 +2377,6 @@ void loop()
           }
           else if (currentmin >= 40 and currentmin < 50)
           {
-            // led1.set(P1[64]);
-            // led2.set(P2[64]);
-            // led3.set(P3[64]);
-            // led4.set(P4[64]);
-            // led5.set(P5[64]);
-            // led6.set(P6[64]);
-            // led7.set(P7[64]);
-            // led8.set(P8[64]);
             int min = currentmin - 40;             
             led1.set(getCurrentValue(P1[64],P1[65],min));
             led2.set(getCurrentValue(P2[64],P2[65],min));
@@ -2895,14 +2389,6 @@ void loop()
           }
           else if (currentmin >= 50)
           {
-            // led1.set(P1[65]);
-            // led2.set(P2[65]);
-            // led3.set(P3[65]);
-            // led4.set(P4[65]);
-            // led5.set(P5[65]);
-            // led6.set(P6[65]);
-            // led7.set(P7[65]);
-            // led8.set(P8[65]);
             int min = currentmin - 50;             
             led1.set(getCurrentValue(P1[65],P1[66],min));
             led2.set(getCurrentValue(P2[65],P2[66],min));
@@ -2918,14 +2404,6 @@ void loop()
         {
           if (currentmin < 10)
           {
-            // led1.set(P1[66]);
-            // led2.set(P2[66]);
-            // led3.set(P3[66]);
-            // led4.set(P4[66]);
-            // led5.set(P5[66]);
-            // led6.set(P6[66]);
-            // led7.set(P7[66]);
-            // led8.set(P8[66]);
             int min = currentmin;             
             led1.set(getCurrentValue(P1[66],P1[67],min));
             led2.set(getCurrentValue(P2[66],P2[67],min));
@@ -2938,14 +2416,6 @@ void loop()
           }
           else if (currentmin >= 10 and currentmin < 20)
           {
-            // led1.set(P1[67]);
-            // led2.set(P2[67]);
-            // led3.set(P3[67]);
-            // led4.set(P4[67]);
-            // led5.set(P5[67]);
-            // led6.set(P6[67]);
-            // led7.set(P7[67]);
-            // led8.set(P8[67]);
             int min = currentmin - 10;             
             led1.set(getCurrentValue(P1[67],P1[68],min));
             led2.set(getCurrentValue(P2[67],P2[68],min));
@@ -2958,14 +2428,6 @@ void loop()
           }
           else if (currentmin >= 20 and currentmin < 30)
           {
-            // led1.set(P1[68]);
-            // led2.set(P2[68]);
-            // led3.set(P3[68]);
-            // led4.set(P4[68]);
-            // led5.set(P5[68]);
-            // led6.set(P6[68]);
-            // led7.set(P7[68]);
-            // led8.set(P8[68]);
             int min = currentmin - 20;             
             led1.set(getCurrentValue(P1[68],P1[69],min));
             led2.set(getCurrentValue(P2[68],P2[69],min));
@@ -2978,14 +2440,6 @@ void loop()
           }
           else if (currentmin >= 30 and currentmin < 40)
           {
-            // led1.set(P1[69]);
-            // led2.set(P2[69]);
-            // led3.set(P3[69]);
-            // led4.set(P4[69]);
-            // led5.set(P5[69]);
-            // led6.set(P6[69]);
-            // led7.set(P7[69]);
-            // led8.set(P8[69]);
             int min = currentmin - 30;             
             led1.set(getCurrentValue(P1[69],P1[70],min));
             led2.set(getCurrentValue(P2[69],P2[70],min));
@@ -2998,14 +2452,6 @@ void loop()
           }
           else if (currentmin >= 40 and currentmin < 50)
           {
-            // led1.set(P1[70]);
-            // led2.set(P2[70]);
-            // led3.set(P3[70]);
-            // led4.set(P4[70]);
-            // led5.set(P5[70]);
-            // led6.set(P6[70]);
-            // led7.set(P7[70]);
-            // led8.set(P8[70]);
             int min = currentmin - 40;             
             led1.set(getCurrentValue(P1[70],P1[71],min));
             led2.set(getCurrentValue(P2[70],P2[71],min));
@@ -3018,14 +2464,6 @@ void loop()
           }
           else if (currentmin >= 50)
           {
-            // led1.set(P1[71]);
-            // led2.set(P2[71]);
-            // led3.set(P3[71]);
-            // led4.set(P4[71]);
-            // led5.set(P5[71]);
-            // led6.set(P6[71]);
-            // led7.set(P7[71]);
-            // led8.set(P8[71]);
             int min = currentmin - 50;             
             led1.set(getCurrentValue(P1[71],P1[72],min));
             led2.set(getCurrentValue(P2[71],P2[72],min));
@@ -3041,14 +2479,6 @@ void loop()
         {
           if (currentmin < 10)
           {
-            // led1.set(P1[72]);
-            // led2.set(P2[72]);
-            // led3.set(P3[72]);
-            // led4.set(P4[72]);
-            // led5.set(P5[72]);
-            // led6.set(P6[72]);
-            // led7.set(P7[72]);
-            // led8.set(P8[72]);
             int min = currentmin;             
             led1.set(getCurrentValue(P1[72],P1[73],min));
             led2.set(getCurrentValue(P2[72],P2[73],min));
@@ -3061,14 +2491,6 @@ void loop()
           }
           else if (currentmin >= 10 and currentmin < 20)
           {
-            // led1.set(P1[73]);
-            // led2.set(P2[73]);
-            // led3.set(P3[73]);
-            // led4.set(P4[73]);
-            // led5.set(P5[73]);
-            // led6.set(P6[73]);
-            // led7.set(P7[73]);
-            // led8.set(P8[73]);
             int min = currentmin - 10;             
             led1.set(getCurrentValue(P1[73],P1[74],min));
             led2.set(getCurrentValue(P2[73],P2[74],min));
@@ -3081,14 +2503,6 @@ void loop()
           }
           else if (currentmin >= 20 and currentmin < 30)
           {
-            // led1.set(P1[74]);
-            // led2.set(P2[74]);
-            // led3.set(P3[74]);
-            // led4.set(P4[74]);
-            // led5.set(P5[74]);
-            // led6.set(P6[74]);
-            // led7.set(P7[74]);
-            // led8.set(P8[74]);
             int min = currentmin - 20;             
             led1.set(getCurrentValue(P1[74],P1[75],min));
             led2.set(getCurrentValue(P2[74],P2[75],min));
@@ -3101,14 +2515,6 @@ void loop()
           }
           else if (currentmin >= 30 and currentmin < 40)
           {
-            // led1.set(P1[75]);
-            // led2.set(P2[75]);
-            // led3.set(P3[75]);
-            // led4.set(P4[75]);
-            // led5.set(P5[75]);
-            // led6.set(P6[75]);
-            // led7.set(P7[75]);
-            // led8.set(P8[75]);
             int min = currentmin - 30;             
             led1.set(getCurrentValue(P1[75],P1[76],min));
             led2.set(getCurrentValue(P2[75],P2[76],min));
@@ -3121,14 +2527,6 @@ void loop()
           }
           else if (currentmin >= 40 and currentmin < 50)
           {
-            // led1.set(P1[76]);
-            // led2.set(P2[76]);
-            // led3.set(P3[76]);
-            // led4.set(P4[76]);
-            // led5.set(P5[76]);
-            // led6.set(P6[76]);
-            // led7.set(P7[76]);
-            // led8.set(P8[76]);
             int min = currentmin - 40;             
             led1.set(getCurrentValue(P1[76],P1[77],min));
             led2.set(getCurrentValue(P2[76],P2[77],min));
@@ -3141,14 +2539,6 @@ void loop()
           }
           else if (currentmin >= 50)
           {
-            // led1.set(P1[77]);
-            // led2.set(P2[77]);
-            // led3.set(P3[77]);
-            // led4.set(P4[77]);
-            // led5.set(P5[77]);
-            // led6.set(P6[77]);
-            // led7.set(P7[77]);
-            // led8.set(P8[77]);
             int min = currentmin - 50;             
             led1.set(getCurrentValue(P1[77],P1[78],min));
             led2.set(getCurrentValue(P2[77],P2[78],min));
@@ -3164,14 +2554,6 @@ void loop()
         {
           if (currentmin < 10)
           {
-            // led1.set(P1[78]);
-            // led2.set(P2[78]);
-            // led3.set(P3[78]);
-            // led4.set(P4[78]);
-            // led5.set(P5[78]);
-            // led6.set(P6[78]);
-            // led7.set(P7[78]);
-            // led8.set(P8[78]);
             int min = currentmin;             
             led1.set(getCurrentValue(P1[78],P1[79],min));
             led2.set(getCurrentValue(P2[78],P2[79],min));
@@ -3184,14 +2566,6 @@ void loop()
           }
           else if (currentmin >= 10 and currentmin < 20)
           {
-            // led1.set(P1[79]);
-            // led2.set(P2[79]);
-            // led3.set(P3[79]);
-            // led4.set(P4[79]);
-            // led5.set(P5[79]);
-            // led6.set(P6[79]);
-            // led7.set(P7[79]);
-            // led8.set(P8[79]);
             int min = currentmin - 10;             
             led1.set(getCurrentValue(P1[79],P1[80],min));
             led2.set(getCurrentValue(P2[79],P2[80],min));
@@ -3204,14 +2578,6 @@ void loop()
           }
           else if (currentmin >= 20 and currentmin < 30)
           {
-            // led1.set(P1[80]);
-            // led2.set(P2[80]);
-            // led3.set(P3[80]);
-            // led4.set(P4[80]);
-            // led5.set(P5[80]);
-            // led6.set(P6[80]);
-            // led7.set(P7[80]);
-            // led8.set(P8[80]);
             int min = currentmin - 20;             
             led1.set(getCurrentValue(P1[80],P1[81],min));
             led2.set(getCurrentValue(P2[80],P2[81],min));
@@ -3224,14 +2590,6 @@ void loop()
           }
           else if (currentmin >= 30 and currentmin < 40)
           {
-            // led1.set(P1[81]);
-            // led2.set(P2[81]);
-            // led3.set(P3[81]);
-            // led4.set(P4[81]);
-            // led5.set(P5[81]);
-            // led6.set(P6[81]);
-            // led7.set(P7[81]);
-            // led8.set(P8[81]);
             int min = currentmin - 30;             
             led1.set(getCurrentValue(P1[81],P1[82],min));
             led2.set(getCurrentValue(P2[81],P2[82],min));
@@ -3244,14 +2602,6 @@ void loop()
           }
           else if (currentmin >= 40 and currentmin < 50)
           {
-            // led1.set(P1[82]);
-            // led2.set(P2[82]);
-            // led3.set(P3[82]);
-            // led4.set(P4[82]);
-            // led5.set(P5[82]);
-            // led6.set(P6[82]);
-            // led7.set(P7[82]);
-            // led8.set(P8[82]);
             int min = currentmin - 40;             
             led1.set(getCurrentValue(P1[82],P1[83],min));
             led2.set(getCurrentValue(P2[82],P2[83],min));
@@ -3264,14 +2614,6 @@ void loop()
           }
           else if (currentmin >= 50)
           {
-            // led1.set(P1[83]);
-            // led2.set(P2[83]);
-            // led3.set(P3[83]);
-            // led4.set(P4[83]);
-            // led5.set(P5[83]);
-            // led6.set(P6[83]);
-            // led7.set(P7[83]);
-            // led8.set(P8[83]);
             int min = currentmin - 50;             
             led1.set(getCurrentValue(P1[83],P1[84],min));
             led2.set(getCurrentValue(P2[83],P2[84],min));
@@ -3287,14 +2629,6 @@ void loop()
         {
           if (currentmin < 10)
           {
-            // led1.set(P1[84]);
-            // led2.set(P2[84]);
-            // led3.set(P3[84]);
-            // led4.set(P4[84]);
-            // led5.set(P5[84]);
-            // led6.set(P6[84]);
-            // led7.set(P7[84]);
-            // led8.set(P8[84]);
             int min = currentmin;             
             led1.set(getCurrentValue(P1[84],P1[85],min));
             led2.set(getCurrentValue(P2[84],P2[85],min));
@@ -3307,14 +2641,6 @@ void loop()
           }
           else if (currentmin >= 10 and currentmin < 20)
           {
-            // led1.set(P1[85]);
-            // led2.set(P2[85]);
-            // led3.set(P3[85]);
-            // led4.set(P4[85]);
-            // led5.set(P5[85]);
-            // led6.set(P6[85]);
-            // led7.set(P7[85]);
-            // led8.set(P8[85]);
             int min = currentmin - 10;             
             led1.set(getCurrentValue(P1[85],P1[86],min));
             led2.set(getCurrentValue(P2[85],P2[86],min));
@@ -3327,14 +2653,6 @@ void loop()
           }
           else if (currentmin >= 20 and currentmin < 30)
           {
-            // led1.set(P1[86]);
-            // led2.set(P2[86]);
-            // led3.set(P3[86]);
-            // led4.set(P4[86]);
-            // led5.set(P5[86]);
-            // led6.set(P6[86]);
-            // led7.set(P7[86]);
-            // led8.set(P8[86]);
             int min = currentmin - 20;             
             led1.set(getCurrentValue(P1[86],P1[87],min));
             led2.set(getCurrentValue(P2[86],P2[87],min));
@@ -3347,14 +2665,6 @@ void loop()
           }
           else if (currentmin >= 30 and currentmin < 40)
           {
-            // led1.set(P1[87]);
-            // led2.set(P2[87]);
-            // led3.set(P3[87]);
-            // led4.set(P4[87]);
-            // led5.set(P5[87]);
-            // led6.set(P6[87]);
-            // led7.set(P7[87]);
-            // led8.set(P8[87]);
             int min = currentmin - 30;             
             led1.set(getCurrentValue(P1[87],P1[88],min));
             led2.set(getCurrentValue(P2[87],P2[88],min));
@@ -3367,14 +2677,6 @@ void loop()
           }
           else if (currentmin >= 40 and currentmin < 50)
           {
-            // led1.set(P1[88]);
-            // led2.set(P2[88]);
-            // led3.set(P3[88]);
-            // led4.set(P4[88]);
-            // led5.set(P5[88]);
-            // led6.set(P6[88]);
-            // led7.set(P7[88]);
-            // led8.set(P8[88]);
             int min = currentmin - 40;             
             led1.set(getCurrentValue(P1[88],P1[89],min));
             led2.set(getCurrentValue(P2[88],P2[89],min));
@@ -3387,14 +2689,6 @@ void loop()
           }
           else if (currentmin >= 50)
           {
-            // led1.set(P1[89]);
-            // led2.set(P2[89]);
-            // led3.set(P3[89]);
-            // led4.set(P4[89]);
-            // led5.set(P5[89]);
-            // led6.set(P6[89]);
-            // led7.set(P7[89]);
-            // led8.set(P8[89]);
             int min = currentmin - 50;             
             led1.set(getCurrentValue(P1[89],P1[90],min));
             led2.set(getCurrentValue(P2[89],P2[90],min));
@@ -3410,14 +2704,6 @@ void loop()
         {
           if (currentmin < 10)
           {
-            // led1.set(P1[90]);
-            // led2.set(P2[90]);
-            // led3.set(P3[90]);
-            // led4.set(P4[90]);
-            // led5.set(P5[90]);
-            // led6.set(P6[90]);
-            // led7.set(P7[90]);
-            // led8.set(P8[90]);
             int min = currentmin;             
             led1.set(getCurrentValue(P1[90],P1[91],min));
             led2.set(getCurrentValue(P2[90],P2[91],min));
@@ -3430,14 +2716,6 @@ void loop()
           }
           else if (currentmin >= 10 and currentmin < 20)
           {
-            // led1.set(P1[91]);
-            // led2.set(P2[91]);
-            // led3.set(P3[91]);
-            // led4.set(P4[91]);
-            // led5.set(P5[91]);
-            // led6.set(P6[91]);
-            // led7.set(P7[91]);
-            // led8.set(P8[91]);
             int min = currentmin - 10;             
             led1.set(getCurrentValue(P1[91],P1[92],min));
             led2.set(getCurrentValue(P2[91],P2[92],min));
@@ -3450,14 +2728,6 @@ void loop()
           }
           else if (currentmin >= 20 and currentmin < 30)
           {
-            // led1.set(P1[92]);
-            // led2.set(P2[92]);
-            // led3.set(P3[92]);
-            // led4.set(P4[92]);
-            // led5.set(P5[92]);
-            // led6.set(P6[92]);
-            // led7.set(P7[92]);
-            // led8.set(P8[92]);
             int min = currentmin - 20;             
             led1.set(getCurrentValue(P1[92],P1[93],min));
             led2.set(getCurrentValue(P2[92],P2[93],min));
@@ -3470,14 +2740,6 @@ void loop()
           }
           else if (currentmin >= 30 and currentmin < 40)
           {
-            // led1.set(P1[93]);
-            // led2.set(P2[93]);
-            // led3.set(P3[93]);
-            // led4.set(P4[93]);
-            // led5.set(P5[93]);
-            // led6.set(P6[93]);
-            // led7.set(P7[93]);
-            // led8.set(P8[93]);
             int min = currentmin - 30;             
             led1.set(getCurrentValue(P1[93],P1[94],min));
             led2.set(getCurrentValue(P2[93],P2[94],min));
@@ -3490,14 +2752,6 @@ void loop()
           }
           else if (currentmin >= 40 and currentmin < 50)
           {
-            // led1.set(P1[94]);
-            // led2.set(P2[94]);
-            // led3.set(P3[94]);
-            // led4.set(P4[94]);
-            // led5.set(P5[94]);
-            // led6.set(P6[94]);
-            // led7.set(P7[94]);
-            // led8.set(P8[94]);
             int min = currentmin - 40;             
             led1.set(getCurrentValue(P1[94],P1[95],min));
             led2.set(getCurrentValue(P2[94],P2[95],min));
@@ -3510,14 +2764,6 @@ void loop()
           }
           else if (currentmin >= 50)
           {
-            // led1.set(P1[95]);
-            // led2.set(P2[95]);
-            // led3.set(P3[95]);
-            // led4.set(P4[95]);
-            // led5.set(P5[95]);
-            // led6.set(P6[95]);
-            // led7.set(P7[95]);
-            // led8.set(P8[95]);
             int min = currentmin - 50;             
             led1.set(getCurrentValue(P1[95],P1[96],min));
             led2.set(getCurrentValue(P2[95],P2[96],min));
@@ -3533,14 +2779,6 @@ void loop()
         {
           if (currentmin < 10)
           {
-            // led1.set(P1[96]);
-            // led2.set(P2[96]);
-            // led3.set(P3[96]);
-            // led4.set(P4[96]);
-            // led5.set(P5[96]);
-            // led6.set(P6[96]);
-            // led7.set(P7[96]);
-            // led8.set(P8[96]);
             int min = currentmin ;             
             led1.set(getCurrentValue(P1[96],P1[97],min));
             led2.set(getCurrentValue(P2[96],P2[97],min));
@@ -3553,14 +2791,6 @@ void loop()
           }
           else if (currentmin >= 10 and currentmin < 20)
           {
-            // led1.set(P1[97]);
-            // led2.set(P2[97]);
-            // led3.set(P3[97]);
-            // led4.set(P4[97]);
-            // led5.set(P5[97]);
-            // led6.set(P6[97]);
-            // led7.set(P7[97]);
-            // led8.set(P8[97]);
             int min = currentmin - 10 ;             
             led1.set(getCurrentValue(P1[97],P1[98],min));
             led2.set(getCurrentValue(P2[97],P2[98],min));
@@ -3573,14 +2803,6 @@ void loop()
           }
           else if (currentmin >= 20 and currentmin < 30)
           {
-            // led1.set(P1[98]);
-            // led2.set(P2[98]);
-            // led3.set(P3[98]);
-            // led4.set(P4[98]);
-            // led5.set(P5[98]);
-            // led6.set(P6[98]);
-            // led7.set(P7[98]);
-            // led8.set(P8[98]);
             int min = currentmin - 20 ;             
             led1.set(getCurrentValue(P1[98],P1[99],min));
             led2.set(getCurrentValue(P2[98],P2[99],min));
@@ -3593,14 +2815,6 @@ void loop()
           }
           else if (currentmin >= 30 and currentmin < 40)
           {
-            // led1.set(P1[99]);
-            // led2.set(P2[99]);
-            // led3.set(P3[99]);
-            // led4.set(P4[99]);
-            // led5.set(P5[99]);
-            // led6.set(P6[99]);
-            // led7.set(P7[99]);
-            // led8.set(P8[99]);
             int min = currentmin - 30 ;             
             led1.set(getCurrentValue(P1[99],P1[100],min));
             led2.set(getCurrentValue(P2[99],P2[100],min));
@@ -3613,14 +2827,6 @@ void loop()
           }
           else if (currentmin >= 40 and currentmin < 50)
           {
-            // led1.set(P1[100]);
-            // led2.set(P2[100]);
-            // led3.set(P3[100]);
-            // led4.set(P4[100]);
-            // led5.set(P5[100]);
-            // led6.set(P6[100]);
-            // led7.set(P7[100]);
-            // led8.set(P8[100]);
             int min = currentmin - 40 ;             
             led1.set(getCurrentValue(P1[100],P1[101],min));
             led2.set(getCurrentValue(P2[100],P2[101],min));
@@ -3633,14 +2839,6 @@ void loop()
           }
           else if (currentmin >= 50)
           {
-            // led1.set(P1[101]);
-            // led2.set(P2[101]);
-            // led3.set(P3[101]);
-            // led4.set(P4[101]);
-            // led5.set(P5[101]);
-            // led6.set(P6[101]);
-            // led7.set(P7[101]);
-            // led8.set(P8[101]);
             int min = currentmin - 50 ;             
             led1.set(getCurrentValue(P1[101],P1[102],min));
             led2.set(getCurrentValue(P2[101],P2[102],min));
@@ -3656,14 +2854,6 @@ void loop()
         {
           if (currentmin < 10)
           {
-            // led1.set(P1[102]);
-            // led2.set(P2[102]);
-            // led3.set(P3[102]);
-            // led4.set(P4[102]);
-            // led5.set(P5[102]);
-            // led6.set(P6[102]);
-            // led7.set(P7[102]);
-            // led8.set(P8[102]);
             int min = currentmin ;             
             led1.set(getCurrentValue(P1[102],P1[103],min));
             led2.set(getCurrentValue(P2[102],P2[103],min));
@@ -3676,14 +2866,6 @@ void loop()
           }
           else if (currentmin >= 10 and currentmin < 20)
           {
-            // led1.set(P1[103]);
-            // led2.set(P2[103]);
-            // led3.set(P3[103]);
-            // led4.set(P4[103]);
-            // led5.set(P5[103]);
-            // led6.set(P6[103]);
-            // led7.set(P7[103]);
-            // led8.set(P8[103]);
             int min = currentmin - 10;             
             led1.set(getCurrentValue(P1[103],P1[104],min));
             led2.set(getCurrentValue(P2[103],P2[104],min));
@@ -3696,14 +2878,6 @@ void loop()
           }
           else if (currentmin >= 20 and currentmin < 30)
           {
-            // led1.set(P1[104]);
-            // led2.set(P2[104]);
-            // led3.set(P3[104]);
-            // led4.set(P4[104]);
-            // led5.set(P5[104]);
-            // led6.set(P6[104]);
-            // led7.set(P7[104]);
-            // led8.set(P8[104]);
             int min = currentmin - 20;             
             led1.set(getCurrentValue(P1[104],P1[105],min));
             led2.set(getCurrentValue(P2[104],P2[105],min));
@@ -3716,14 +2890,6 @@ void loop()
           }
           else if (currentmin >= 30 and currentmin < 40)
           {
-            // led1.set(P1[105]);
-            // led2.set(P2[105]);
-            // led3.set(P3[105]);
-            // led4.set(P4[105]);
-            // led5.set(P5[105]);
-            // led6.set(P6[105]);
-            // led7.set(P7[105]);
-            // led8.set(P8[105]);
             int min = currentmin - 30;             
             led1.set(getCurrentValue(P1[105],P1[106],min));
             led2.set(getCurrentValue(P2[105],P2[106],min));
@@ -3736,14 +2902,6 @@ void loop()
           }
           else if (currentmin >= 40 and currentmin < 50)
           {
-            // led1.set(P1[106]);
-            // led2.set(P2[106]);
-            // led3.set(P3[106]);
-            // led4.set(P4[106]);
-            // led5.set(P5[106]);
-            // led6.set(P6[106]);
-            // led7.set(P7[106]);
-            // led8.set(P8[106]);
             int min = currentmin - 40;             
             led1.set(getCurrentValue(P1[106],P1[107],min));
             led2.set(getCurrentValue(P2[106],P2[107],min));
@@ -3756,14 +2914,6 @@ void loop()
           }
           else if (currentmin >= 50)
           {
-            // led1.set(P1[107]);
-            // led2.set(P2[107]);
-            // led3.set(P3[107]);
-            // led4.set(P4[107]);
-            // led5.set(P5[107]);
-            // led6.set(P6[107]);
-            // led7.set(P7[107]);
-            // led8.set(P8[107]);
             int min = currentmin - 50;             
             led1.set(getCurrentValue(P1[107],P1[108],min));
             led2.set(getCurrentValue(P2[107],P2[108],min));
@@ -3779,14 +2929,6 @@ void loop()
         {
           if (currentmin < 10)
           {
-            // led1.set(P1[108]);
-            // led2.set(P2[108]);
-            // led3.set(P3[108]);
-            // led4.set(P4[108]);
-            // led5.set(P5[108]);
-            // led6.set(P6[108]);
-            // led7.set(P7[108]);
-            // led8.set(P8[108]);
             int min = currentmin;             
             led1.set(getCurrentValue(P1[108],P1[109],min));
             led2.set(getCurrentValue(P2[108],P2[109],min));
@@ -3799,14 +2941,6 @@ void loop()
           }
           else if (currentmin >= 10 and currentmin < 20)
           {
-            // led1.set(P1[109]);
-            // led2.set(P2[109]);
-            // led3.set(P3[109]);
-            // led4.set(P4[109]);
-            // led5.set(P5[109]);
-            // led6.set(P6[109]);
-            // led7.set(P7[109]);
-            // led8.set(P8[109]);
             int min = currentmin - 10;              
             led1.set(getCurrentValue(P1[109],P1[110],min));
             led2.set(getCurrentValue(P2[109],P2[110],min));
@@ -3819,14 +2953,6 @@ void loop()
           }
           else if (currentmin >= 20 and currentmin < 30)
           {
-            // led1.set(P1[110]);
-            // led2.set(P2[110]);
-            // led3.set(P3[110]);
-            // led4.set(P4[110]);
-            // led5.set(P5[110]);
-            // led6.set(P6[110]);
-            // led7.set(P7[110]);
-            // led8.set(P8[110]);
             int min = currentmin - 20;              
             led1.set(getCurrentValue(P1[110],P1[111],min));
             led2.set(getCurrentValue(P2[110],P2[111],min));
@@ -3839,14 +2965,6 @@ void loop()
           }
           else if (currentmin >= 30 and currentmin < 40)
           {
-            // led1.set(P1[111]);
-            // led2.set(P2[111]);
-            // led3.set(P3[111]);
-            // led4.set(P4[111]);
-            // led5.set(P5[111]);
-            // led6.set(P6[111]);
-            // led7.set(P7[111]);
-            // led8.set(P8[111]);
             int min = currentmin - 30;              
             led1.set(getCurrentValue(P1[111],P1[112],min));
             led2.set(getCurrentValue(P2[111],P2[112],min));
@@ -3859,14 +2977,6 @@ void loop()
           }
           else if (currentmin >= 40 and currentmin < 50)
           {
-            // led1.set(P1[112]);
-            // led2.set(P2[112]);
-            // led3.set(P3[112]);
-            // led4.set(P4[112]);
-            // led5.set(P5[112]);
-            // led6.set(P6[112]);
-            // led7.set(P7[112]);
-            // led8.set(P8[112]);
             int min = currentmin - 40;              
             led1.set(getCurrentValue(P1[112],P1[113],min));
             led2.set(getCurrentValue(P2[112],P2[113],min));
@@ -3879,14 +2989,6 @@ void loop()
           }
           else if (currentmin >= 50)
           {
-            // led1.set(P1[113]);
-            // led2.set(P2[113]);
-            // led3.set(P3[113]);
-            // led4.set(P4[113]);
-            // led5.set(P5[113]);
-            // led6.set(P6[113]);
-            // led7.set(P7[113]);
-            // led8.set(P8[113]);
             int min = currentmin - 50;              
             led1.set(getCurrentValue(P1[113],P1[114],min));
             led2.set(getCurrentValue(P2[113],P2[114],min));
@@ -3902,14 +3004,6 @@ void loop()
         {
           if (currentmin < 10)
           {
-            // led1.set(P1[114]);
-            // led2.set(P2[114]);
-            // led3.set(P3[114]);
-            // led4.set(P4[114]);
-            // led5.set(P5[114]);
-            // led6.set(P6[114]);
-            // led7.set(P7[114]);
-            // led8.set(P8[114]);
             int min = currentmin;              
             led1.set(getCurrentValue(P1[114],P1[115],min));
             led2.set(getCurrentValue(P2[114],P2[115],min));
@@ -3922,14 +3016,6 @@ void loop()
           }
           else if (currentmin >= 10 and currentmin < 20)
           {
-            // led1.set(P1[115]);
-            // led2.set(P2[115]);
-            // led3.set(P3[115]);
-            // led4.set(P4[115]);
-            // led5.set(P5[115]);
-            // led6.set(P6[115]);
-            // led7.set(P7[115]);
-            // led8.set(P8[115]);
             int min = currentmin - 10;              
             led1.set(getCurrentValue(P1[115],P1[116],min));
             led2.set(getCurrentValue(P2[115],P2[116],min));
@@ -3942,14 +3028,6 @@ void loop()
           }
           else if (currentmin >= 20 and currentmin < 30)
           {
-            // led1.set(P1[116]);
-            // led2.set(P2[116]);
-            // led3.set(P3[116]);
-            // led4.set(P4[116]);
-            // led5.set(P5[116]);
-            // led6.set(P6[116]);
-            // led7.set(P7[116]);
-            // led8.set(P8[116]);
             int min = currentmin - 20;              
             led1.set(getCurrentValue(P1[116],P1[117],min));
             led2.set(getCurrentValue(P2[116],P2[117],min));
@@ -3962,14 +3040,6 @@ void loop()
           }
           else if (currentmin >= 30 and currentmin < 40)
           {
-            // led1.set(P1[117]);
-            // led2.set(P2[117]);
-            // led3.set(P3[117]);
-            // led4.set(P4[117]);
-            // led5.set(P5[117]);
-            // led6.set(P6[117]);
-            // led7.set(P7[117]);
-            // led8.set(P8[117]);
             int min = currentmin - 30;              
             led1.set(getCurrentValue(P1[117],P1[118],min));
             led2.set(getCurrentValue(P2[117],P2[118],min));
@@ -3982,14 +3052,6 @@ void loop()
           }
           else if (currentmin >= 40 and currentmin < 50)
           {
-            // led1.set(P1[118]);
-            // led2.set(P2[118]);
-            // led3.set(P3[118]);
-            // led4.set(P4[118]);
-            // led5.set(P5[118]);
-            // led6.set(P6[118]);
-            // led7.set(P7[118]);
-            // led8.set(P8[118]);
             int min = currentmin - 40;              
             led1.set(getCurrentValue(P1[118],P1[119],min));
             led2.set(getCurrentValue(P2[118],P2[119],min));
@@ -4002,14 +3064,6 @@ void loop()
           }
           else if (currentmin >= 50)
           {
-            // led1.set(P1[119]);
-            // led2.set(P2[119]);
-            // led3.set(P3[119]);
-            // led4.set(P4[119]);
-            // led5.set(P5[119]);
-            // led6.set(P6[119]);
-            // led7.set(P7[119]);
-            // led8.set(P8[119]);
             int min = currentmin - 50;              
             led1.set(getCurrentValue(P1[119],P1[120],min));
             led2.set(getCurrentValue(P2[119],P2[120],min));
@@ -4025,14 +3079,6 @@ void loop()
         {
           if (currentmin < 10)
           {
-            // led1.set(P1[120]);
-            // led2.set(P2[120]);
-            // led3.set(P3[120]);
-            // led4.set(P4[120]);
-            // led5.set(P5[120]);
-            // led6.set(P6[120]);
-            // led7.set(P7[120]);
-            // led8.set(P8[120]);
             int min = currentmin;              
             led1.set(getCurrentValue(P1[120],P1[121],min));
             led2.set(getCurrentValue(P2[120],P2[121],min));
@@ -4045,14 +3091,6 @@ void loop()
           }
           else if (currentmin >= 10 and currentmin < 20)
           {
-            // led1.set(P1[121]);
-            // led2.set(P2[121]);
-            // led3.set(P3[121]);
-            // led4.set(P4[121]);
-            // led5.set(P5[121]);
-            // led6.set(P6[121]);
-            // led7.set(P7[121]);
-            // led8.set(P8[121]);
             int min = currentmin - 10;              
             led1.set(getCurrentValue(P1[121],P1[122],min));
             led2.set(getCurrentValue(P2[121],P2[122],min));
@@ -4065,14 +3103,6 @@ void loop()
           }
           else if (currentmin >= 20 and currentmin < 30)
           {
-            // led1.set(P1[122]);
-            // led2.set(P2[122]);
-            // led3.set(P3[122]);
-            // led4.set(P4[122]);
-            // led5.set(P5[122]);
-            // led6.set(P6[122]);
-            // led7.set(P7[122]);
-            // led8.set(P8[122]);
             int min = currentmin - 20;              
             led1.set(getCurrentValue(P1[122],P1[123],min));
             led2.set(getCurrentValue(P2[122],P2[123],min));
@@ -4085,14 +3115,6 @@ void loop()
           }
           else if (currentmin >= 30 and currentmin < 40)
           {
-            // led1.set(P1[123]);
-            // led2.set(P2[123]);
-            // led3.set(P3[123]);
-            // led4.set(P4[123]);
-            // led5.set(P5[123]);
-            // led6.set(P6[123]);
-            // led7.set(P7[123]);
-            // led8.set(P8[123]);
             int min = currentmin - 30;              
             led1.set(getCurrentValue(P1[123],P1[124],min));
             led2.set(getCurrentValue(P2[123],P2[124],min));
@@ -4105,14 +3127,6 @@ void loop()
           }
           else if (currentmin >= 40 and currentmin < 50)
           {
-            // led1.set(P1[124]);
-            // led2.set(P2[124]);
-            // led3.set(P3[124]);
-            // led4.set(P4[124]);
-            // led5.set(P5[124]);
-            // led6.set(P6[124]);
-            // led7.set(P7[124]);
-            // led8.set(P8[124]);
             int min = currentmin - 40;              
             led1.set(getCurrentValue(P1[124],P1[125],min));
             led2.set(getCurrentValue(P2[124],P2[125],min));
@@ -4125,14 +3139,6 @@ void loop()
           }
           else if (currentmin >= 50)
           {
-            // led1.set(P1[125]);
-            // led2.set(P2[125]);
-            // led3.set(P3[125]);
-            // led4.set(P4[125]);
-            // led5.set(P5[125]);
-            // led6.set(P6[125]);
-            // led7.set(P7[125]);
-            // led8.set(P8[125]);
             int min = currentmin - 50;              
             led1.set(getCurrentValue(P1[125],P1[126],min));
             led2.set(getCurrentValue(P2[125],P2[126],min));
@@ -4148,14 +3154,6 @@ void loop()
         {
           if (currentmin < 10)
           {
-            // led1.set(P1[126]);
-            // led2.set(P2[126]);
-            // led3.set(P3[126]);
-            // led4.set(P4[126]);
-            // led5.set(P5[126]);
-            // led6.set(P6[126]);
-            // led7.set(P7[126]);
-            // led8.set(P8[126]);
             int min = currentmin;              
             led1.set(getCurrentValue(P1[126],P1[127],min));
             led2.set(getCurrentValue(P2[126],P2[127],min));
@@ -4168,14 +3166,6 @@ void loop()
           }
           else if (currentmin >= 10 and currentmin < 20)
           {
-            // led1.set(P1[127]);
-            // led2.set(P2[127]);
-            // led3.set(P3[127]);
-            // led4.set(P4[127]);
-            // led5.set(P5[127]);
-            // led6.set(P6[127]);
-            // led7.set(P7[127]);
-            // led8.set(P8[127]);
             int min = currentmin - 10;              
             led1.set(getCurrentValue(P1[127],P1[128],min));
             led2.set(getCurrentValue(P2[127],P2[128],min));
@@ -4188,14 +3178,6 @@ void loop()
           }
           else if (currentmin >= 20 and currentmin < 30)
           {
-            // led1.set(P1[128]);
-            // led2.set(P2[128]);
-            // led3.set(P3[128]);
-            // led4.set(P4[128]);
-            // led5.set(P5[128]);
-            // led6.set(P6[128]);
-            // led7.set(P7[128]);
-            // led8.set(P8[128]);
             int min = currentmin - 20;              
             led1.set(getCurrentValue(P1[128],P1[129],min));
             led2.set(getCurrentValue(P2[128],P2[129],min));
@@ -4208,14 +3190,6 @@ void loop()
           }
           else if (currentmin >= 30 and currentmin < 40)
           {
-            // led1.set(P1[129]);
-            // led2.set(P2[129]);
-            // led3.set(P3[129]);
-            // led4.set(P4[129]);
-            // led5.set(P5[129]);
-            // led6.set(P6[129]);
-            // led7.set(P7[129]);
-            // led8.set(P8[129]);
             int min = currentmin - 30;              
             led1.set(getCurrentValue(P1[129],P1[130],min));
             led2.set(getCurrentValue(P2[129],P2[130],min));
@@ -4228,14 +3202,6 @@ void loop()
           }
           else if (currentmin >= 40 and currentmin < 50)
           {
-            // led1.set(P1[130]);
-            // led2.set(P2[130]);
-            // led3.set(P3[130]);
-            // led4.set(P4[130]);
-            // led5.set(P5[130]);
-            // led6.set(P6[130]);
-            // led7.set(P7[130]);
-            // led8.set(P8[130]);
             int min = currentmin - 40;              
             led1.set(getCurrentValue(P1[130],P1[131],min));
             led2.set(getCurrentValue(P2[130],P2[131],min));
@@ -4247,14 +3213,6 @@ void loop()
           }
           else if (currentmin >= 50)
           {
-            // led1.set(P1[131]);
-            // led2.set(P2[131]);
-            // led3.set(P3[131]);
-            // led4.set(P4[131]);
-            // led5.set(P5[131]);
-            // led6.set(P6[131]);
-            // led7.set(P7[131]);
-            // led8.set(P8[131]);
             int min = currentmin - 50;              
             led1.set(getCurrentValue(P1[131],P1[132],min));
             led2.set(getCurrentValue(P2[131],P2[132],min));
@@ -4270,14 +3228,6 @@ void loop()
         {
           if (currentmin < 10)
           {
-            // led1.set(P1[132]);
-            // led2.set(P2[132]);
-            // led3.set(P3[132]);
-            // led4.set(P4[132]);
-            // led5.set(P5[132]);
-            // led6.set(P6[132]);
-            // led7.set(P7[132]);
-            // led8.set(P8[132]);
             int min = currentmin;              
             led1.set(getCurrentValue(P1[132],P1[133],min));
             led2.set(getCurrentValue(P2[132],P2[133],min));
@@ -4290,14 +3240,6 @@ void loop()
           }
           else if (currentmin >= 10 and currentmin < 20)
           {
-            // led1.set(P1[133]);
-            // led2.set(P2[133]);
-            // led3.set(P3[133]);
-            // led4.set(P4[133]);
-            // led5.set(P5[133]);
-            // led6.set(P6[133]);
-            // led7.set(P7[133]);
-            // led8.set(P8[133]);
             int min = currentmin - 10;              
             led1.set(getCurrentValue(P1[133],P1[134],min));
             led2.set(getCurrentValue(P2[133],P2[134],min));
@@ -4310,14 +3252,6 @@ void loop()
           }
           else if (currentmin >= 20 and currentmin < 30)
           {
-            // led1.set(P1[134]);
-            // led2.set(P2[134]);
-            // led3.set(P3[134]);
-            // led4.set(P4[134]);
-            // led5.set(P5[134]);
-            // led6.set(P6[134]);
-            // led7.set(P7[134]);
-            // led8.set(P8[134]);
             int min = currentmin - 20;              
             led1.set(getCurrentValue(P1[134],P1[135],min));
             led2.set(getCurrentValue(P2[134],P2[135],min));
@@ -4330,14 +3264,6 @@ void loop()
           }
           else if (currentmin >= 30 and currentmin < 40)
           {
-            // led1.set(P1[135]);
-            // led2.set(P2[135]);
-            // led3.set(P3[135]);
-            // led4.set(P4[135]);
-            // led5.set(P5[135]);
-            // led6.set(P6[135]);
-            // led7.set(P7[135]);
-            // led8.set(P8[135]);
             int min = currentmin - 30;              
             led1.set(getCurrentValue(P1[135],P1[136],min));
             led2.set(getCurrentValue(P2[135],P2[136],min));
@@ -4350,14 +3276,6 @@ void loop()
           }
           else if (currentmin >= 40 and currentmin < 50)
           {
-            // led1.set(P1[136]);
-            // led2.set(P2[136]);
-            // led3.set(P3[136]);
-            // led4.set(P4[136]);
-            // led5.set(P5[136]);
-            // led6.set(P6[136]);
-            // led7.set(P7[136]);
-            // led8.set(P8[136]);
             int min = currentmin - 40;              
             led1.set(getCurrentValue(P1[136],P1[137],min));
             led2.set(getCurrentValue(P2[136],P2[137],min));
@@ -4370,14 +3288,6 @@ void loop()
           }
           else if (currentmin >= 50)
           {
-            // led1.set(P1[137]);
-            // led2.set(P2[137]);
-            // led3.set(P3[137]);
-            // led4.set(P4[137]);
-            // led5.set(P5[137]);
-            // led6.set(P6[137]);
-            // led7.set(P7[137]);
-            // led8.set(P8[137]);
             int min = currentmin - 50;              
             led1.set(getCurrentValue(P1[137],P1[138],min));
             led2.set(getCurrentValue(P2[137],P2[138],min));
@@ -4393,14 +3303,6 @@ void loop()
         {
           if (currentmin < 10)
           {
-            // led1.set(P1[138]);
-            // led2.set(P2[138]);
-            // led3.set(P3[138]);
-            // led4.set(P4[138]);
-            // led5.set(P5[138]);
-            // led6.set(P6[138]);
-            // led7.set(P7[138]);
-            // led8.set(P8[138]);
             int min = currentmin;              
             led1.set(getCurrentValue(P1[138],P1[139],min));
             led2.set(getCurrentValue(P2[138],P2[139],min));
@@ -4413,14 +3315,6 @@ void loop()
           }
           else if (currentmin >= 10 and currentmin < 20)
           {
-            // led1.set(P1[139]);
-            // led2.set(P2[139]);
-            // led3.set(P3[139]);
-            // led4.set(P4[139]);
-            // led5.set(P5[139]);
-            // led6.set(P6[139]);
-            // led7.set(P7[139]);
-            // led8.set(P8[139]);
             int min = currentmin - 10;              
             led1.set(getCurrentValue(P1[139],P1[140],min));
             led2.set(getCurrentValue(P2[139],P2[140],min));
@@ -4433,14 +3327,6 @@ void loop()
           }
           else if (currentmin >= 20 and currentmin < 30)
           {
-            // led1.set(P1[140]);
-            // led2.set(P2[140]);
-            // led3.set(P3[140]);
-            // led4.set(P4[140]);
-            // led5.set(P5[140]);
-            // led6.set(P6[140]);
-            // led7.set(P7[140]);
-            // led8.set(P8[140]);
             int min = currentmin - 20;              
             led1.set(getCurrentValue(P1[140],P1[141],min));
             led2.set(getCurrentValue(P2[140],P2[141],min));
@@ -4453,14 +3339,6 @@ void loop()
           }
           else if (currentmin >= 30 and currentmin < 40)
           {
-            // led1.set(P1[141]);
-            // led2.set(P2[141]);
-            // led3.set(P3[141]);
-            // led4.set(P4[141]);
-            // led5.set(P5[141]);
-            // led6.set(P6[141]);
-            // led7.set(P7[141]);
-            // led8.set(P8[141]);
             int min = currentmin - 30;              
             led1.set(getCurrentValue(P1[141],P1[142],min));
             led2.set(getCurrentValue(P2[141],P2[142],min));
@@ -4473,14 +3351,6 @@ void loop()
           }
           else if (currentmin >= 40 and currentmin < 50)
           {
-            // led1.set(P1[142]);
-            // led2.set(P2[142]);
-            // led3.set(P3[142]);
-            // led4.set(P4[142]);
-            // led5.set(P5[142]);
-            // led6.set(P6[142]);
-            // led7.set(P7[142]);
-            // led8.set(P8[142]);
             int min = currentmin - 40;              
             led1.set(getCurrentValue(P1[142],P1[0],min));
             led2.set(getCurrentValue(P2[142],P2[0],min));
@@ -4493,14 +3363,6 @@ void loop()
           }
           else if (currentmin >= 50)
           {
-            // led1.set(P1[143]);
-            // led2.set(P2[143]);
-            // led3.set(P3[143]);
-            // led4.set(P4[143]);
-            // led5.set(P5[143]);
-            // led6.set(P6[143]);
-            // led7.set(P7[143]);
-            // led8.set(P8[143]);
             int min = currentmin - 50;              
             led1.set(getCurrentValue(P1[143],P1[0],min));
             led2.set(getCurrentValue(P2[143],P2[0],min));
@@ -4561,7 +3423,7 @@ void loop()
       led8.set(P8[144]);
       //String topiccontent = ESP_HOST_NAME;
       //Serial.printf("the connect status is: %d, the smart status is: %d, the mqtt is: %d, the ssid is: %s \n", WiFi.status(), WiFi.smartConfigDone(), client.connected(), SSID.c_str());
-        if(WiFi.status() == WL_CONNECTED) {
+      if(WiFi.status() == WL_CONNECTED) {
           if (!client.connected())
           {
             led8.set(5);
