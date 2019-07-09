@@ -16,7 +16,7 @@
 #include <math.h>
 
 #define RESET_BUTTON 16
-#define VERSION_NUM "0.60"
+#define VERSION_NUM "0.61"
 // #define ESP_HOST_NAME "esp1006"
 #define ESP_RTC_TICK 1542012457
 
@@ -485,34 +485,6 @@ void mqttconn()
       String recv_topic_setp = ESP_HOST_NAME;
       recv_topic_setp = recv_topic_setp + "/setp";
       client.subscribe(recv_topic_setp.c_str());
-      // // subscibe the p1 light service
-      // String recv_topic_p1 = ESP_HOST_NAME;
-      // recv_topic_p1 = recv_topic_p1 + "/p1";
-      // client.subscribe(recv_topic_p1.c_str());
-      // // subscibe the p2 light service
-      // String recv_topic_p2 = ESP_HOST_NAME;
-      // recv_topic_p2 = recv_topic_p2 + "/p2";
-      // client.subscribe(recv_topic_p2.c_str());
-      // // subscibe the p3 light service
-      // String recv_topic_p3 = ESP_HOST_NAME;
-      // recv_topic_p3 = recv_topic_p3 + "/p3";
-      // client.subscribe(recv_topic_p3.c_str());
-      // // subscibe the p4 light service
-      // String recv_topic_p4 = ESP_HOST_NAME;
-      // recv_topic_p4 = recv_topic_p4 + "/p4";
-      // client.subscribe(recv_topic_p4.c_str());
-      // // subscibe the p5 light service
-      // String recv_topic_p5 = ESP_HOST_NAME;
-      // recv_topic_p5 = recv_topic_p5 + "/p5";
-      // client.subscribe(recv_topic_p5.c_str());
-      // // subscibe the p6 light service
-      // String recv_topic_p6 = ESP_HOST_NAME;
-      // recv_topic_p6 = recv_topic_p6 + "/p6";
-      // client.subscribe(recv_topic_p6.c_str());
-      // // subscibe the p7 light service
-      // String recv_topic_p7 = ESP_HOST_NAME;
-      // recv_topic_p7 = recv_topic_p7 + "/p7";
-      // client.subscribe(recv_topic_p7.c_str());
 
       // publish the oline notification
       String online_message = "{mid:";
@@ -532,20 +504,6 @@ void mqttconn()
   }
 }
 
-// void printJson(cJSON *root)
-// {
-//   for (int i = 0; i < cJSON_GetArraySize(root); i++)
-//   {
-//     cJSON *item = cJSON_GetArrayItem(root, i);
-//     if (cJSON_Object == item->type)
-//       printJson(item);
-//     else
-//     {
-//       Serial.printf("%s->", item->string);
-//       printf("%s\n", cJSON_Print(item));
-//     }
-//   }
-// }
 
 String getHeaderValue(String header, String headerName)
 {
@@ -1212,7 +1170,8 @@ void setup()
 
   // change mid & qrcode
   server.on("/mid", HTTP_GET, [](AsyncWebServerRequest *request) {
-    String rawhtml = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>QRCode</title></head><body><div><table><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">设备名:</span></td><td style=\"font-size:14px;\"><input type=\"text\"id=\"txtmid\"onchange=\"midchange()\"/></td></tr><tr><td colspan=\"2\"><input style=\"background:green; color:white; width:80px; height:30px; margin-right:2px;\"type=\"submit\"value=\"修改\"id=\"btnModify\"onclick=\"submit()\"/><input style=\"background:green; color:white; width:80px; height:30px;\"type=\"button\"value=\"返回\"id=\"btnBack\"onclick=\"back()\"/><span style=\"color:red;\">修改完设备名后wifi热点名也会随之改变,需要重新选择wifi热点并刷新页面</span></td></tr></table><hr/><div style=\"font-size:14px;\"id=\"divqrcode\"><span>扫描下方二维码进行绑定,如改名需要重新绑定</span><span style=\"color:red;\">需要联网</span><div id=\"code\"></div></div></div><script src='https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js'></script><script src='https://cdn.bootcss.com/jquery.qrcode/1.0/jquery.qrcode.min.js'></script><script>function toUtf8(str){var out,i,len,c;out=\"\";len=str.length;for(i=0;i<len;i++){c=str.charCodeAt(i);if((c>=0x0001)&&(c<=0x007F)){out+=str.charAt(i)}else if(c>0x07FF){out+=String.fromCharCode(0xE0|((c>>12)&0x0F));out+=String.fromCharCode(0x80|((c>>6)&0x3F));out+=String.fromCharCode(0x80|((c>>0)&0x3F))}else{out+=String.fromCharCode(0xC0|((c>>6)&0x1F));out+=String.fromCharCode(0x80|((c>>0)&0x3F))}}return out}function submit(){var mid=document.getElementById('txtmid').value;var url=\"cmid?mid=\"+mid;window.location.href=url}function midchange(){var mid=document.getElementById('txtmid').value;var qrcode=toUtf8(`{mid:${mid},mac:00000000}`);$('#code').empty();$('#code').qrcode(qrcode)}$(\"#divqrcode\").show();var mid=document.getElementById('txtmid').value;var str=toUtf8(`{mid:${mid},mac:00000000}`);$('#code').qrcode(str);$(\"#offline\").hide();</script></body></html>";
+    //String rawhtml = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>QRCode</title></head><body><div><table><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">设备名:</span></td><td style=\"font-size:14px;\"><input type=\"text\"id=\"txtmid\"onchange=\"midchange()\"/></td></tr><tr><td colspan=\"2\"><input style=\"background:green; color:white; width:80px; height:30px; margin-right:2px;\"type=\"submit\"value=\"修改\"id=\"btnModify\"onclick=\"submit()\"/><input style=\"background:green; color:white; width:80px; height:30px;\"type=\"button\"value=\"返回\"id=\"btnBack\"onclick=\"back()\"/><span style=\"color:red;\">修改完设备名后wifi热点名也会随之改变,需要重新选择wifi热点并刷新页面</span></td></tr></table><hr/><div style=\"font-size:14px;\"id=\"divqrcode\"><span>扫描下方二维码进行绑定,如改名需要重新绑定</span><span style=\"color:red;\">需要联网</span><div id=\"code\"></div></div></div><script src='https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js'></script><script src='https://cdn.bootcss.com/jquery.qrcode/1.0/jquery.qrcode.min.js'></script><script>function toUtf8(str){var out,i,len,c;out=\"\";len=str.length;for(i=0;i<len;i++){c=str.charCodeAt(i);if((c>=0x0001)&&(c<=0x007F)){out+=str.charAt(i)}else if(c>0x07FF){out+=String.fromCharCode(0xE0|((c>>12)&0x0F));out+=String.fromCharCode(0x80|((c>>6)&0x3F));out+=String.fromCharCode(0x80|((c>>0)&0x3F))}else{out+=String.fromCharCode(0xC0|((c>>6)&0x1F));out+=String.fromCharCode(0x80|((c>>0)&0x3F))}}return out}function submit(){var mid=document.getElementById('txtmid').value;var url=\"cmid?mid=\"+mid;window.location.href=url}function midchange(){var mid=document.getElementById('txtmid').value;var qrcode=toUtf8(`{mid:${mid},mac:00000000}`);$('#code').empty();$('#code').qrcode(qrcode)}$(\"#divqrcode\").show();var mid=document.getElementById('txtmid').value;console.log('here it is:',mid);var str=toUtf8(`{mid:${mid},mac:00000000}`);$('#code').qrcode(str);$(\"#offline\").hide();</script></body></html>";
+    String rawhtml = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>QRCode</title></head><body><div><table><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">设备名:</span></td><td style=\"font-size:14px;\"><input type=\"text\"id=\"txtmid\"/></td></tr><tr style=\"display: none;\"><td colspan=\"2\"><input style=\"background:green; color:white; width:80px; height:30px; margin-right:2px;\"type=\"submit\"value=\"修改\"id=\"btnModify\"onclick=\"submit()\"/><input style=\"background:green; color:white; width:80px; height:30px;\"type=\"button\"value=\"返回\"id=\"btnBack\"onclick=\"back()\"/><span style=\"color:red;\">修改完设备名后wifi热点名也会随之改变,需要重新选择wifi热点并刷新页面</span></td></tr></table><hr/><div style=\"font-size:14px;\"id=\"divqrcode\"><span>扫描下方二维码进行绑定,如改名需要重新绑定</span><span style=\"color:red;\">需求联网</span><div id=\"code\"></div></div></div><script src='https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js'></script><script src='https://cdn.bootcss.com/jquery.qrcode/1.0/jquery.qrcode.min.js'></script><script>function toUtf8(str){var out,i,len,c;out=\"\";len=str.length;for(i=0;i<len;i++){c=str.charCodeAt(i);if((c>=0x0001)&&(c<=0x007F)){out+=str.charAt(i)}else if(c>0x07FF){out+=String.fromCharCode(0xE0|((c>>12)&0x0F));out+=String.fromCharCode(0x80|((c>>6)&0x3F));out+=String.fromCharCode(0x80|((c>>0)&0x3F))}else{out+=String.fromCharCode(0xC0|((c>>6)&0x1F));out+=String.fromCharCode(0x80|((c>>0)&0x3F))}}return out}function submit(){var mid=document.getElementById('txtmid').value;var url=\"cmid?mid=\"+mid;window.location.href=url}function midchange(){var mid=document.getElementById('txtmid').value;var qrcode=toUtf8(`{mid:${mid},mac:00000000}`);$('#code').empty();$('#code').qrcode(qrcode)}function back(){var url=\"/\";window.location.href=url}var mid=document.getElementById('txtmid').value;var str=toUtf8(`{mid:${mid},mac:00000000}`);$('#code').qrcode(str);</script></body></html>";
 
     if (!SPIFFS.begin())
     {
