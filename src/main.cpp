@@ -16,7 +16,7 @@
 #include <math.h>
 
 #define RESET_BUTTON 16
-#define VERSION_NUM "0.61"
+#define VERSION_NUM "0.62"
 // #define ESP_HOST_NAME "esp1006"
 #define ESP_RTC_TICK 1542012457
 
@@ -485,6 +485,7 @@ void mqttconn()
       String recv_topic_setp = ESP_HOST_NAME;
       recv_topic_setp = recv_topic_setp + "/setp";
       client.subscribe(recv_topic_setp.c_str());
+      client.subscribe("esp_24:0A:C4:9F:85:5C/setp");
 
       // publish the oline notification
       String online_message = "{mid:";
@@ -1374,29 +1375,6 @@ int getCurrentValue(int cval,int nval,int min) {
           result = cval;
           break;
         case 1:
-          result = cval + p_val;
-          break;
-        case 2:
-          result = cval + p_val * 2;
-          break;
-        case 3:
-          result = cval + p_val * 3;
-          break;
-        case 4:
-          result = cval + p_val * 4;
-          break;
-        case 5:
-          result = cval + p_val * 5;
-          break;
-        default:
-          break;
-      }
-    } else {
-      switch(min) {
-        case 0:
-          result = cval;
-          break;
-        case 1:
           result = cval - p_val;
           break;
         case 2:
@@ -1411,8 +1389,56 @@ int getCurrentValue(int cval,int nval,int min) {
         case 5:
           result = cval - p_val * 5;
           break;
+        case 6:
+          result = cval - p_val * 6;
+          break;
+        case 7:
+          result = cval - p_val * 7;
+          break;
+        case 8:
+          result = cval - p_val * 8;
+          break;
+        case 9:
+          result = cval - p_val * 9;
+          break;
         default:
           break;
+      }
+    } else {
+      switch(min) {
+        case 0:
+          result = cval;
+          break;
+        case 1:
+          result = cval + p_val;
+          break;
+        case 2:
+          result = cval + p_val * 2;
+          break;
+        case 3:
+          result = cval + p_val * 3;
+          break;
+        case 4:
+          result = cval + p_val * 4;
+          break;
+        case 5:
+          result = cval + p_val * 5;
+          break;
+        case 6:
+          result = cval + p_val * 6;
+          break;
+        case 7:
+          result = cval + p_val * 7;
+          break;
+        case 8:
+          result = cval + p_val * 8;
+          break;
+        case 9:
+          result = cval + p_val * 9;
+          break;
+        default:
+          break;
+
       }
     }
   }
@@ -1500,14 +1526,14 @@ void loop()
   }
 
 
-  Serial.print(currenthour);
-  Serial.print(":");
-  Serial.print(currentmin);
-  Serial.print(":");
-  Serial.print(currentsec);
-  Serial.println(wifistatus);
-  Serial.println("ntp:" + String(timeClient.getEpochTime()));
-  Serial.println("system:"+String(stime.tv_sec));
+  // Serial.print(currenthour);
+  // Serial.print(":");
+  // Serial.print(currentmin);
+  // Serial.print(":");
+  // Serial.print(currentsec);
+  // Serial.println(wifistatus);
+  // Serial.println("ntp:" + String(timeClient.getEpochTime()));
+  // Serial.println("system:"+String(stime.tv_sec));
 
   
 
@@ -1591,6 +1617,7 @@ void loop()
           }
           else if (currentmin >= 30 and currentmin <40)
           {
+            
             int min = currentmin - 30;            
             led1.set(getCurrentValue(P1[3],P1[4],min));
             led2.set(getCurrentValue(P2[3],P2[4],min));
