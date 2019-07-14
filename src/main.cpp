@@ -15,8 +15,8 @@
 #include <NTPClient.h>
 #include <math.h>
 
-#define RESET_BUTTON 16
-#define VERSION_NUM "0.62"
+#define RESET_BUTTON 26
+#define VERSION_NUM "0.63"
 // #define ESP_HOST_NAME "esp1006"
 #define ESP_RTC_TICK 1542012457
 
@@ -53,23 +53,18 @@ const int mqttPort = 1883;
 const char *mqttuser = "";
 const char *mqttpwd = "";
 
-LED_ESP32 led1(4, 7, 100);
-LED_ESP32 led2(12, 1, 100);
-LED_ESP32 led3(13, 2, 100);
-LED_ESP32 led4(15, 3, 100);
-LED_ESP32 led5(21, 4, 100);
-LED_ESP32 led6(22, 5, 100);
-LED_ESP32 led7(27, 6, 100);
-LED_ESP32 led8(25, 0, 100);
+LED_ESP32 led1(4, 1, 100);
+LED_ESP32 led2(12, 2, 100);
+LED_ESP32 led3(13, 3, 100);
+LED_ESP32 led4(15, 4, 100);
+LED_ESP32 led5(21, 5, 100);
+LED_ESP32 led6(22, 6, 100);
+LED_ESP32 led7(23, 7, 100);
+LED_ESP32 led8(27, 8, 100);
 
-// LED_ESP32 led8(2, 7, 100);
-// LED_ESP32 led1(4, 0, 100);
-// LED_ESP32 led2(12, 1, 100);
-// LED_ESP32 led3(13, 2, 100);
-// LED_ESP32 led4(15, 3, 100);
-// LED_ESP32 led5(22, 4, 100);
-// LED_ESP32 led6(23, 5, 100);
-// LED_ESP32 led7(25, 6, 100);
+// 信号灯
+LED_ESP32 led0(25, 0, 100);
+
 
 AsyncWebServer server(80);
 WiFiClient espClient;
@@ -461,7 +456,7 @@ void mqttconn()
     //if (client.connect(ESP_HOST_NAME, mqttuser, mqttpwd))
     if (client.connect(ESP_MAC.c_str()))
     {
-      led8.set(100);
+      led0.set(100);
       Serial.println("MQTT has connected...");
       // subscribe the checktime service
       client.subscribe("esp32/checktime");
@@ -729,6 +724,7 @@ void setup()
   // Serial.print("the current version is: ");
   // Serial.println(VERSION_NUM);
 
+  led0.setup();
   led1.setup();
   led2.setup();
   led3.setup();
@@ -737,7 +733,8 @@ void setup()
   led6.setup();
   led7.setup();
   led8.setup();
-
+  
+  led0.set(0);
   led1.set(0);
   led2.set(0);
   led3.set(0);
@@ -837,7 +834,7 @@ void setup()
           }
           IS_SMART = true;
           Serial.println(WiFi.localIP());
-          led8.set(100);
+          led0.set(100);
           client.setServer(mqttServer, mqttPort);
           client.setCallback(callback);
           mqttconn();
@@ -852,12 +849,12 @@ void setup()
           PWM_INFO_VERSION.replace("\"", "");         
         } else {
           WiFi.softAP(ESP_HOST_NAME.c_str(), password);
-          led8.set(0);
+          led0.set(0);
           Serial.println("please set the wifi");
         }
       } else {
         WiFi.softAP(ESP_HOST_NAME.c_str(), password);
-        led8.set(0);
+        led0.set(0);
         Serial.println("please set the wifi");
       }
       // online or offline light operation
@@ -1542,22 +1539,22 @@ void loop()
     if(currentsec <=15) {
       if (WiFi.status() != WL_CONNECTED && SSID != "")
       {
-        led8.set(0);
+        led0.set(0);
         Serial.printf("try to reconnecting ..\n");
         WiFi.begin(SSID.c_str(), SSID_PWD.c_str());
         int i = 30;
         while ((WiFi.status() != WL_CONNECTED) && i > 0)
         {
-          led8.set(100);
+          led0.set(100);
           delay(500);
-          led8.set(0);
+          led0.set(0);
           Serial.printf(".");
           i = i - 1;
         }
         if (WiFi.status() == WL_CONNECTED)
         {
           Serial.println(WiFi.localIP());
-          led8.set(100);
+          led0.set(100);
           client.setServer(mqttServer, mqttPort);
           client.setCallback(callback);
           mqttconn();
@@ -3402,7 +3399,7 @@ void loop()
       {
         if (WiFi.status() == WL_CONNECTED  && !client.connected())
         {
-          led8.set(5);
+          led0.set(5);
           Serial.println("the mqtt service is disconnected");
           mqttconn();
           client.publish("esp32/disnotify", ESP_HOST_NAME.c_str());
@@ -3429,7 +3426,7 @@ void loop()
       if(WiFi.status() == WL_CONNECTED) {
           if (!client.connected())
           {
-            led8.set(5);
+            led0.set(5);
             Serial.println("the mqtt service is disconnected");
             mqttconn();
             client.publish("esp32/disnotify", ESP_HOST_NAME.c_str());
