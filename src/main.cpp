@@ -59,11 +59,11 @@ LED_ESP32 led3(13, 3, 100);
 LED_ESP32 led4(15, 4, 100);
 LED_ESP32 led5(21, 5, 100);
 LED_ESP32 led6(22, 6, 100);
-LED_ESP32 led7(23, 7, 100);
-LED_ESP32 led8(27, 8, 100);
+LED_ESP32 led7(23, 0, 100);
+LED_ESP32 led8(27, 7, 100); // the channel 8 has some trouble for switch the lgiht to 0 , is disable
 
 // 信号灯
-LED_ESP32 led0(25, 0, 100);
+LED_ESP32 led0(25, 9, 100);
 
 
 AsyncWebServer server(80);
@@ -1190,8 +1190,8 @@ void setup()
       itemstr = cJSON_Print(item);
       String mid = itemstr;
       mid.replace("\"", "");
-      String tpl_mid = "<input type=\"text\"id=\"txtmid\"onchange=\"midchange()\"/>";
-      String change_mid = "<input type=\"text\"id=\"txtmid\"onchange=\"midchange()\" value=\"";
+      String tpl_mid = "<input type=\"text\"id=\"txtmid\"/>";
+      String change_mid = "<input type=\"text\"id=\"txtmid\" value=\"";
       change_mid = change_mid + mid;
       change_mid = change_mid + "\"/>";
       Serial.println(change_mid);
@@ -3412,7 +3412,8 @@ void loop()
     }
     else if (PWM_INFO_SHOWTYPE == "fix")
     {
-      //Serial.printf("fix mode ... the led1's volume is: %d \n", P7[144]);
+      //Serial.println("fix mode ... the led8's volume is:", P8[144]);
+      Serial.println(P8[144]);
       led1.set(P1[144]);
       led2.set(P2[144]);
       led3.set(P3[144]);
