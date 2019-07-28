@@ -1321,6 +1321,64 @@ void setup()
     request->redirect("/basic");
   });
 
+  // for iso all on
+  server.on("/ioson", HTTP_GET, [](AsyncWebServerRequest *request) {
+    led1.set(100);
+    led2.set(100);
+    led3.set(100);
+    led4.set(100);
+    led5.set(100);
+    led6.set(100);
+    led7.set(100);
+    led8.set(100);
+    request->send(200, "text/html", "success");
+  });
+
+  // for iso all off
+  server.on("/iosoff", HTTP_GET, [](AsyncWebServerRequest *request) {
+    led1.set(0);
+    led2.set(0);
+    led3.set(0);
+    led4.set(0);
+    led5.set(0);
+    led6.set(0);
+    led7.set(0);
+    led8.set(0);
+    request->send(200, "text/html", "success");
+  });
+
+  // for ios wifi setting
+  server.on("/online", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (request->hasParam("ssid"))
+    {
+      if (!SPIFFS.begin())
+      {
+        Serial.println("SPIFFS Mount Failed");
+        return;
+      }
+      String ssid = request->getParam("ssid")->value();
+      String pwd = request->getParam("pwd")->value();
+      Serial.println(ssid);
+      String filecontent;
+      filecontent = filecontent + "{\"ssid\":\"";
+      filecontent = filecontent + ssid;
+      filecontent = filecontent + "\",\"pwd\":\"";
+      filecontent = filecontent + pwd;
+      filecontent = filecontent + "\"}";
+      writeFile(SPIFFS, "/wifi.ini", filecontent.c_str());
+      SPIFFS.end();
+      Serial.println("Begin to reboot!");
+      ESP.restart();
+    }
+    else
+    {
+      Serial.println("param error");
+    }
+    request->send(200, "text/html", "success");
+  });
+
+
+
   // reset operation
   server.on("/reset", HTTP_GET, [](AsyncWebServerRequest *request) {
     Serial.println("Start to reset....");
@@ -3413,7 +3471,7 @@ void loop()
     else if (PWM_INFO_SHOWTYPE == "fix")
     {
       //Serial.println("fix mode ... the led8's volume is:", P8[144]);
-      Serial.println(P8[144]);
+      //Serial.println(P8[144]);
       led1.set(P1[144]);
       led2.set(P2[144]);
       led3.set(P3[144]);
