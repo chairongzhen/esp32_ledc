@@ -16,7 +16,7 @@
 #include <math.h>
 
 #define RESET_BUTTON 26
-#define VERSION_NUM "0.70"
+#define VERSION_NUM "0.72"
 // #define ESP_HOST_NAME "esp1006"
 #define ESP_RTC_TICK 1542012457
 
@@ -53,10 +53,13 @@ const int mqttPort = 1883;
 const char *mqttuser = "";
 const char *mqttpwd = "";
 
+// int contentLength = 0;
+// bool isValidContentType = false;
+
 LED_ESP32 led1(4, 1, 100);
 LED_ESP32 led2(12, 2, 100);
 LED_ESP32 led3(13, 3, 100);
-LED_ESP32 led4(15, 4, 100);
+LED_ESP32 led4(15, 9 , 100);
 LED_ESP32 led5(21, 5, 100);
 LED_ESP32 led6(22, 6, 100);
 LED_ESP32 led7(23, 0, 100);
@@ -501,178 +504,14 @@ void mqttconn()
 }
 
 
-String getHeaderValue(String header, String headerName)
-{
+String getHeaderValue(String header, String headerName) {
   return header.substring(strlen(headerName.c_str()));
 }
 
 
-void execOTA()
-{
-  Serial.println("Connecting to: www.polypite.com");
 
-  int contentLength = 0;
-  bool isValidContentType = false;
-  // Connect to S3
-  if (espClient.connect("www.polypite.com", 80))
-  {
-    // Connection Succeed.
-    // Fecthing the bin
-    Serial.println("Fetching Bin: /public/bin/firmware.bin");
-
-    // Get the contents of the bin file
-    espClient.print(String("GET ") + "/public/bin/firmware.bin" + " HTTP/1.1\r\n" +
-                    "Host: " + "www.polypite.com" + "\r\n" +
-                    "Cache-Control: no-cache\r\n" +
-                    "Connection: close\r\n\r\n");
-
-    // Check what is being sent
-    //    Serial.print(String("GET ") + bin + " HTTP/1.1\r\n" +
-    //                 "Host: " + host + "\r\n" +
-    //                 "Cache-Control: no-cache\r\n" +
-    //                 "Connection: close\r\n\r\n");
-
-    unsigned long timeout = millis();
-    while (espClient.available() == 0)
-    {
-      if (millis() - timeout > 5000)
-      {
-        Serial.println("Client Timeout !");
-        espClient.stop();
-        return;
-      }
-    }
-    // Once the response is available,
-    // check stuff
-
-    /*
-       Response Structure
-        HTTP/1.1 200 OK
-        x-amz-id-2: NVKxnU1aIQMmpGKhSwpCBh8y2JPbak18QLIfE+OiUDOos+7UftZKjtCFqrwsGOZRN5Zee0jpTd0=
-        x-amz-request-id: 2D56B47560B764EC
-        Date: Wed, 14 Jun 2017 03:33:59 GMT
-        Last-Modified: Fri, 02 Jun 2017 14:50:11 GMT
-        ETag: "d2afebbaaebc38cd669ce36727152af9"
-        Accept-Ranges: bytes
-        Content-Type: application/octet-stream
-        Content-Length: 357280
-        Server: AmazonS3
-                                   
-        {{BIN FILE CONTENTS}}
- 
-    */
-    while (espClient.available())
-    {
-      // read line till /n
-      String line = espClient.readStringUntil('\n');
-      // remove space, to check if the line is end of headers
-      line.trim();
-
-      // if the the line is empty,
-      // this is end of headers
-      // break the while and feed the
-      // remaining `client` to the
-      // Update.writeStream();
-      if (!line.length())
-      {
-        //headers ended
-        break; // and get the OTA started
-      }
-
-      // Check if the HTTP Response is 200
-      // else break and Exit Update
-      if (line.startsWith("HTTP/1.1"))
-      {
-        if (line.indexOf("200") < 0)
-        {
-          Serial.println("Got a non 200 status code from server. Exiting OTA Update.");
-          break;
-        }
-      }
-      // extract headers here
-      // Start with content length
-      if (line.startsWith("Content-Length: "))
-      {
-        contentLength = atoi((getHeaderValue(line, "Content-Length: ")).c_str());
-        Serial.println("Got " + String(contentLength) + " bytes from server");
-      }
-      // Next, the content type
-      if (line.startsWith("Content-Type: "))
-      {
-        String contentType = getHeaderValue(line, "Content-Type: ");
-        Serial.println("Got " + contentType + " payload.");
-        if (contentType == "application/octet-stream")
-        {
-          isValidContentType = true;
-        }
-      }
-    }
-  }
-  else
-  {
-    // Connect to S3 failed
-    // May be try?
-    // Probably a choppy network?
-    Serial.println("Connection to www.polypite.com failed. Please check your setup");
-    // retry??
-    // execOTA();
-  }
-  // Check what is the contentLength and if content type is `application/octet-stream`
-  Serial.println("contentLength : " + String(contentLength) + ", isValidContentType : " + String(isValidContentType));
-  // check contentLength and content type
-  if (contentLength && isValidContentType)
-  {
-    // Check if there is enough to OTA Update
-    bool canBegin = Update.begin(contentLength);
-    // If yes, begin
-    if (canBegin)
-    {
-      Serial.println("Begin OTA. This may take 2 - 5 mins to complete. Things might be quite for a while.. Patience!");
-      // No activity would appear on the Serial monitor
-      // So be patient. This may take 2 - 5mins to complete
-      size_t written = Update.writeStream(espClient);
-      if (written == contentLength)
-      {
-        Serial.println("Written : " + String(written) + " successfully");
-      }
-      else
-      {
-        Serial.println("Written only : " + String(written) + "/" + String(contentLength) + ". Retry?");
-        // retry??
-        // execOTA();
-      }
-      if (Update.end())
-      {
-        Serial.println("OTA done!");
-        if (Update.isFinished())
-        {
-          Serial.println("Update successfully completed. Rebooting.");
-          ESP.restart();
-        }
-        else
-        {
-          Serial.println("Update not finished? Something went wrong!");
-        }
-      }
-      else
-      {
-        Serial.println("Error Occurred. Error #: " + String(Update.getError()));
-      }
-    }
-    else
-    {
-      // not enough space to begin OTA
-      // Understand the partitions and
-      // space availability
-      Serial.println("Not enough space to begin OTA");
-      espClient.flush();
-    }
-  }
-  else
-  {
-    Serial.println("There was no content in the response");
-    espClient.flush();
-  }
+void execOTA() {
+  
 }
 
 bool execCheckVersion(String oldversion)
@@ -1402,6 +1241,9 @@ void setup()
       request->send(200, "text/html", "success");
   });
 
+  
+  
+
   // update operation
   server.on("/update", HTTP_POST, [](AsyncWebServerRequest *request) {
     if (!SPIFFS.begin())
@@ -1418,9 +1260,6 @@ void setup()
   },
             onFileUpload);
 
-  server.on("/onlineupdate", HTTP_GET, [](AsyncWebServerRequest *request) {
-    execOTA();
-  });
 
   server.onNotFound(notFound);
   server.begin();
@@ -1586,7 +1425,7 @@ void loop()
       currenthour = t_st->tm_hour;
       currentmin = t_st->tm_min;
       currentsec = t_st->tm_sec;
-      Serial.println(t_st, "%A, %B %d %Y %H:%M:%S");
+      //Serial.println(t_st, "%A, %B %d %Y %H:%M:%S");
 
     }
     wifistatus = "online";
@@ -1606,7 +1445,7 @@ void loop()
 
   if (currentmin == 0 || currentmin == 5 || currentmin == 10 || currentmin == 15 || currentmin == 20 || currentmin == 25 || currentmin == 30 || currentmin == 35 || currentmin == 40 || currentmin == 45 || currentmin == 50 || currentmin == 55)
   {
-    if(currentsec <=15) {
+    if(currentsec <= 15) {
       if (WiFi.status() != WL_CONNECTED && SSID != "")
       {
         led0.set(0);
@@ -1644,7 +1483,7 @@ void loop()
 
       if (PWM_INFO_TESTMODE == "production")
       {
-        Serial.printf("product mode .... current hour is: %d:%d:%d \r\n", currenthour,currentmin,currentsec);
+        //Serial.printf("product mode .... current hour is: %d:%d:%d \r\n", currenthour,currentmin,currentsec);
         if (currenthour == 0)
         {
           if (currentmin <10)
@@ -3447,7 +3286,7 @@ void loop()
       }
       else if (PWM_INFO_TESTMODE == "test")
       {
-        Serial.printf("test mode .... current sec is: %d:%d:%d the led8's volume is: %d \r\n", currenthour,currentmin,currentsec, P8[TESTMODE_COUNT]);
+        //Serial.printf("test mode .... current sec is: %d:%d:%d the led8's volume is: %d \r\n", currenthour,currentmin,currentsec, P8[TESTMODE_COUNT]);
         if (TESTMODE_COUNT > 143)
         {
           TESTMODE_COUNT = 0;
