@@ -59,7 +59,7 @@ const char *mqttpwd = "";
 LED_ESP32 led1(4, 1, 100);
 LED_ESP32 led2(12, 2, 100);
 LED_ESP32 led3(13, 3, 100);
-LED_ESP32 led4(15, 9 , 100);
+LED_ESP32 led4(15, 9 , 100);  // the led15 has trouble when rest the light will lighting a sceond
 LED_ESP32 led5(21, 5, 100);
 LED_ESP32 led6(22, 6, 100);
 LED_ESP32 led7(23, 0, 100);
@@ -67,7 +67,7 @@ LED_ESP32 led8(27, 7, 100); // the channel 8 has some trouble for switch the lgi
 
 // 信号灯
 LED_ESP32 led0(25, 9, 100);
-
+ 
 
 AsyncWebServer server(80);
 WiFiClient espClient;
