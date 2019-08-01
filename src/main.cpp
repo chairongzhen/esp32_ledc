@@ -913,12 +913,6 @@ void setup()
     sysdate.replace("\"", "");
     PWM_INFO_RTC = sysdate;
 
-
-    // struct timeval stime;
-    // stime.tv_sec = PWM_INFO_RTC.toInt() + 28816;
-    // settimeofday(&stime, NULL);
-
-
     item = cJSON_GetObjectItem(root, "status");
     itemstr = cJSON_Print(item);
     String status = itemstr;
@@ -938,20 +932,6 @@ void setup()
 
     String tpl_currentdate = "<span id=\"spCurrent\"></span>";
     String change_currentdate = "<span id=\"spCurrent\">";
-
-
-    // int currenthour = t_st->tm_hour;
-    // int currentmin = t_st->tm_min;
-    // int currentsec = t_st->tm_sec;
-    //time_t t = time(NULL);
-    // char nowtime[24];  
-    // struct tm *t_st;
-    // t_st = localtime(&t);
-    // memset(nowtime, 0, sizeof(nowtime));
-    // strftime(nowtime, 24, "%Y-%m-%d %H:%M:%S", t_st);
-    // String strDate = nowtime;
-    // //getEpochTime
-    // Serial.println(PWM_INFO_RTC);
     time_t t;
     struct tm *p;
     t= atoi(PWM_INFO_RTC.c_str()) + 28800;
@@ -1267,28 +1247,6 @@ void setup()
       rawhtml.replace(tpl_pwd, change_pwd);
     }
     SPIFFS.end();
-
-    // String tpl_scanresult = "<table id=\"wifilist\"></table>";
-    // String change_scanresult = "";
-    // int n = WiFi.scanNetworks();
-    // if (n == 0)
-    // {
-    //   change_scanresult = "<table id=\"wifilist\"><tr><td>wifi not found</td></tr></table>";
-    //   rawhtml.replace(tpl_scanresult, change_scanresult);
-    // }
-    // else
-    // {
-    //   String change_scanresult = "<table id=\"wifilist\">";
-    //   for (int i = 0; i < n; ++i)
-    //   {
-    //     change_scanresult = change_scanresult + "<tr><td>";
-    //     change_scanresult = change_scanresult + WiFi.SSID(i);
-    //     change_scanresult = change_scanresult + "</td></tr>";
-    //   }
-    //   change_scanresult = change_scanresult + "</table>";
-    //   rawhtml.replace(tpl_scanresult, change_scanresult);
-    // }
-
     request->send(200, "text/html", rawhtml);
   });
 
@@ -1360,16 +1318,16 @@ void setup()
   });
 
   // for ios wifi setting
-  server.on("/online", HTTP_POST, [](AsyncWebServerRequest *request) {
-    if (request->hasParam("ssid",true) && request->hasParam("pwd",true))
+  server.on("/online", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (request->hasParam("ssid") && request->hasParam("pwd"))
     {
       if (!SPIFFS.begin())
       {
         Serial.println("SPIFFS Mount Failed");
         return;
       }
-      String ssid = request->getParam("ssid",true)->value();
-      String pwd = request->getParam("pwd",true)->value();
+      String ssid = request->getParam("ssid")->value();
+      String pwd = request->getParam("pwd")->value();
       String filecontent;
       filecontent = filecontent + "{\"ssid\":\"";
       filecontent = filecontent + ssid;
@@ -1430,6 +1388,18 @@ void setup()
     //String html = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>Update System</title><script src='https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js'></script></head><body><div><h1 id=\"title\">更新固件</h1><hr/><form method='POST'action='#'enctype='multipart/form-data'id='upload_form'><input type='file'name='update'/><input type='submit'value='更新'/></form><div id='prg'>progress:0%</div></div><script>$('form').submit(function(e){e.preventDefault();var form=$('#upload_form')[0];var data=new FormData(form);$.ajax({url:'/update',type:'POST',data:data,contentType:false,processData:false,xhr:function(){var xhr=new window.XMLHttpRequest();xhr.upload.addEventListener('progress',function(evt){if(evt.lengthComputable){var per=evt.loaded/evt.total;$('#prg').html('progress: '+Math.round(per*100)+'%')}},false);return xhr},success:function(d,s){console.log('success!')},error:function(a,b,c){}})});</script></body></html>";
     String html = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>Update System</title><script src='https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js'></script></head><body><div><form method='POST'action='#'enctype='multipart/form-data'id='upload_form'><input type='file'name='update'/><input style=\"background:green; color:white; width:80px; height:30px;\"type='submit'value='更新'/></form><div id='prg'style=\"font-size:14px; margin-top:10px;\">上传进步:0%</div></div><script>$('form').submit(function(e){e.preventDefault();var form=$('#upload_form')[0];var data=new FormData(form);$.ajax({url:'/update',type:'POST',data:data,contentType:false,processData:false,xhr:function(){var xhr=new window.XMLHttpRequest();xhr.upload.addEventListener('progress',function(evt){if(evt.lengthComputable){var per=evt.loaded/evt.total;$('#prg').html('progress: '+Math.round(per*100)+'%')}},false);return xhr},success:function(d,s){console.log('success!')},error:function(a,b,c){}})});</script></body></html>";
     request->send(200, "text/html", html);
+  });
+
+  // delete wifi.ini
+  server.on("/delwifi", HTTP_GET, [](AsyncWebServerRequest *request) {
+      if (!SPIFFS.begin(true))
+      {
+        Serial.println("SPIFFS Mount Failed");
+        return;
+      }
+      deleteFile(SPIFFS,"/wifi.ini");
+      SPIFFS.end();
+      request->send(200, "text/html", "success");
   });
 
   // update operation
@@ -1582,6 +1552,8 @@ void loop()
       currentsec = timeClient.getSeconds();
     } else {
       //Serial.println("use local time value");      
+      stime.tv_sec = atoi(PWM_INFO_RTC.c_str()) + 27726;
+      settimeofday(&stime, NULL);
       time_t t = time(NULL);      
       struct tm *t_st;
       t_st = localtime(&t);
@@ -3510,7 +3482,7 @@ void loop()
     }
     else if (PWM_INFO_SHOWTYPE == "fix")
     {
-      Serial.println(P8[144]);
+      //Serial.println(P8[144]);
       led1.set(P1[144]);
       led2.set(P2[144]);
       led3.set(P3[144]);
