@@ -16,7 +16,7 @@
 #include <math.h>
 
 #define RESET_BUTTON 26
-#define VERSION_NUM "0.63"
+#define VERSION_NUM "0.70"
 // #define ESP_HOST_NAME "esp1006"
 #define ESP_RTC_TICK 1542012457
 
