@@ -12,7 +12,7 @@
 class LED_ESP32
 {
   public:
-    LED_ESP32(uint8_t pin, uint8_t channel, uint32_t valueMax = 255, uint32_t freq = 5000 , uint8_t precision = 13);
+    LED_ESP32(uint8_t pin, uint8_t channel, uint32_t valueMax = 255, uint32_t freq = 5000 , uint8_t precision = 10);
     void setup();
     void set(uint32_t value);
     void on();

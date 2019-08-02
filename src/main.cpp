@@ -16,7 +16,7 @@
 #include <math.h>
 
 #define RESET_BUTTON 26
-#define VERSION_NUM "0.72"
+#define VERSION_NUM "0.74"
 // #define ESP_HOST_NAME "esp1006"
 #define ESP_RTC_TICK 1542012457
 
@@ -56,23 +56,23 @@ const char *mqttpwd = "";
 // int contentLength = 0;
 // bool isValidContentType = false;
 
-LED_ESP32 led1(4, 1, 100);
-LED_ESP32 led2(12, 2, 100);
-LED_ESP32 led3(13, 3, 100);
-LED_ESP32 led4(15, 9 , 100);  // the led15 has trouble when rest the light will lighting a sceond
-LED_ESP32 led5(21, 5, 100);
-LED_ESP32 led6(22, 6, 100);
-LED_ESP32 led7(23, 0, 100);
+LED_ESP32 led1(4, 0, 100);
+LED_ESP32 led2(12, 1, 100);
+LED_ESP32 led3(13, 2, 100);
+LED_ESP32 led4(15, 3 , 100);  // the led15 has trouble when rest the light will lighting a sceond
+LED_ESP32 led5(21, 4, 100);
+LED_ESP32 led6(22, 5, 100);
+LED_ESP32 led7(23, 6, 100);
 LED_ESP32 led8(27, 7, 100); // the channel 8 has some trouble for switch the lgiht to 0 , is disable
 
 // 信号灯
-LED_ESP32 led0(25, 9, 100);
+LED_ESP32 led0(25, 8, 100);
  
 
 AsyncWebServer server(80);
 WiFiClient espClient;
 PubSubClient client(espClient);
-HttpClient http(espClient,mqttServer);
+//HttpClient HttpClient(espClient,mqttServer);
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP,"ntp1.aliyun.com",28800,60000);
 
@@ -516,26 +516,27 @@ void execOTA() {
 
 bool execCheckVersion(String oldversion)
 {
-  String version = "0.50";
-  bool needtoupdate = false;
-  int err = http.get("/version");
-  if(err == 0) {
-    err = http.responseStatusCode();
-    if(err >=0) {
-      while(http.available() && !http.endOfBodyReached()) {
-        String line = http.readStringUntil('\n');
-        line.trim();
-        if (line.startsWith("version:")) {
-          line.replace("version:","");
-          version = line;
-        }
-      }
-    }
-  }
-  if(oldversion != version) {
-    needtoupdate =  true;
-  }
-  return needtoupdate;
+  return true;
+  // String version = "0.50";
+  // bool needtoupdate = false;
+  // int err = http.get("/version");
+  // if(err == 0) {
+  //   err = http.responseStatusCode();
+  //   if(err >=0) {
+  //     while(http.available() && !http.endOfBodyReached()) {
+  //       String line = http.readStringUntil('\n');
+  //       line.trim();
+  //       if (line.startsWith("version:")) {
+  //         line.replace("version:","");
+  //         version = line;
+  //       }
+  //     }
+  //   }
+  // }
+  // if(oldversion != version) {
+  //   needtoupdate =  true;
+  // }
+  // return needtoupdate;
 }
 
 // void setup() {
@@ -593,7 +594,7 @@ void setup()
     //deleteFile(SPIFFS,"/wifi.ini");
     //deleteFile(SPIFFS,"/pwminfo.ini");
     //initFileSystem();
-    if (!SPIFFS.exists("/pwminfo.ini"))
+    if (!SPIFFS.exists("/mid.ini"))
     {
       Serial.println("begin to init system file");
       initFileSystem();

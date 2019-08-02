@@ -45,6 +45,6 @@
       if(_isWorking) set(currentValue);
     }
  void LED_ESP32::_analogWrite(uint32_t value) {
-      uint32_t duty = _DUTY_MAX * min(value, _MAX_VALUE);
+      uint32_t duty =  10 * value;
       ledcWrite(_CHANNEL, duty);
     }
