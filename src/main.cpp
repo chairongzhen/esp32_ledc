@@ -14,9 +14,10 @@
 #include <WiFiUdp.h>
 #include <NTPClient.h>
 #include <math.h>
+#include <HTTPUpdate.h>
 
 #define RESET_BUTTON 26
-#define VERSION_NUM "0.75"
+#define VERSION_NUM "0.80"
 // #define ESP_HOST_NAME "esp1006"
 #define ESP_RTC_TICK 1542012457
 
@@ -71,6 +72,7 @@ LED_ESP32 led0(25, 8, 100);
 
 AsyncWebServer server(80);
 WiFiClient espClient;
+WiFiClient updateClient;
 PubSubClient client(espClient);
 //HttpClient HttpClient(espClient,mqttServer);
 WiFiUDP ntpUDP;
@@ -205,6 +207,11 @@ void initFileSystem()
   } 
   writeFile(SPIFFS, "/p.ini", "{\"t000\":\"0000000000000000\",\"t001\":\"0000000000000000\",\"t002\":\"0000000000000000\",\"t003\":\"0000000000000000\",\"t004\":\"0000000000000000\",\"t005\":\"0000000000000000\",\"t010\":\"0000000000000000\",\"t011\":\"0000000000000000\",\"t012\":\"0000000000000000\",\"t013\":\"0000000000000000\",\"t014\":\"0000000000000000\",\"t015\":\"0000000000000000\",\"t020\":\"0000000000000000\",\"t021\":\"0000000000000000\",\"t022\":\"0000000000000000\",\"t023\":\"0000000000000000\",\"t024\":\"0000000000000000\",\"t025\":\"0000000000000000\",\"t030\":\"0000000000000000\",\"t031\":\"0000000000000000\",\"t032\":\"0000000000000000\",\"t033\":\"0000000000000000\",\"t034\":\"0000000000000000\",\"t035\":\"0000000000000000\",\"t040\":\"0000000000000000\",\"t041\":\"0000000000000000\",\"t042\":\"0000000000000000\",\"t043\":\"0000000000000000\",\"t044\":\"0000000000000000\",\"t045\":\"0000000000000000\",\"t050\":\"0000000000000000\",\"t051\":\"0000000000000000\",\"t052\":\"0000000000000000\",\"t053\":\"0000000000000000\",\"t054\":\"0000000000000000\",\"t055\":\"0000000000000000\",\"t060\":\"0000000000000000\",\"t061\":\"0000000000000000\",\"t062\":\"0000000000000000\",\"t063\":\"0000000000000000\",\"t064\":\"0000000000000000\",\"t065\":\"0000000000000000\",\"t070\":\"0000000000000000\",\"t071\":\"0000000000000000\",\"t072\":\"0000000000000000\",\"t073\":\"0000000000000000\",\"t074\":\"0000000000000000\",\"t075\":\"0000000000000000\",\"t080\":\"0000000000000000\",\"t081\":\"0000000000000000\",\"t082\":\"0000000000000000\",\"t083\":\"0000000000000000\",\"t084\":\"0000000000000000\",\"t085\":\"0000000000000000\",\"t090\":\"0000000000000000\",\"t091\":\"0000000000000000\",\"t092\":\"0000000000000000\",\"t093\":\"0000000000000000\",\"t094\":\"0000000000000000\",\"t095\":\"0000000000000000\",\"t100\":\"0000000000000000\",\"t101\":\"0000000000000000\",\"t102\":\"0000000000000000\",\"t103\":\"0000000000000000\",\"t104\":\"0000000000000000\",\"t105\":\"0000000000000000\",\"t110\":\"0000000000000000\",\"t111\":\"0000000000000000\",\"t112\":\"0000000000000000\",\"t113\":\"0000000000000000\",\"t114\":\"0000000000000000\",\"t115\":\"0000000000000000\",\"t120\":\"0000000000000000\",\"t121\":\"0000000000000000\",\"t122\":\"0000000000000000\",\"t123\":\"0000000000000000\",\"t124\":\"0000000000000000\",\"t125\":\"0000000000000000\",\"t130\":\"0000000000000000\",\"t131\":\"0000000000000000\",\"t132\":\"0000000000000000\",\"t133\":\"0000000000000000\",\"t134\":\"0000000000000000\",\"t135\":\"0000000000000000\",\"t140\":\"0000000000000000\",\"t141\":\"0000000000000000\",\"t142\":\"0000000000000000\",\"t143\":\"0000000000000000\",\"t144\":\"0000000000000000\",\"t145\":\"0000000000000000\",\"t150\":\"0000000000000000\",\"t151\":\"0000000000000000\",\"t152\":\"0000000000000000\",\"t153\":\"0000000000000000\",\"t154\":\"0000000000000000\",\"t155\":\"0000000000000000\",\"t160\":\"0000000000000000\",\"t161\":\"0000000000000000\",\"t162\":\"0000000000000000\",\"t163\":\"0000000000000000\",\"t164\":\"0000000000000000\",\"t165\":\"0000000000000000\",\"t170\":\"0000000000000000\",\"t171\":\"0000000000000000\",\"t172\":\"0000000000000000\",\"t173\":\"0000000000000000\",\"t174\":\"0000000000000000\",\"t175\":\"0000000000000000\",\"t180\":\"0000000000000000\",\"t181\":\"0000000000000000\",\"t182\":\"0000000000000000\",\"t183\":\"0000000000000000\",\"t184\":\"0000000000000000\",\"t185\":\"0000000000000000\",\"t190\":\"0000000000000000\",\"t191\":\"0000000000000000\",\"t192\":\"0000000000000000\",\"t193\":\"0000000000000000\",\"t194\":\"0000000000000000\",\"t195\":\"0000000000000000\",\"t200\":\"0000000000000000\",\"t201\":\"0000000000000000\",\"t202\":\"0000000000000000\",\"t203\":\"0000000000000000\",\"t204\":\"0000000000000000\",\"t205\":\"0000000000000000\",\"t210\":\"0000000000000000\",\"t211\":\"0000000000000000\",\"t212\":\"0000000000000000\",\"t213\":\"0000000000000000\",\"t214\":\"0000000000000000\",\"t215\":\"0000000000000000\",\"t220\":\"0000000000000000\",\"t221\":\"0000000000000000\",\"t222\":\"0000000000000000\",\"t223\":\"0000000000000000\",\"t224\":\"0000000000000000\",\"t225\":\"0000000000000000\",\"t230\":\"0000000000000000\",\"t231\":\"0000000000000000\",\"t232\":\"0000000000000000\",\"t233\":\"0000000000000000\",\"t234\":\"0000000000000000\",\"t235\":\"0000000000000000\",\"tfix\":\"0000000000000000\"}");
   
+  if(!SPIFFS.exists("/version")) {
+      String versionContent = "0.80";
+      writeFile(SPIFFS, "/version.ini", versionContent.c_str());
+  }
+
   SPIFFS.end();
 }
 
@@ -376,6 +383,7 @@ void callback(char *topic, byte *payload, unsigned int length)
   root = cJSON_Parse(jsonstr);
   String itemstr;
   String checktimetopic = "esp32/checktime";
+  String checkversiontopic = "esp32/checkversion";
 
   if (String(topic) == topic_name_p)
   {
@@ -408,6 +416,7 @@ void callback(char *topic, byte *payload, unsigned int length)
     itemstr = cJSON_Print(item);
     PWM_INFO_VERSION = itemstr;
     PWM_INFO_VERSION.replace("\"", "");
+    Serial.println(filecontent);
     writeFile(SPIFFS, "/pwminfo.ini", filecontent.c_str());
   }
   else if (String(topic) == checktimetopic)
@@ -437,6 +446,11 @@ void callback(char *topic, byte *payload, unsigned int length)
     //stime.tv_sec = PWM_INFO_RTC.toInt() + 28816;
     stime.tv_sec = PWM_INFO_RTC.toInt();
     settimeofday(&stime, NULL);
+  }
+  else if(String(topic) == checkversiontopic ) {
+      String versionContent = filecontent;
+      Serial.println(versionContent);
+      writeFile(SPIFFS, "/version.ini", versionContent.c_str());
   }
   else if (String(topic) == topic_name_pt)
   {
@@ -474,6 +488,9 @@ void mqttconn()
       // subscribe the checktime service
       client.subscribe("esp32/checktime");
 
+      // subscribe the check version service
+      client.subscribe("esp32/checkversion");
+
       // subscribe the checkonine servcie
       String checkonine = ESP_HOST_NAME;
       checkonine = checkonine + "/check";
@@ -493,7 +510,6 @@ void mqttconn()
       String recv_topic_setp = ESP_HOST_NAME;
       recv_topic_setp = recv_topic_setp + "/setp";
       client.subscribe(recv_topic_setp.c_str());
-      client.subscribe("esp_24:0A:C4:9F:85:5C/setp");
 
       // publish the oline notification
       String online_message = "{mid:";
@@ -565,6 +581,7 @@ bool execCheckVersion(String oldversion)
 void setup()
 {
   Serial.begin(115200);
+  Serial.printf("esp version: %s \r\n",VERSION_NUM);
   RESET_FLAG = false;
   IS_SMART = false;
   pinMode(RESET_BUTTON, INPUT_PULLUP);
@@ -628,15 +645,14 @@ void setup()
         itemstr = cJSON_Print(item);
         itemstr.replace("\"", "");
         ESP_HOST_NAME = itemstr;
-        Serial.println("the host name is" + ESP_HOST_NAME);
         item = cJSON_GetObjectItem(root, "mac");
         itemstr = cJSON_Print(item);
         itemstr.replace("\"", "");
         ESP_MAC = itemstr;
       }
 
-      Serial.println("the AP name is : " + String(ESP_HOST_NAME) + " password is: " + String(password));
-      Serial.println("the mac address is: " + String(ESP_MAC));
+      //Serial.println("the AP name is : " + String(ESP_HOST_NAME) + " password is: " + String(password));
+      //Serial.println("the mac address is: " + String(ESP_MAC));
       if (SPIFFS.exists("/wifi.ini"))
       {
         String filestr;
@@ -1272,6 +1288,72 @@ void setup()
             onFileUpload);
 
 
+
+
+server.on("/iosupdatetime",HTTP_GET,[](AsyncWebServerRequest * request){     
+      if (request->hasParam("timestamp")) {
+        String timestamp = request -> getParam("timestamp")->value();;
+        if (!SPIFFS.begin())
+        {
+          Serial.println("SPIFFS Mount Failed");
+          request->send(200, "text/html", "failed");
+        }
+
+        String filestr;
+        filestr = getFileString(SPIFFS, "/pwminfo.ini");
+        cJSON *root = NULL;
+        cJSON *item = NULL;
+        const char *jsonstr = filestr.c_str();
+        root = cJSON_Parse(jsonstr);
+
+        String itemstr;
+        item = cJSON_GetObjectItem(root, "showtype");
+        itemstr = cJSON_Print(item);
+        String showtype = itemstr;
+        item = cJSON_GetObjectItem(root, "testmode");
+        itemstr = cJSON_Print(item);
+        String testmode = itemstr;
+        item = cJSON_GetObjectItem(root, "sysdate");
+        itemstr = cJSON_Print(item);
+        String sysdate = itemstr;
+        sysdate.replace("\"", "");
+        PWM_INFO_RTC = sysdate;
+
+        item = cJSON_GetObjectItem(root, "status");
+        itemstr = cJSON_Print(item);
+        String status = itemstr;
+        item = cJSON_GetObjectItem(root, "conmode");
+        itemstr = cJSON_Print(item);
+        String conmode = itemstr;
+        cJSON_Delete(root);
+
+
+        String filecontent;
+        filecontent = "{\"showtype\":";
+        filecontent = filecontent + showtype;
+        filecontent = filecontent + ",\"testmode\":";
+        filecontent = filecontent + testmode;
+        filecontent = filecontent + ",\"sysdate\":\"";
+        filecontent = filecontent + timestamp;
+        filecontent = filecontent + "\",\"conmode\":";
+        filecontent = filecontent + conmode;
+        filecontent = filecontent + "}";
+        PWM_INFO_RTC = sysdate;
+        writeFile(SPIFFS, "/pwminfo.ini", filecontent.c_str());
+        Serial.println(filecontent);
+        SPIFFS.end();
+        struct timeval stime;
+        //stime.tv_sec = atoi(PWM_INFO_RTC.c_str()) + 27726;
+        stime.tv_sec = 1565004710 + 28800;
+        settimeofday(&stime, NULL);
+        request->send(200, "text/html", "success");
+        
+      } else {
+        request->send(200, "text/html", "miss timestamp param");
+      }      
+  });
+
+
   server.onNotFound(notFound);
   server.begin();
 }
@@ -1389,7 +1471,7 @@ void loop()
   if (WiFi.status() != WL_CONNECTED) {
     if(timeClient.getEpochTime() < 28900 && stime.tv_sec < 28900) {
       if(!isUpaded) {
-        Serial.println("set time from RTC File");
+        //Serial.println("set time from RTC File");
         stime.tv_sec = atoi(PWM_INFO_RTC.c_str()) + 27726;
         settimeofday(&stime, NULL);
         isUpaded = true;
@@ -1410,7 +1492,6 @@ void loop()
       currenthour = t_st->tm_hour;
       currentmin = t_st->tm_min;
       currentsec = t_st->tm_sec;
-      //Serial.println(t_st, "%A, %B %d %Y %H:%M:%S");
     }
     wifistatus = "offline";   
   } else {
@@ -1439,6 +1520,25 @@ void loop()
       //Serial.println(t_st, "%A, %B %d %Y %H:%M:%S");
 
     }
+  PWM_INFO_CONMODE = "none";
+  if(PWM_INFO_CONMODE == "auto") {
+    String latestversion = getFileString(SPIFFS, "/version.ini");
+    if(String(VERSION_NUM) != latestversion) {
+        t_httpUpdate_return ret = httpUpdate.update(updateClient,"http://www.polypite.com/public/bin/firmware.bin");
+        switch (ret)
+        {
+            case HTTP_UPDATE_FAILED:
+                  Serial.printf("HTTP_UPDATE_FAILD Error (%d): %s", httpUpdate.getLastError(), httpUpdate.getLastErrorString().c_str());
+                  break;
+              case HTTP_UPDATE_NO_UPDATES:
+                  Serial.println("HTTP_UPDATE_NO_UPDATES");
+                  break;
+              case HTTP_UPDATE_OK:
+                  Serial.println("HTTP_UPDATE_OK");
+                  break;
+          }
+    }
+  }
     wifistatus = "online";
   }
 
