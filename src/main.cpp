@@ -21,9 +21,11 @@
 //#include <TaskScheduler.h>
 
 #define RESET_BUTTON 26
-#define VERSION_NUM "0.94"
+#define VERSION_NUM "0.95"
 #define ESP_RTC_TICK 1572870999
 
+
+byte KEY1_NUM = 0;
 String ESP_HOST_NAME = "esp004";
 String ESP_MAC = "00000000";
 String PWM_INFO_SHOWTYPE, PWM_INFO_TESTMODE, PWM_INFO_CONMODE, PWM_INFO_RTC, PWM_INFO_VERSION;
@@ -82,8 +84,9 @@ WiFiUDP ntpUDP;
 Preferences localStorage;
 NTPClient timeClient(ntpUDP, "ntp1.aliyun.com", 28800, 60000);
 
-Ticker wifiTicker;
-Ticker lightTicker;
+//Ticker wifiTicker;
+//Ticker lightTicker;
+Ticker resetTicker;
 Ticker timeTicker;
 TaskHandle_t wsHandler;
 TaskHandle_t mqttHandler;
@@ -1968,13 +1971,6 @@ void callback(char *topic, byte *payload, unsigned int length)
   {
     filecontent = filecontent + (char)payload[i];
   }
-  // // Serial.println("here we go 3");
-
-  //Serial.println("the content is: " + filecontent);
-
-  //char *p_content;
-  //char dst[30][80];
-  //int cnt;
 
   String checktimetopic = "esp32/checktime";
   String checkversiontopic = "esp32/checkversion";
@@ -2024,36 +2020,11 @@ void callback(char *topic, byte *payload, unsigned int length)
     // Serial.println(filecontent);
     // writeFile(SPIFFS, "/pwminfo.ini", filecontent.c_str());
   }
-  // else if (String(topic) == checktimetopic)
-  // {
-  //   // localStorage.putUInt(filecontent.toInt());
-  //   // PWM_INFO_RTC = filecontent;
-
-  //   // String pwmifnocontent = getFileString(SPIFFS, "/pwminfo.ini");
-  //   // Serial.println(pwmifnocontent);
-  //   // p_content = new char[200];
-  //   // strcpy(p_content, pwmifnocontent.c_str());
-  //   // cnt = split(dst, p_content, ",");
-  //   // String tpl_sysdate;
-  //   // String change_sysdate = "\"sysdate\":\"";
-  //   // change_sysdate = change_sysdate + PWM_INFO_RTC;
-  //   // change_sysdate = change_sysdate + "\"";
-  //   // for (int i = 0; i < cnt; i++)
-  //   // {
-  //   //   if (i == 2)
-  //   //   {
-  //   //     tpl_sysdate = dst[i];
-  //   //     break;
-  //   //   }
-  //   // }
-  //   // pwmifnocontent.replace(tpl_sysdate, change_sysdate);
-
-  //   // writeFile(SPIFFS, "/pwminfo.ini", pwmifnocontent.c_str());
-  //   struct timeval stime;
-  //   // //stime.tv_sec = PWM_INFO_RTC.toInt() + 28816;
-  //   stime.tv_sec = PWM_INFO_RTC.toInt();
-  //   settimeofday(&stime, NULL);
-  // }
+  else if (String(topic) == checktimetopic)
+  {
+    Serial.println("the timestampe is:"+filecontent);
+    localStorage.putUInt("localtime",filecontent.toInt());
+  }
   // // else if (String(topic) == checkversiontopic)
   // // {
   // //   String versionContent = filecontent;
@@ -2351,7 +2322,8 @@ void callback(char *topic, byte *payload, unsigned int length)
 // mqtt service
 void mqttconn()
 {
-  while (!client.connected())
+  int trytime = 30;
+  while (!client.connected() && trytime >=0)
   {
     Serial.println("MQTT is connecting...");
     //if (client.connect(ESP_HOST_NAME, mqttuser, mqttpwd))
@@ -2397,9 +2369,13 @@ void mqttconn()
     }
     else
     {
+      trytime--;
       Serial.printf("MQTT connect failed, the rc=%d; try again in 2 second", client.state());
       delay(2000);
     }
+  }
+  if(trytime<=0) {
+    ESP.restart();
   }
 }
 
@@ -2454,7 +2430,7 @@ bool execCheckVersion(String oldversion)
 void setWebServer(void *parameter)
 {
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-    String html = "";
+    String html PROGMEM = "";
     html = html + "<html><head><meta http-equiv=\"Content-Type\"content=\"text/html; charset=utf-8\"/><meta http-equiv=\"X-UA-Compatible\"content=\"IE=edge,Chrome=1\"/><meta name=\"format-detection\" content=\"telephone=no\" /><meta http-equiv=\"pragma\"content=\"no-cache\"><meta http-equiv=\"cache-control\"content=\"no-cache\"><meta http-equiv=\"expires\"content=\"0\"><meta name=\"viewport\"content=\"width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no\"><style>";
     html = html + ".w-header{height:50px;background-color:#eee;line-height:50px;border-bottom:1px solid #999}";
     html = html + ".w-header-brand{font-size:16px;font-weight:bold;float:left;margin-left:20px;}";
@@ -2469,7 +2445,7 @@ void setWebServer(void *parameter)
     html = html + ".w-body iframe{padding:0;margin:0;border:0;overflow-x:hidden}";
     //html = html +  "</style><title>后台管理</title></head><body style=\"overflow:hidden\"><div class=\"w-header\"><div class=\"w-header-brand\">后台管理</div></div><div class=\"w-body\"><ul class=\"w-menu\"><li id=\"basic\"><a target=\"iframe\"href=\"/basic\">基本设置</a></li><li class=\"divider\">|</li><li id=\"light\"><a target=\"iframe\"href=\"/p\">亮度设置</a></li><li class=\"divider\">|</li><li id=\"basic\"><a target=\"iframe\"href=\"/upload\">固件升级</a></li></ul><div id='grid'></div><hr/><iframe name=\"iframe\"width=\"100%\"height=\"80%\"frameborder=\"no\"border=\"0\"scrolling=\"auto\"src=\"/basic\"></iframe></div><div id=\"w-footer\"></div></body></html>";
     html = html + "</style><title>后台管理</title></head><body style=\"overflow:hidden\"><div class=\"w-header\"><div class=\"w-header-brand\">后台管理</div></div><div class=\"w-body\"><ul class=\"w-menu\"><li id=\"basic\"><a target=\"iframe\"href=\"/basic\">基本设置</a></li><li class=\"divider\">|</li><li id=\"light\"><a target=\"iframe\"href=\"/p\">亮度设置</a></li><li class=\"divider\">|</li><li id=\"upload\"><a target=\"iframe\"href=\"/upload\">固件更新</a></li></ul><hr/><iframe name=\"iframe\"width=\"100%\"height=\"80%\"frameborder=\"no\"border=\"0\"scrolling=\"auto\"src=\"./basic\"></iframe></div><div id=\"w-footer\"></div></body></html>";
-
+    
     request->send(200, "text/html", html);
   });
 
@@ -2516,7 +2492,7 @@ void setWebServer(void *parameter)
     //todo
     String version = VERSION_NUM;
     Serial.println("the version is: " + version);
-    String html = "";
+    String html PROGMEM = "";
     //html = html + "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>NodeMCU Control Page</title><!--<script type=\"text/javascript\"src=\"jquery.js\"></script>--></head><body><div><h1 id=\"title\">基本信息</h1><table><tr><th style=\"text-align:left;\">版本号</th></tr><tr><td><span id=\"spversion\"></span></td></tr><tr><th style=\"text-align:left;\">系统时间</th></tr><tr><td><span id=\"spCurrent\"></span></td></tr><tr><th style=\"text-align: left;\">修改时间</th></tr><tr><td><input type=\"text\"value=\"2018-03-03 00:00:00\"id=\"txtsysdate\"/>*时间格式:2018-03-03 00:00:00</td></tr><tr><th style=\"text-align:left;\">循环模式</th></tr><tr><td><input type=\"radio\"value=\"repeat\"name=\"showtype\"id=\"rdRpt\"/>循环模式<input type=\"radio\"value=\"fix\"name=\"showtype\"id=\"rdFix\"/>固定模式</td></tr><tr id=\"thtest\"><th style=\"text-align:left;\">是否测试</th></tr><tr id=\"tdtest\"><td><input value=\"production\"type=\"radio\"name=\"testMode\"id=\"rdPrd\"/>否<input value=\"test\"type=\"radio\"name=\"testMode\"id=\"rdTest\"/>是</td></tr><tr id=\"thonline\"style=\"display: none;\"><th style=\"text-align:left;\">云端控制</th></tr><tr id=\"tdonline\"style=\"display: none;\"><td><input value=\"local\"type=\"radio\"name=\"onlineMode\"id=\"rdlocal\"/>否<input value=\"online\"type=\"radio\"name=\"onlineMode\"id=\"rdonline\"/>是</td></tr><tr><td><input type=\"button\"value=\"联网设置\"id=\"btnwifi\"onclick=\"wifi();\"/><input type=\"submit\"value=\"保存\"id=\"submit\"onclick=\"submit();\"/><input type=\"button\"value=\"恢复出厂\"id=\"btnstop\"onclick=\"init();\"/><input type=\"button\"value=\"重启\"id=\"btnReset\"onclick=\"reset();\"/><input type=\"button\"value=\"更新固件\"id=\"btnupload\"onclick=\"upload();\"/></td></tr></table><hr/><h1 id=\"title\">灯光控制</h1><table><tr><td><a href=\"/p\">进入设置页面</a></td></tr></table></div><script>function submit(){var selectshowtype=document.getElementsByName('showtype');var showtypevalue=\"\";for(var i=0;i<selectshowtype.length;i++){if(selectshowtype[i].checked){showtypevalue=selectshowtype[i].value;break}}var selecttestmode=document.getElementsByName('testMode');var testmodevalue=\"\";for(var i=0;i<selecttestmode.length;i++){if(selecttestmode[i].checked){testmodevalue=selecttestmode[i].value;break}}var str=document.getElementById('txtsysdate').value;str=str.replace(/-/g,\"/\");var date=new Date(str);var unixDate=date.getTime()/1000|0;console.log(unixDate);var selectedconnectionmode=document.getElementsByName(\"onlineMode\");var connectionmodevalue=\"\";for(var i=0;i<selectedconnectionmode.length;i++){if(selectedconnectionmode[i].checked){connectionmodevalue=selectedconnectionmode[i].value;break}}alert('保存成功');var url=\"pwmopr?showtype=\"+showtypevalue+\"&testmode=\"+testmodevalue+\"&sysdate=\"+unixDate+\"&conmode=\"+connectionmodevalue;window.location.href=url}function init(){alert('已恢复出厂设置!');var url=\"init\";window.location.href=url}function wifi(){var url=\"wifi\";window.location.href=url}function reset(){var url=\"reset\";alert(\"已重启,请关闭当前页面\");window.location.href=url}function upload(){var url=\"upload\";window.location.href=url}</script></body></html>";
     //html = html + "<!DOCTYPE html><html><head><meta name=\"format-detection\" content=\"telephone=no\" /><meta http-equiv=\"Content-Type\"content=\"text/html; charset=utf-8\"/><meta http-equiv=\"X-UA-Compatible\"content=\"IE=edge,Chrome=1\"/><meta http-equiv=\"pragma\"content=\"no-cache\"><!--HTTP 1.1--><meta http-equiv=\"cache-control\"content=\"no-cache\"><!--HTTP 1.0--><meta http-equiv=\"expires\"content=\"0\"><!--Prevent caching at the proxy server--><meta name=\"viewport\"content=\"width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no\"><title>基本信息</title></head><body><div><table><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">版本号</span></td><td style=\"font-size:14px;\"><span id=\"spversion\"></span></td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">系统时间</span></td><td style=\"font-size:14px;\"><span id=\"spCurrent\"></span></td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">修改时间</span></td><td style=\"font-size:14px;\"><input type=\"text\"value=\"2018-12-20 00:00:00\"id=\"txtsysdate\"/></td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">循环模式</span></td><td style=\"font-size:14px;\"><input type=\"radio\"value=\"repeat\"name=\"showtype\"id=\"rdRpt\"/>循环模式<input type=\"radio\"value=\"fix\"name=\"showtype\"id=\"rdFix\"/>固定模式</td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">是否测试</span></td><td style=\"font-size:14px;\"><input value=\"production\"type=\"radio\"name=\"testMode\"id=\"rdPrd\"/>否<input value=\"test\"type=\"radio\"name=\"testMode\"id=\"rdTest\"/>是</td></tr><tr style=\"height:50px;\"><td colspan=\"2\"><input style=\"background:green; color:white; width:80px; height:30px; margin-right:2px;\"type=\"button\"value=\"联网设置\"id=\"btnwifi\"onclick=\"wifi();\"/><input style=\"background:green; color:white; width:80px; height:30px;margin-right:2px;\"type=\"submit\"value=\"保存\"id=\"submit\"onclick=\"submit();\"/><input style=\"background:green; color:white; width:80px; height:30px;margin-right:2px;\"type=\"button\"value=\"恢复出厂\"id=\"btnstop\"onclick=\"init();\"/><input style=\"background:green; color:white; width:80px; height:30px;\"type=\"button\"value=\"重启\"id=\"btnReset\"onclick=\"reset();\"/></td></tr></table><hr/></div><script>var now=new Date();var year=now.getFullYear();var month=now.getMonth();var date=now.getDate();var day=now.getDay();var hour=now.getHours();var minu=now.getMinutes();var sec=now.getSeconds();month=month+1;if(month<10)month=\"0\"+month;if(date<10)date=\"0\"+date;if(hour<10)hour=\"0\"+hour;if(minu<10)minu=\"0\"+minu;if(sec<10)sec=\"0\"+sec;var time=\"\";time=year+\"-\"+month+\"-\"+date+\" \"+hour+\":\"+minu+\":\"+sec;document.getElementById(\"txtsysdate\").value=time;function submit(){var selectshowtype=document.getElementsByName('showtype');var showtypevalue=\"\";for(var i=0;i<selectshowtype.length;i++){if(selectshowtype[i].checked){showtypevalue=selectshowtype[i].value;break}}var selecttestmode=document.getElementsByName('testMode');var testmodevalue=\"\";for(var i=0;i<selecttestmode.length;i++){if(selecttestmode[i].checked){testmodevalue=selecttestmode[i].value;break}}var str=document.getElementById('txtsysdate').value;str=str.replace(/-/g,\"/\");var date=new Date(str);var unixDate=date.getTime()/1000|0;console.log(unixDate);alert('保存成功');var url=\"pwmopr?showtype=\"+showtypevalue+\"&testmode=\"+testmodevalue+\"&sysdate=\"+unixDate+\"&conmode=local\";window.location.href=url}function init(){alert('已恢复出厂设置!');var url=\"init\";window.location.href=url}function wifi(){var url=\"wifi\";window.location.href=url}function reset(){var url=\"reset\";alert(\"已重启,请关闭当前页面\");window.location.href=url}function upload(){var url=\"upload\";window.location.href=url}</script></body></html>";
     html = html + "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\"content=\"text/html; charset=utf-8\"/><meta http-equiv=\"X-UA-Compatible\"content=\"IE=edge,Chrome=1\"/><meta http-equiv=\"pragma\"content=\"no-cache\"><!--HTTP 1.1--><meta http-equiv=\"cache-control\"content=\"no-cache\"><!--HTTP 1.0--><meta http-equiv=\"expires\"content=\"0\"><!--Prevent caching at the proxy server--><meta name=\"viewport\"content=\"width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no\"><title>基本信息</title></head><body><div><table><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">版本号</span></td><td style=\"font-size:14px;\"><span id=\"spversion\"></span></td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">系统时间</span></td><td style=\"font-size:14px;\"><span id=\"spCurrent\"></span></td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">修改时间</span></td><td style=\"font-size:14px;\"><input type=\"text\"value=\"2018-12-20 00:00:00\"id=\"txtsysdate\"/></td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">循环模式</span></td><td style=\"font-size:14px;\"><input type=\"radio\"value=\"repeat\"name=\"showtype\"id=\"rdRpt\"/>循环模式<input type=\"radio\"value=\"fix\"name=\"showtype\"id=\"rdFix\"/>固定模式</td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">是否测试</span></td><td style=\"font-size:14px;\"><input value=\"production\"type=\"radio\"name=\"testMode\"id=\"rdPrd\"/>否<input value=\"test\"type=\"radio\"name=\"testMode\"id=\"rdTest\"/>是</td></tr><tr style=\"height:50px;\"><td colspan=\"2\"><input style=\"background:green; color:white; width:80px; height:30px; margin-right:2px;\"type=\"button\"value=\"联网设置\"id=\"btnwifi\"onclick=\"wifi();\"/><input style=\"background:green; color:white; width:80px; height:30px;margin-right:2px;\"type=\"submit\"value=\"保存\"id=\"submit\"onclick=\"submit();\"/><input style=\"background:green; color:white; width:80px; height:30px;margin-right:2px;\"type=\"button\"value=\"恢复出厂\"id=\"btnstop\"onclick=\"init();\"/><input style=\"background:green; color:white; width:80px; height:30px;\"type=\"button\"value=\"重启\"id=\"btnReset\"onclick=\"reset();\"/><input style=\"background:green; color:white; width:80px; height:30px;\"type=\"button\"value=\"二维码\"id=\"btnQrcode\"onclick=\"qrcode();\"/></td></tr></table><hr/></div><script>var now=new Date();var year=now.getFullYear();var month=now.getMonth();var date=now.getDate();var day=now.getDay();var hour=now.getHours();var minu=now.getMinutes();var sec=now.getSeconds();month=month+1;if(month<10)month=\"0\"+month;if(date<10)date=\"0\"+date;if(hour<10)hour=\"0\"+hour;if(minu<10)minu=\"0\"+minu;if(sec<10)sec=\"0\"+sec;var time=\"\";time=year+\"-\"+month+\"-\"+date+\" \"+hour+\":\"+minu+\":\"+sec;document.getElementById(\"txtsysdate\").value=time;function submit(){var selectshowtype=document.getElementsByName('showtype');var showtypevalue=\"\";for(var i=0;i<selectshowtype.length;i++){if(selectshowtype[i].checked){showtypevalue=selectshowtype[i].value;break}}var selecttestmode=document.getElementsByName('testMode');var testmodevalue=\"\";for(var i=0;i<selecttestmode.length;i++){if(selecttestmode[i].checked){testmodevalue=selecttestmode[i].value;break}}var str=document.getElementById('txtsysdate').value;str=str.replace(/-/g,\"/\");var date=new Date(str);var unixDate=date.getTime()/1000|0;console.log(unixDate);alert('保存成功');var url=\"pwmopr?showtype=\"+showtypevalue+\"&testmode=\"+testmodevalue+\"&sysdate=\"+unixDate+\"&conmode=local\";window.location.href=url}function init(){alert('已恢复出厂设置!');var url=\"init\";window.location.href=url}function wifi(){var url=\"wifi\";window.location.href=url}function reset(){var url=\"reset\";alert(\"已重启,请关闭当前页面\");window.location.href=url}function upload(){var url=\"upload\";window.location.href=url}function qrcode(){var url=\"mid\";window.location.href=url}function update(){var url=\"onlineupdate\";window.location.href=url}</script></body></html>";
@@ -2652,16 +2628,17 @@ void setWebServer(void *parameter)
   server.on("/setp", HTTP_GET, [](AsyncWebServerRequest *request) {
     if (request->hasParam("t"))
     {
-      if (!SPIFFS.begin())
-      {
-        Serial.println("SPIFFS Mount Failed");
-        return;
-      }
+      // if (!SPIFFS.begin())
+      // {
+      //   Serial.println("SPIFFS Mount Failed");
+      //   return;
+      // }
       String tvalues = request->getParam("t")->value();
-      lightopr(tvalues);
-      writeFile(SPIFFS, "/p.ini", tvalues.c_str());
-      SPIFFS.end();
-      request->redirect("/p");
+      // lightopr(tvalues);
+      // writeFile(SPIFFS, "/p.ini", tvalues.c_str());
+      // SPIFFS.end();
+      // request->redirect("/p");
+      Serial.println(tvalues);
     }
     else
     {
@@ -2811,7 +2788,7 @@ void setWebServer(void *parameter)
   // wifi page
   server.on("/wifi", HTTP_GET, [](AsyncWebServerRequest *request) {
     //String rawhtml = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>WiFi Setup Page</title></head><body><div><h1 id=\"title\">联网设置</h1><table><tr><th style=\"text-align:left;\">WIFI名称</th></tr><tr><td><input type=\"text\"id=\"txtssid\"/></td></tr><tr><th style=\"text-align:left;\">WIFI密码</th></tr><tr><td><input type=\"text\"id=\"txtpwd\"/></td></tr><tr><td><input type=\"submit\"value=\"连接\"id=\"btnConnect\"onclick=\"submit()\"/><input type=\"button\"value=\"返回\"id=\"btnBack\"onclick=\"back()\"/></td></tr><tr><td><span id=\"spResult\"></span></td></tr></table><hr/><h1 id=\"title\">WIFI热点扫描</h1><table id=\"wifilist\"></table></div><script>function submit(){var ssid=document.getElementById('txtssid').value;var pwd=document.getElementById('txtpwd').value;alert(\"正在连接热点,请关闭此页面并切换选择的热点，通过http://esp32访问\");var url=\"savewifi?ssid=\"+ssid+\"&pwd=\"+pwd;window.location.href=url}function back(){var url=\"/\";window.location.href=url}</script></body></html>";
-    String rawhtml = "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>WiFi Setup Page</title></head><body><div><table><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">WIFI名称</span></td><td style=\"font-size:14px;\"><input type=\"text\"id=\"txtssid\"/></td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">WIFI密码</span></td><td style=\"font-size:14px;\"><input type=\"text\"id=\"txtpwd\"/></td></tr><tr><td colspan=\"2\"><input style=\"background:green; color:white; width:80px; height:30px; margin-right:2px;\"type=\"submit\"value=\"连接\"id=\"btnConnect\"onclick=\"submit()\"/><input style=\"background:green; color:white; width:80px; height:30px;\"type=\"button\"value=\"返回\"id=\"btnBack\"onclick=\"back()\"/></td></tr><tr><td><span id=\"spResult\"style=\"font-size:14px;\"></span></td></tr></table><hr/><div style=\"font-size:14px;\"><span></span><div><table id=\"wifilist\"></table></div></div></div><script>function submit(){var ssid=document.getElementById('txtssid').value;var pwd=document.getElementById('txtpwd').value;alert(\"正在连接热点,请关闭此页面并切换选择的热点，通过http://esp32访问\");var url=\"savewifi?ssid=\"+ssid+\"&pwd=\"+pwd;window.location.href=url}function back(){var url=\"/basic\";window.location.href=url}</script></body></html>";
+    String rawhtml PROGMEM = "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>WiFi Setup Page</title></head><body><div><table><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">WIFI名称</span></td><td style=\"font-size:14px;\"><input type=\"text\"id=\"txtssid\"/></td></tr><tr style=\"height:30px;\"><td style=\"width:80px;\"><span style=\"font-size:14px;\">WIFI密码</span></td><td style=\"font-size:14px;\"><input type=\"text\"id=\"txtpwd\"/></td></tr><tr><td colspan=\"2\"><input style=\"background:green; color:white; width:80px; height:30px; margin-right:2px;\"type=\"submit\"value=\"连接\"id=\"btnConnect\"onclick=\"submit()\"/><input style=\"background:green; color:white; width:80px; height:30px;\"type=\"button\"value=\"返回\"id=\"btnBack\"onclick=\"back()\"/></td></tr><tr><td><span id=\"spResult\"style=\"font-size:14px;\"></span></td></tr></table><hr/><div style=\"font-size:14px;\"><span></span><div><table id=\"wifilist\"></table></div></div></div><script>function submit(){var ssid=document.getElementById('txtssid').value;var pwd=document.getElementById('txtpwd').value;alert(\"正在连接热点,请关闭此页面并切换选择的热点，通过http://esp32访问\");var url=\"savewifi?ssid=\"+ssid+\"&pwd=\"+pwd;window.location.href=url}function back(){var url=\"/basic\";window.location.href=url}</script></body></html>";
     String ssid = localStorage.getString("ssid", "");
     String pwd = localStorage.getString("pwd", "");
 
@@ -3027,7 +3004,7 @@ void setWebServer(void *parameter)
   // bin upload page
   server.on("/upload", HTTP_GET, [](AsyncWebServerRequest *request) {
     //String html = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>Update System</title><script src='https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js'></script></head><body><div><h1 id=\"title\">更新固件</h1><hr/><form method='POST'action='#'enctype='multipart/form-data'id='upload_form'><input type='file'name='update'/><input type='submit'value='更新'/></form><div id='prg'>progress:0%</div></div><script>$('form').submit(function(e){e.preventDefault();var form=$('#upload_form')[0];var data=new FormData(form);$.ajax({url:'/update',type:'POST',data:data,contentType:false,processData:false,xhr:function(){var xhr=new window.XMLHttpRequest();xhr.upload.addEventListener('progress',function(evt){if(evt.lengthComputable){var per=evt.loaded/evt.total;$('#prg').html('progress: '+Math.round(per*100)+'%')}},false);return xhr},success:function(d,s){console.log('success!')},error:function(a,b,c){}})});</script></body></html>";
-    String html = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>Update System</title><script src='https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js'></script></head><body><div><form method='POST'action='#'enctype='multipart/form-data'id='upload_form'><input type='file'name='update'/><input style=\"background:green; color:white; width:80px; height:30px;\"type='submit'value='更新'/></form><div id='prg'style=\"font-size:14px; margin-top:10px;\">上传进步:0%</div></div><script>$('form').submit(function(e){e.preventDefault();var form=$('#upload_form')[0];var data=new FormData(form);$.ajax({url:'/update',type:'POST',data:data,contentType:false,processData:false,xhr:function(){var xhr=new window.XMLHttpRequest();xhr.upload.addEventListener('progress',function(evt){if(evt.lengthComputable){var per=evt.loaded/evt.total;$('#prg').html('progress: '+Math.round(per*100)+'%')}},false);return xhr},success:function(d,s){console.log('success!')},error:function(a,b,c){}})});</script></body></html>";
+    const char html[] PROGMEM = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>Update System</title><script src='https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js'></script></head><body><div><form method='POST'action='#'enctype='multipart/form-data'id='upload_form'><input type='file'name='update'/><input style=\"background:green; color:white; width:80px; height:30px;\"type='submit'value='更新'/></form><div id='prg'style=\"font-size:14px; margin-top:10px;\">上传进步:0%</div></div><script>$('form').submit(function(e){e.preventDefault();var form=$('#upload_form')[0];var data=new FormData(form);$.ajax({url:'/update',type:'POST',data:data,contentType:false,processData:false,xhr:function(){var xhr=new window.XMLHttpRequest();xhr.upload.addEventListener('progress',function(evt){if(evt.lengthComputable){var per=evt.loaded/evt.total;$('#prg').html('progress: '+Math.round(per*100)+'%')}},false);return xhr},success:function(d,s){console.log('success!')},error:function(a,b,c){}})});</script></body></html>";
     request->send(200, "text/html", html);
   });
 
@@ -3337,7 +3314,7 @@ void lightSettingByTicker()
     }
     else
     {
-      Serial.println("set local time value");
+      //Serial.println("set local time value");
       //unsigned int localTime = localStorage.getUInt("localTime",1572867315);
       //stime.tv_sec = atoi(PWM_INFO_RTC.c_str()) + 27726;
       stime.tv_sec = localStorage.getUInt("localTime", 1574412536) + 28800;
@@ -3437,14 +3414,14 @@ void lightSettingByTicker()
     wifistatus = "online";
   }
 
-  Serial.print(currenthour);
-  Serial.print(":");
-  Serial.print(currentmin);
-  Serial.print(":");
-  Serial.print(currentsec);
-  Serial.println(wifistatus);
-  Serial.println("ntp:" + String(timeClient.getEpochTime()));
-  Serial.println("system:"+String(stime.tv_sec));
+  // Serial.print(currenthour);
+  // Serial.print(":");
+  // Serial.print(currentmin);
+  // Serial.print(":");
+  // Serial.print(currentsec);
+  // Serial.println(wifistatus);
+  // Serial.println("ntp:" + String(timeClient.getEpochTime()));
+  // Serial.println("system:"+String(stime.tv_sec));
 
   if (PWM_INFO_SHOWTYPE == "repeat")
   {
@@ -5339,6 +5316,21 @@ void localTimeTicker()
 }
 
 
+void resetClick() {
+  if(digitalRead(RESET_BUTTON) == LOW) {
+    if(KEY1_NUM == 0) {
+      unsigned int Rt1 = millis() % 4000;
+      if(Rt1 > 3990) {
+        Serial.println("reset button touched");
+        if(digitalRead(RESET_BUTTON) == LOW) {
+          KEY1_NUM = 1;
+          initFileSystem();
+          while(digitalRead(RESET_BUTTON) == LOW);
+        }
+      }
+    }
+  }
+}
 
 // esp32 init config
 // todo setup
@@ -5373,7 +5365,8 @@ void setup()
   RESET_FLAG = false;
   IS_SMART = false;
   pinMode(RESET_BUTTON, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(RESET_BUTTON), handleRestButtonChanged, CHANGE);
+  //pinMode(RESET_LED,OUTPUT);
+  //attachInterrupt(digitalPinToInterrupt(RESET_BUTTON), handleRestButtonChanged, CHANGE);
   WiFi.mode(WIFI_AP_STA);
 
   led0.setup();
@@ -5420,6 +5413,7 @@ void setup()
       ESP_MAC = localStorage.getString("mac", "");
       //todowifi
       timeTicker.attach(1, localTimeTicker);
+      resetTicker.attach(1,resetClick);
       localStorage.getUInt("localTime", 1574412536);
       SSID = localStorage.getString("ssid", "");
       if (SSID == "")
