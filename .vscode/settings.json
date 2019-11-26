@@ -17,7 +17,8 @@
         "streambuf": "cpp",
         "typeinfo": "cpp",
         "functional": "cpp",
-        "string": "cpp"
+        "string": "cpp",
+        "__functional_03": "cpp"
     },
     "terminal.integrated.env.osx": {
         "PATH": "/Users/chairongzhen/.platformio/penv/bin:/Users/chairongzhen/.platformio/penv:/Users/chairongzhen/.rvm/gems/ruby-2.5.3/bin:/Users/chairongzhen/.rvm/gems/ruby-2.5.3@global/bin:/Users/chairongzhen/.rvm/rubies/ruby-2.5.3/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Library/Apple/usr/bin:/Library/Apple/bin:/Users/chairongzhen/.rvm/bin",
